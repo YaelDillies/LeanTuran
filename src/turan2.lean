@@ -5,7 +5,8 @@ import tactic.core
 import algebra.big_operators
 open finset fintype
 
-open_locale big_operators classical
+open_locale big_operators 
+namespace simple_graph 
 variables {t n : ℕ} 
 -- turan_numb t n is max numb of edges in an n vertex t+1 partite graph 
 ---what about 0-partite? sorry not going there...
@@ -13,6 +14,7 @@ def turan_numb : ℕ → ℕ → ℕ
 | _       0 := 0
 | 0       _ := 0
 | (t+1) (n+1) :=option.get_or_else ((range(n+1)).image(λa, turan_numb t a + a*(n+1-a))).max 0 
+
 
 lemma tn_simp (t :ℕ): turan_numb t 0 = 0:=by cases t;refl
 
@@ -37,16 +39,34 @@ begin
 end
 
 
--- complete (t+1) partite graph with n vertices
-def  Turan_Graph (t n : ℕ) : simple_graph (fin (n+1)):=
+lemma sc {n : ℕ} (h: n≠0) : ∃m:ℕ, n=m.succ :=
 begin
-  induction t with t ht,
-  induction n with n hn,
-  exact ⊥, exact ⊥,
-  choose b hb1 hb2 using (tn_max_mem t n n ((self_mem_range_succ n))),
-
-  exact ⊤,
+exact nat.exists_eq_succ_of_ne_zero h,
 end
+
+-- given t and n return the size of the next part in turan (t+1) partite graph of order n
+noncomputable
+def  Turan_part  : ℕ → ℕ → ℕ:=
+begin
+  intros t n,
+  by_cases hn: n=0, exact 0,
+  by_cases ht: n=0, exact  n,
+  choose m hm using nat.exists_eq_succ_of_ne_zero hn, 
+  choose s hs using nat.exists_eq_succ_of_ne_zero ht, 
+  choose b hb1 hb2 using (tn_max_mem s m m ((self_mem_range_succ m))),
+  exact b,
+end
+
+def Turan_partition : ℕ → ℕ → list ℕ
+| 0 _ := []
+| _ 0 := [0]
+| (t+1) (n+1):= (Turan_partition t (n+1-Turan_part (t+1) (n+1))).append(Turan_part (t+1) (n+1)) 
+
+
+
+
+
+end simple_graph
 
 
 

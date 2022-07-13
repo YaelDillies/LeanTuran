@@ -6,7 +6,7 @@ import tactic.core
 import algebra.big_operators
 open finset fintype
 
-open_locale big_operators classical
+open_locale big_operators 
 namespace simple_graph
 variables {t n : ℕ} 
 variables {α : Type*} (G : simple_graph α)[fintype α][inhabited α]{s : finset α}[decidable_eq α] [decidable_rel G.adj]
