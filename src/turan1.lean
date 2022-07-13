@@ -289,6 +289,27 @@ begin
 end
 
   
-
+---- given a graph on a subset of α can form the bipartite join with rest of α
+def bip_join {A : finset α} (H: simple_graph A) : simple_graph α:={
+adj:=
+begin
+  set F:=spanning_coe H,
+  intros x y, exact F.adj x y ∨ (x∈ A ∧ y ∈ univ\A) ∨ (x∈ univ\A ∧ y ∈ A), 
+end,
+symm:=
+begin
+  simp only [map_adj, function.embedding.coe_subtype, set_coe.exists, subtype.coe_mk, exists_and_distrib_right,
+  exists_eq_right_right, exists_eq_right, mem_sdiff, mem_univ, true_and] at *, 
+  intros x y hxy,
+  obtain ⟨x1,x2,h1⟩:=hxy,
+  use [x2,x1], rwa adj_comm,
+  cases hxy with h1 h2,right,right, exact ⟨h1.2,h1.1⟩,
+  right,left, exact ⟨h2.2,h2.1⟩,
+end,
+loopless:=
+begin
+  obviously,
+end,
+}
 
 end simple_graph
