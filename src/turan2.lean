@@ -57,15 +57,15 @@ begin
   exact b,
 end
 
+
 def Turan_partition : ℕ → ℕ → list ℕ
-| 0 _ := []
-| _ 0 := [0]
-| (t+1) (n+1):= (Turan_partition t (n+1-Turan_part (t+1) (n+1))).append(Turan_part (t+1) (n+1)) 
+| 0     n     := [n]
+| (t+1) 0     := list.repeat 0 (t+2)
+| (t+1) (n+1) := append [Turan_part (t) (n)] (Turan_partition t (n+1-(Turan_part (t) (n)))) 
 
 
-
-
-
+variable {l : list ℕ} def l:=[0]
+#eval append [4,1] [3 ,2] 
 end simple_graph
 
 
