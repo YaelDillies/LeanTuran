@@ -320,7 +320,7 @@ begin
   have ne1: (range(n+1)).nonempty:= nonempty_range_succ,
   have ne2: vals.nonempty, apply finset.nonempty.image ne1,
   set part:ℕ:= vals.max' ne2,
-  --- need to 
+  --- need to see
   sorry,
 end
 
