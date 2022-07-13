@@ -1,6 +1,7 @@
 import combinatorics.simple_graph.clique
 import combinatorics.simple_graph.degree_sum
 import data.finset.basic
+import data.list.basic
 import tactic.core
 import algebra.big_operators
 open finset fintype
@@ -39,13 +40,26 @@ begin
 end
 
 
-lemma sc {n : ℕ} (h: n≠0) : ∃m:ℕ, n=m.succ :=
-begin
-exact nat.exists_eq_succ_of_ne_zero h,
+-- form list [b,b,...b] of length a
+def mylist : ℕ → ℕ → list ℕ
+| 0   b   := []
+|(a+1)  b   := (mylist a b).append [b]
+
+
+-- form (t+1)-part partition for Turan as a list ℕ
+def TP : ℕ → ℕ → list ℕ
+| 0  n   := [n]
+|(t+1) 0 := mylist (t+2) 0
+| (t+1) (n+1) :=begin
+by_cases hnt: (n+1 ≤ t+2) ,
+  exact (mylist (n+1) 1).append (mylist ((t+2)-(n+1)) 0),
+  exact (mylist ((n+1)%(t+2)) (1+(n+1)/(t+2))).append (mylist ((t+2)-(n+1)%(t+2)) ((n+1)/(t+2))),
 end
 
+
+
 -- given t and n return the size of the next part in turan (t+1) partite graph of order n
-noncomputable
+noncomputable theory
 def  Turan_part  : ℕ → ℕ → ℕ:=
 begin
   intros t n,
@@ -58,14 +72,8 @@ begin
 end
 
 
-def Turan_partition : ℕ → ℕ → list ℕ
-| 0     n     := [n]
-| (t+1) 0     := list.repeat 0 (t+2)
-| (t+1) (n+1) := append [Turan_part (t) (n)] (Turan_partition t (n+1-(Turan_part (t) (n)))) 
 
 
-variable {l : list ℕ} def l:=[0]
-#eval append [4,1] [3 ,2] 
 end simple_graph
 
 
