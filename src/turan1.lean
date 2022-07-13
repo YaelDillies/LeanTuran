@@ -7,12 +7,8 @@ import algebra.big_operators
 open finset fintype
 
 open_locale big_operators classical
+namespace simple_graph
 variables {t n : ℕ} 
--- turan_numb t n is max numb of edges in an n vertex t+1 partite graph 
----what about 0-partite? sorry not going there...
-
-
-
 variables {α : Type*} (G : simple_graph α)[fintype α][inhabited α]{s : finset α}[decidable_eq α] [decidable_rel G.adj]
 lemma turan_bd (s : ℕ) {A B :finset α} (hA: A.nonempty) (hB: B⊆A) (hB': B⊂ A): turan_numb s B.card + B.card * (A\B).card ≤ turan_numb s.succ A.card:=
 begin
@@ -27,8 +23,6 @@ begin
   rw [mem_range,  ← nat.succ_eq_add_one, ← hc],
   exact card_lt_card hB',
 end
-
-namespace simple_graph
 
 include G
 -- res nbhd is part of nbhd in A
@@ -293,10 +287,5 @@ begin
   simp [deg_res_univ] at sdG,
   rw sum_degrees_eq_twice_card_edges at sdG, rw card_univ at sdG, rwa [mul_le_mul_left] at sdG, by norm_num,
 end
-
-
-
-
-
 
 end simple_graph
