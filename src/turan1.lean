@@ -288,4 +288,7 @@ begin
   rw sum_degrees_eq_twice_card_edges at sdG, rw card_univ at sdG, rwa [mul_le_mul_left] at sdG, by norm_num,
 end
 
+  
+
+
 end simple_graph
