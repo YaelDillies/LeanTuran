@@ -312,4 +312,8 @@ begin
 end,
 }
 
+def TG (n :ℕ): ℕ → simple_graph (range n)
+| 0  := { adj := λ i j, false }
+| (t+1):= TG (n-(Turan_part (t+1) n))
+
 end simple_graph

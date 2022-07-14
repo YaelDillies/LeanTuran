@@ -2,9 +2,10 @@ import combinatorics.simple_graph.clique
 import combinatorics.simple_graph.degree_sum
 import data.finset.basic
 import data.list.basic
+import data.nat.basic
 import tactic.core
 import algebra.big_operators
-open finset fintype
+open finset fintype nat
 
 open_locale big_operators 
 namespace simple_graph 
@@ -40,22 +41,100 @@ begin
 end
 
 
+lemma mysucc (h: 0 <n) :∃m:ℕ, m.succ=n :=
+begin
+use n.pred, apply succ_pred_eq_of_pos h,
+end
+
+
+
+lemma maxlistsum (t n : ℕ) : ∃l:list ℕ,l.length=t+1 ∧ l.sum=n ∧ n^2=(l.map (λi,i^2)).sum +2*turan_numb t n:=
+begin
+  revert n,
+  induction t with t ht,
+  intro n, rw [zero_add,tn_simp',mul_zero],
+  use [[n]],dsimp, simp only [eq_self_iff_true, list.sum_cons, list.sum_nil, add_zero, and_self] at *,
+  intro n,
+--  induction n using nat.strong_induction_on with n hn,
+  cases nat.eq_zero_or_pos n with hn0,
+  rcases ht 0 with ⟨h0,h1,h2,h3⟩,
+  rw [tn_simp,mul_zero,zero_pow (by norm_num:0<2)] at h3,
+  set ml:= 0 :: h0,
+  use ml,
+  simp only [list.length, list.map, add_left_inj, list.sum_cons, zero_add, nat.nat_zero_eq_zero, zero_pow', ne.def, bit0_eq_zero,
+  nat.one_ne_zero, not_false_iff, add_zero], rw [hn0,zero_pow (by norm_num:0<2),tn_simp,mul_zero,add_zero ],
+  exact ⟨h1,h2,h3⟩,
+  have ms:=succ_pred_eq_of_pos h,
+  set m:=n.pred with m,rw ← ms,
+----inductive step 
+sorry,
+end
+
+
+
+
+
+
 -- form list [b,b,...b] of length a
 def mylist : ℕ → ℕ → list ℕ
 | 0   b   := []
-|(a+1)  b   := (mylist a b).append [b]
+|(a+1)  b   :=  b :: mylist a b
+
+def addlist : list ℕ → list ℕ → list ℕ
+| [] _ := []
+| _ [] := []
+| (a :: l) (b :: m)  :=(a+b):: addlist l m
+
+
 
 
 -- form (t+1)-part partition for Turan as a list ℕ
-def TP : ℕ → ℕ → list ℕ
-| 0  n   := [n]
-|(t+1) 0 := mylist (t+2) 0
-| (t+1) (n+1) :=begin
-by_cases hnt: (n+1 ≤ t+2) ,
-  exact (mylist (n+1) 1).append (mylist ((t+2)-(n+1)) 0),
-  exact (mylist ((n+1)%(t+2)) (1+(n+1)/(t+2))).append (mylist ((t+2)-(n+1)%(t+2)) ((n+1)/(t+2))),
+
+
+lemma myexists (a b : ℕ) (h : a< b): ∃c, a+c=b:=
+begin
+tidy, exact b-a,
+convert add_tsub_eq_max, rw max_def a b,split_ifs,exfalso, linarith,refl, tidy,
 end
 
+
+
+def TurPln2 : ℕ → ℕ → list ℕ
+|t n := if h: n≤(t+1) then (mylist n 1).append (mylist (t+1-n) 0)
+else 
+begin 
+exact have n-(t+1) <n ,{
+  have hlt:=lt_of_not_ge h, 
+  obtain ⟨c,hc⟩:=myexists (t+1) n hlt,
+  rw ← hc, simp only [add_tsub_cancel_left, lt_add_iff_pos_left, nat.succ_pos'],
+},
+TurPln2 t (n-(t+1)),
+end
+
+
+
+
+
+--- what a mess... trying to prove recursive def of Turan graph is well founded 
+--- need to show that n-(t+1) < n and n%(t+1) < n for (t+1) < n.
+def TurPln : ℕ → ℕ → list ℕ
+|t n := if h: n≤(t+1) then (mylist n 1).append (mylist (t+1-n) 0)
+else 
+begin 
+exact have (n-(t+1) <n) ∧  (n%(t+1)<n),{
+ have wf1: (n-(t+1) <n)  ,
+{ have hlt:=lt_of_not_ge h,
+  have h1:= tsub_add_cancel_of_le (le_of_lt hlt),
+  nth_rewrite_rhs 0 ← h1, apply (lt_add_iff_pos_right (n-(t+1))).mpr (by norm_num:0<t+1),
+},
+have wf2: (n%(t+1)<n),{
+  rw nat.mod_def,split_ifs,
+  sorry, sorry,
+}, exact ⟨wf1,wf2⟩,},
+sorry,--list.map₂ (λx y, x+y) (TurPln t (n-(t+1))) (TurPln t (n%(t+1))),
+end
+
+#eval TurPln 2 4
 
 
 -- given t and n return the size of the next part in turan (t+1) partite graph of order n
@@ -70,7 +149,6 @@ begin
   choose b hb1 hb2 using (tn_max_mem s m m ((self_mem_range_succ m))),
   exact b,
 end
-
 
 
 
