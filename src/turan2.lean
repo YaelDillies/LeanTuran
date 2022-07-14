@@ -88,53 +88,7 @@ def addlist : list ℕ → list ℕ → list ℕ
 
 
 
--- form (t+1)-part partition for Turan as a list ℕ
 
-
-lemma myexists (a b : ℕ) (h : a< b): ∃c, a+c=b:=
-begin
-tidy, exact b-a,
-convert add_tsub_eq_max, rw max_def a b,split_ifs,exfalso, linarith,refl, tidy,
-end
-
-
-
-def TurPln2 : ℕ → ℕ → list ℕ
-|t n := if h: n≤(t+1) then (mylist n 1).append (mylist (t+1-n) 0)
-else 
-begin 
-exact have n-(t+1) <n ,{
-  have hlt:=lt_of_not_ge h, 
-  obtain ⟨c,hc⟩:=myexists (t+1) n hlt,
-  rw ← hc, simp only [add_tsub_cancel_left, lt_add_iff_pos_left, nat.succ_pos'],
-},
-TurPln2 t (n-(t+1)),
-end
-
-
-
-
-
---- what a mess... trying to prove recursive def of Turan graph is well founded 
---- need to show that n-(t+1) < n and n%(t+1) < n for (t+1) < n.
-def TurPln : ℕ → ℕ → list ℕ
-|t n := if h: n≤(t+1) then (mylist n 1).append (mylist (t+1-n) 0)
-else 
-begin 
-exact have (n-(t+1) <n) ∧  (n%(t+1)<n),{
- have wf1: (n-(t+1) <n)  ,
-{ have hlt:=lt_of_not_ge h,
-  have h1:= tsub_add_cancel_of_le (le_of_lt hlt),
-  nth_rewrite_rhs 0 ← h1, apply (lt_add_iff_pos_right (n-(t+1))).mpr (by norm_num:0<t+1),
-},
-have wf2: (n%(t+1)<n),{
-  rw nat.mod_def,split_ifs,
-  sorry, sorry,
-}, exact ⟨wf1,wf2⟩,},
-sorry,--list.map₂ (λx y, x+y) (TurPln t (n-(t+1))) (TurPln t (n%(t+1))),
-end
-
-#eval TurPln 2 4
 
 
 -- given t and n return the size of the next part in turan (t+1) partite graph of order n
