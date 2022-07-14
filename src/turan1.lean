@@ -240,7 +240,7 @@ begin
 end
 
 -- main theorem basically erdos proof of degree majorisation of (t+2)-clique-free graph by (t+1)-partite graph
-theorem erdos : ∀A:finset α, G.clique_free_set A (t+2) → ∑v in A,G.deg_res v A ≤ 2*(turan_numb t A.card):=
+theorem erdos_simple : ∀A:finset α, G.clique_free_set A (t+2) → ∑v in A,G.deg_res v A ≤ 2*(turan_numb t A.card):=
 begin
   induction t with s hs,
   intros A hA,
@@ -284,35 +284,33 @@ theorem turan_ub : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (
 begin
   intro h,
   have ucf:=G.clique_free_graph_imp_set h,
-  have sdG:= G.erdos univ ucf,
+  have sdG:= G.erdos_simple univ ucf,
   simp [deg_res_univ] at sdG,
   rw sum_degrees_eq_twice_card_edges at sdG, rw card_univ at sdG, rwa [mul_le_mul_left] at sdG, by norm_num,
 end
 
 --- for any t and n there is a list of (t+1) nats summing to n whose sum of squares is n^2 - 2*Turan(t+1,n)
---- ie there is a partition of n into t+1 parts so that the multipartite graph on these parts has the maximum number of edges
-lemma turan_list_lb (t n : ℕ) : ∃l:list ℕ,l.length=t+1 ∧ l.sum=n ∧ n^2=(l.map (λi,i^2)).sum +2*turan_numb t n:=
+--- ie there is a partition of n into t+1 parts so that the multipartite graph on these parts 
+--  t(t+1,n) edges 
+lemma turan_list_lb (t n : ℕ) : ∃l:list ℕ,l.length=t+1 ∧ l.sum=n ∧ n^2= (l.map (λi,i^2)).sum + 2*turan_numb t n:=
 begin
   revert n,
   induction t with t ht,
   intro n, rw [zero_add,tn_simp',mul_zero],
   use [[n]],dsimp, simp only [eq_self_iff_true, list.sum_cons, list.sum_nil, add_zero, and_self] at *,
-  intro n,
-  cases nat.eq_zero_or_pos n with hn0,
+  intro n,  cases nat.eq_zero_or_pos n with hn0,
   rcases ht 0 with ⟨h0,h1,h2,h3⟩,
   rw [tn_simp,mul_zero,zero_pow (by norm_num:0<2)] at h3,
-  set ml:= 0 :: h0,
-  use ml,
+  use  0 :: h0,
   simp only [list.length, list.map, add_left_inj, list.sum_cons, zero_add, nat.nat_zero_eq_zero, zero_pow', ne.def, bit0_eq_zero,
   nat.one_ne_zero, not_false_iff, add_zero], rw [hn0,zero_pow (by norm_num:0<2),tn_simp,mul_zero,add_zero ],
   exact ⟨h1,h2,h3⟩,
   have ms:=succ_pred_eq_of_pos h,
   set m:=n.pred with hm,rw ← ms,
-----inductive step 
+----inductive step, choose the correct size for the new (t+2)^{th} part
   choose b hb1 hb2 using (tn_max_mem t m m ((self_mem_range_succ m))),
   rcases ht b with ⟨l,l0,l1,l2⟩,
-  set tl:= (m+1-b) :: l,
-  use tl,
+  use (m+1-b) :: l,
   split, simp only [*, list.length] at *,
   split, simp only [*, list.sum_cons, mem_range, eq_self_iff_true] at *, rw ← succ_eq_add_one, rw ms, 
   rw [← succ_eq_add_one, ms] at hb1,
@@ -327,12 +325,27 @@ begin
   nth_rewrite 0 ← this, ring,
 end
   
+
+
+-- define a constructor of a multipartite graph from a list ℕ 
+def multipartite {l : list ℕ} (hn: l.sum =n) : simple_graph (fin n):={
+adj:=
+begin
+  set sl: list ℕ:= l.scanl (+) 0,  ---take the list and convert it into intervals e.g [2,2,3,3] -> [0,2,4,7,10]
+  intros x y, -- 0 ≤ x,y ≤ n-1 (ie fin n) are adjacent if x and y lie in different intervals
+  exact (sl.take_while (λa, a<x)) ≠  (sl.take_while (λa, a<y)),-- eg x=3 y=8 have [0,2] ≠ [0,2,4,7] so adj x y
+end,
+symm:= by obviously,
+loopless:= by obviously,}
+
+
 ---- given a graph on a subset of α can form the bipartite join with rest of α
+--- don't currently use this but could to define a complete multipartite graph on α
 def bip_join {A : finset α} (H: simple_graph A) : simple_graph α:={
 adj:=
 begin
   set F:=spanning_coe H,
-  intros x y, exact F.adj x y ∨ (x∈ A ∧ y ∈ univ\A) ∨ (x∈ univ\A ∧ y ∈ A), 
+  intros x y, exact F.adj x y ∨ (x∈ A ∧ y ∈ univ\A) ∨ (x ∈ univ\A ∧ y ∈ A), 
 end,
 symm:=
 begin
@@ -344,9 +357,6 @@ begin
   cases hxy with h1 h2,right,right, exact ⟨h1.2,h1.1⟩,
   right,left, exact ⟨h2.2,h2.1⟩,
 end,
-loopless:=
-begin
-  obviously,
-end,}
+loopless:= by obviously,}
 
 end simple_graph

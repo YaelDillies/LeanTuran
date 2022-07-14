@@ -18,10 +18,11 @@ def turan_numb : ℕ → ℕ → ℕ
 | (t+1) (n+1) :=option.get_or_else ((range(n+1)).image(λa, turan_numb t a + a*(n+1-a))).max 0 
 
 
-lemma tn_simp (t :ℕ): turan_numb t 0 = 0:=by cases t;refl
+lemma tn_simp (t :ℕ): turan_numb t 0 = 0 := by cases t;refl
 
-lemma tn_simp' (n :ℕ): turan_numb 0 n = 0:=by cases n;refl
+lemma tn_simp' (n :ℕ): turan_numb 0 n = 0 := by cases n;refl
 
+--the turan number is the maximum of the lhs below 
 lemma tn_le (t c n : ℕ) (h: c ∈ range (n+1)): turan_numb t c +c*(n+1-c) ≤ turan_numb (t+1) (n+1):=
 begin
   obtain ⟨x, hx : _ = _⟩ := finset.max_of_mem (mem_image_of_mem (λa, turan_numb t a + a*(n+1-a)) h),
@@ -39,9 +40,6 @@ begin
   use [b,hbr],
   rw [turan_numb, hi, hbm],refl,
 end
-
-
-
 
 end simple_graph
 
