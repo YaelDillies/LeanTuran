@@ -1,10 +1,11 @@
 import combinatorics.simple_graph.clique
 import combinatorics.simple_graph.degree_sum
 import data.finset.basic
+import data.nat.basic
 import turan2
 import tactic.core
 import algebra.big_operators
-open finset fintype
+open finset fintype nat
 
 open_locale big_operators 
 namespace simple_graph
