@@ -140,10 +140,9 @@ begin
   cases hw with h1 h2, 
   have ne: v≠w := adj.ne h2,
   have c2 :card {v,w} =2:=card_doubleton ne,
-  have :G.is_n_clique 2 {v,w},
-    rw is_n_clique_iff, simp only [coe_insert, coe_singleton], rw is_clique_iff,split,
-    rw set.pairwise_pair_of_symmetric,
-    intro h,exact h2, exact G.symm, exact c2,
+  have :G.is_n_clique 2 {v,w},{
+    rw [is_n_clique_iff, coe_insert, coe_singleton, is_clique_iff,set.pairwise_pair_of_symmetric],
+    split, intro h,exact h2,  exact c2,exact G.symm,},
   rw clique_free_set, push_neg,use {v,w},split, 
   work_on_goal 1 { intros a ᾰ, dsimp at *, simp at *, cases ᾰ, work_on_goal 1 { induction ᾰ, assumption }, induction ᾰ, assumption }, assumption,
 end
@@ -157,10 +156,9 @@ begin
   rw clique_free_set,push_neg,
   set C:= B ∪ {v} with hC,
   have ct:  C.card = t.succ +2,{
-    rw hC, rw nat.succ_eq_add_one,rw add_assoc,rw add_comm 1, rw ← add_assoc,
+    rw [hC, nat.succ_eq_add_one, add_assoc, add_comm 1, ← add_assoc],
     convert card_union_eq _, rw is_n_clique_iff at hA, exact hA.2.symm,
     rw disjoint_singleton_right , 
-    simp only [eq_self_iff_true] at *,
     intros h, apply  (not_mem_res_nbhd G v A) (hB h),},
   have BA: B⊆ A:= subset_trans hB (G.sub_res_nbhd_A v A),
   use C, split,
@@ -168,32 +166,30 @@ begin
   simp only [hv, singleton_subset_iff],
   rw is_n_clique_iff at *,
   cases hA with cl ca, 
-  split, rw is_clique_iff, rw set.pairwise,
+  split, rw [is_clique_iff, set.pairwise],
   intros x hx y hy hne,
   by_cases x=v,
-    have yB : y∈ G.neighbor_finset v, 
+    have yB : y∈ G.neighbor_finset v,{ 
       rw hC at *,
       simp only [*, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, mem_coe, eq_self_iff_true,
       true_or, ne.def] at *,
       cases hy,exfalso, exact hne hy.symm, 
-      exact (mem_of_mem_inter_right (hB hy)),
-    rw h, rwa ← mem_neighbor_finset G v,
+      exact (mem_of_mem_inter_right (hB hy)),},
+    rwa [h, ← mem_neighbor_finset G v],
     by_cases h2:  y=v,
       rw h2, simp only [*, ne.def, not_false_iff, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, eq_self_iff_true,
       mem_coe, true_or, false_or] at *,
-      rw adj_comm,
-      rw ← mem_neighbor_finset G v,
+      rw [adj_comm,  ← mem_neighbor_finset G v],
       exact mem_of_mem_inter_right (hB hx),
     simp only [*, ne.def, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, mem_coe, false_or, eq_self_iff_true] at *,
-    exact cl hx  hy hne,
+    exact cl hx hy hne,
   exact ct,
 end
 
 -- restricted degree additive over partition of A into B ∪ A\B
 lemma sum_sdf {A B C: finset α} (hB: B ⊆ A) (hC: C ⊆ A): ∑ v in A, G.deg_res v C = ∑v in B, G.deg_res v C + ∑ v in A\B, G.deg_res v C:=
 begin
-  nth_rewrite 0 ← union_sdiff_of_subset hB,
-  exact sum_union (disjoint_sdiff),
+  nth_rewrite 0 ← union_sdiff_of_subset hB, exact sum_union (disjoint_sdiff),
 end
 
 -- restricted deg over A = restricted deg over B + restricted deg over A\B
@@ -244,38 +240,33 @@ theorem erdos_simple : ∀A:finset α, G.clique_free_set A (t+2) → ∑v in A,G
 begin
   induction t with s hs,
   intros A hA,
-  rw tn_simp', 
-  rw mul_zero, rw zero_add at hA, 
-  have two: ∀v∈A, G.deg_res v A= 0:= G.two_clique_free hA,
-  simp only [nonpos_iff_eq_zero, sum_eq_zero_iff], exact two, 
+  rw [tn_simp',mul_zero], rw zero_add at hA, 
+  have two:= G.two_clique_free hA,
+  rwa [nonpos_iff_eq_zero, sum_eq_zero_iff],  
   intros A hA, 
-  dsimp at *, 
   by_cases hnem: A.nonempty,{
     obtain ⟨x,hxA,hxM⟩:=G.exists_max_res_deg_vertex hnem,
-    have hBc :G.clique_free_set (G.nbhd_res x A) (s+2):=G.t_clique_free hA hxA,
-    specialize hs (G.nbhd_res x A) hBc,
-    set B: finset α := (G.nbhd_res x A) with hBd, 
+    have hBc :=G.t_clique_free hA hxA,
+    set B:= (G.nbhd_res x A) with hBd, 
     have hBA: B⊆ A:=(G.sub_res_nbhd_A x A),
     rw [G.deg_res_add_sum hBA (subset_refl A),G.sum_sdf hBA hBA, add_assoc],
-    apply add_le_of_add_le_right _ hs,
+    apply add_le_of_add_le_right _ (hs (G.nbhd_res x A) hBc),
     rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA (sdiff_subset A B)],
-    nth_rewrite 1 add_comm,
-    rw ← add_assoc,
-    have over:=G.sum_res_le hBA (sdiff_subset A B),
+    nth_rewrite 1 add_comm, rw ← add_assoc,
+    have over:=G.sum_res_le hBA (sdiff_subset A B),-- this is a strict overestimate if A\B contains any edges
     apply add_le_of_add_le_left _ over,
     ring_nf, rw ← mul_add,
     refine mul_le_mul' _ _, refl,
-    have maxbd:=G.max_deg_res_sum_le (sdiff_subset A B),
+    have maxbd:=G.max_deg_res_sum_le (sdiff_subset A B),-- this is a strict overestimate if any vertex in A\B has degree in A less than max
     apply add_le_of_add_le_left _ maxbd, rw hxM,
-    rw G.deg_res_eq_card_of_ss  hBd,
+    rw G.deg_res_eq_card_of_ss hBd,
     have BssA: B⊂A,{
       convert (ssubset_iff_of_subset hBA).mpr _,
       use x, split , exact hxA,
-      rw hBd, exact G.not_mem_res_nbhd x A, 
-    },
+      rw hBd, exact G.not_mem_res_nbhd x A,},
     exact turan_bd s hnem hBA BssA,},
     -- ¬ A.nonempty ie A = ∅
-  {  rw not_nonempty_iff_eq_empty at hnem, 
+  { rw not_nonempty_iff_eq_empty at hnem, 
     rw [hnem,finset.card_empty,turan_numb, mul_zero,finset.sum_empty],},
 end
 
@@ -290,7 +281,7 @@ begin
 end
 
 --- for any t and n there is a list of (t+1) nats summing to n whose sum of squares is n^2 - 2*Turan(t+1,n)
---- ie there is a partition of n into t+1 parts so that the multipartite graph on these parts 
+--- ie there is a partition of n into t+1 parts so that the multipartite graph on these parts has
 --  t(t+1,n) edges 
 lemma turan_list_lb (t n : ℕ) : ∃l:list ℕ,l.length=t+1 ∧ l.sum=n ∧ n^2= (l.map (λi,i^2)).sum + 2*turan_numb t n:=
 begin
@@ -315,19 +306,16 @@ begin
   split, simp only [*, list.sum_cons, mem_range, eq_self_iff_true] at *, rw ← succ_eq_add_one, rw ms, 
   rw [← succ_eq_add_one, ms] at hb1,
   apply tsub_add_cancel_of_le (le_of_lt hb1),
-  rw [ms],
-  simp only [*, list.map, list.sum_cons, mem_range, eq_self_iff_true] at *,
-  rw [← succ_eq_add_one ,ms] at hb2,
-  rw ← hb2,rw mul_add,rw ← add_assoc, rw add_comm, rw add_assoc, rw ←l2,
-  clear_except hb1 ms, rw ← succ_eq_add_one at hb1,rw ms at hb1,
-  rw ← succ_eq_add_one,rw ms, 
+  rw [ms], simp only [*, list.map, list.sum_cons, mem_range] at *,
+  rw [← succ_eq_add_one ,ms] at *,
+  rw [← hb2, mul_add, ← add_assoc, add_comm, add_assoc, ←l2],  
   have:= tsub_add_cancel_of_le (le_of_lt hb1),
   nth_rewrite 0 ← this, ring,
 end
   
 
 
--- define a constructor of a multipartite graph from a list ℕ 
+-- make a multipartite graph from a list ℕ that is guaranteed to sum to n
 def multipartite {l : list ℕ} (hn: l.sum =n) : simple_graph (fin n):={
 adj:=
 begin
@@ -337,6 +325,9 @@ begin
 end,
 symm:= by obviously,
 loopless:= by obviously,}
+
+
+
 
 
 ---- given a graph on a subset of α can form the bipartite join with rest of α
