@@ -45,29 +45,32 @@ structure multi_part :=
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 (deg_sum: ℕ:= A.card^2 - ∑ i in range(t+1), ((P i).card)^2)
 
+
 -- degree sum of complete multiparite graph = |A|^2-∑ |A_i|^2 
 --def deg_sum_multi_part  (M : multi_part) : ℕ := (M.A.card)^2 - ∑ i in range(M.t+1), ((M.P i).card)^2
+def extend_M  {B : finset α} {M : multi_part} (h: disjoint B M.A): multi_part :={
+  t:=M.t+1,
+  A:=B ∪ M.A,
+  P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
+  uni:= begin
+    rw range_succ, rw [bUnion_insert],rw M.uni, split_ifs, contradiction,
+    ext,rw [mem_union,mem_union,mem_bUnion,mem_bUnion],
+    split,intro h, cases h with hb hP,left, exact hb,right, 
+    obtain ⟨a1, H, H2⟩:=hP, use [a1,H],split_ifs, exact H2,   
+    push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H,
+    intros h,cases h with hb hP,left, exact hb,right, 
+    obtain ⟨a1, H, H2⟩:=hP,split_ifs at H2, use [a1,H, H2],
+    push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H,
+  end,
+  disj:= begin
+    intros i hi j hj ne, split_ifs, exact M.disj i hi j hj ne,
+  sorry,
+  end,
+  deg_sum:= begin
 
-def extend_M  {B : finset α} (M : multi_part) (h: disjoint B M.A): multi_part :={
-t:=M.t+1,
-A:=B∪ M.A,
-P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
-uni:= begin
-rw range_succ, rw [bUnion_insert],rw M.uni, split_ifs, contradiction,
 
-
-sorry,
-end,
-
-disj:= begin
-
-sorry,
-end,
-deg_sum:= begin
-
-
-sorry,
-end,}
+  sorry,
+  end,}
 
 
 
