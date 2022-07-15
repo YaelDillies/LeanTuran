@@ -34,8 +34,8 @@ end
 lemma tn_max_mem (t c n : ℕ) (h: c∈ range (n+1)) : ∃b∈ range(n+1), turan_numb t b +b*(n+1-b) = turan_numb (t+1) (n+1):=
 begin
   obtain ⟨i, hi : _ = _⟩ := finset.max_of_mem (mem_image_of_mem (λa, turan_numb t a + a*(n+1-a)) h),
-  have :=mem_of_max  hi,
-   rw mem_image at this,
+  have := mem_of_max  hi,
+  rw mem_image at this,
   rcases this with ⟨b,hbr,hbm⟩,
   use [b,hbr],
   rw [turan_numb, hi, hbm],refl,
