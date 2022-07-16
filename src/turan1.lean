@@ -402,7 +402,6 @@ begin
 
 sorry,sorry,
 
-
 end
 
 
@@ -422,13 +421,15 @@ begin
     set hBA:= (G.sub_res_nbhd_A x A), 
     set B:=(G.nbhd_res x A) with hB,-- Let B be the res nbhd of the vertex x of max deg_A 
     refine ⟨B, ⟨hBA,(G.t_clique_free' hA hxA),_⟩⟩,
-   rw [G.deg_res_add_sum hBA (subset_refl A), G.sum_sdf hBA hBA, add_assoc],
-   rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA (sdiff_subset A B)],
-   rw ← hB,
-   ----START HERE NEXT TIME
-  --  nth_rewrite 1 add_comm, rw ← add_assoc,
-   --apply add_le_of_add_le_left _ (G.max_deg_res_sum_le (sdiff_subset A B)), 
-    sorry,},
+    rw [G.deg_res_add_sum hBA (subset_refl A), G.sum_sdf hBA hBA, add_assoc],
+    rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA (sdiff_subset A B)],
+    rw ← hB, rw ← add_assoc, ring_nf,
+    apply add_le_add_left _ (∑ v in B, G.deg_res v B ), 
+    rw add_comm, rw add_assoc, nth_rewrite 1 add_comm,
+    rw ← G.deg_res_add_sum hBA (sdiff_subset A B), ring_nf,rw mul_assoc,
+    refine mul_le_mul' (by norm_num) _,
+    apply le_trans (G.max_deg_res_sum_le (sdiff_subset A B)) _,
+    rw [hxM,deg_res],},
     {rw not_nonempty_iff_eq_empty at hnem, 
     refine ⟨∅,⟨empty_subset A,(G.clique_free_empty (by norm_num: 0 <t+1)),_⟩⟩,
     rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,hnem,sum_empty],},
