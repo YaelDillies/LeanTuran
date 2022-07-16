@@ -5,7 +5,7 @@ import data.nat.basic
 import turan2
 import tactic.core
 import algebra.big_operators
-open finset fintype nat
+open finset nat
 
 open_locale big_operators 
 
@@ -176,6 +176,20 @@ end
 -- A is a t-clique free set of vertices in G
 def clique_free_set (A : finset α) (s : ℕ): Prop:= ∀ B ⊆ A, ¬G.is_n_clique s B
 
+
+lemma clique_free_card_lt {A : finset α} {s: ℕ} (h: A.card <s): G.clique_free_set A s:=
+begin
+  rw clique_free_set,intros B hB,rw is_n_clique_iff,push_neg,intro h1,
+  apply ne_of_lt (lt_of_le_of_lt (card_le_of_subset hB) h), 
+end
+
+lemma clique_free_empty {s : ℕ} (h: 0< s): G.clique_free_set ∅ s:=
+begin
+  have:=finset.card_empty, rw ← this at h, exact G.clique_free_card_lt h,
+end
+
+
+
 -- if G has no s-clique then nor does the univ 
 lemma clique_free_graph_imp_set {s : ℕ} (h: G.clique_free s) :  G.clique_free_set univ s:=
 begin
@@ -190,7 +204,7 @@ end
 -- i.e. A is an independent set
 lemma two_clique_free {A: finset α} (hA : G.clique_free_set A 2) :  ∀v∈A, G.deg_res v A =0 :=
 begin
-  intros v hv, rw [deg_res,finset.card_eq_zero], 
+  intros v hv, rw [deg_res,card_eq_zero], 
   contrapose! hA,
   obtain ⟨w,hw⟩:=exists_mem_nempty G hA,
   cases hw with h1 h2, 
@@ -204,7 +218,14 @@ begin
   simp only [mem_insert, mem_singleton] at *,cases hx, rw hx,exact hv,rw hx, exact h1,
 end
 
--- inductive step: if A is (t.succ+2)-clique free then for any v ∈ A the restricted nbhd of v in A is (t+2)-clique-free
+
+-- sum of degrees over an independent set (2-clique-free set) is 0
+lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in A, G.deg_res v A = 0:=
+begin
+  rw sum_eq_zero_iff, exact G.two_clique_free hA,
+end
+
+-- inductive step for Erdos proof: if A is (t.succ+2)-clique free then for any v ∈ A the restricted nbhd of v in A is (t+2)-clique-free
 lemma t_clique_free {A: finset α} {v :α}(hA : G.clique_free_set A (t.succ + 2)) (hv : v ∈ A) :
 G.clique_free_set (G.nbhd_res v A) (t + 2):=
 begin
@@ -241,8 +262,47 @@ begin
     intros h, apply  (not_mem_res_nbhd G v A) (hB h),
 end
 
+
+lemma t_clique_free' {A: finset α} {v :α}(hA : G.clique_free_set A (t + 2)) (hv : v ∈ A) :
+G.clique_free_set (G.nbhd_res v A) (t + 1):=
+begin
+  rw clique_free_set at *,
+  intros B hB, contrapose! hA,
+  set C:= B ∪ {v} with hC,
+  refine ⟨C,_,_⟩,
+  rw hC, apply union_subset (subset_trans hB (G.sub_res_nbhd_A v A)) _,
+  simp only [hv, singleton_subset_iff],
+  rw is_n_clique_iff at *,
+  refine ⟨_,_⟩, 
+  rcases hA with ⟨cl,ca⟩, 
+  rw [is_clique_iff, set.pairwise],
+  intros x hx y hy hne,
+  by_cases x=v,
+    have yB : y∈ G.neighbor_finset v,{ 
+      simp only [*, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, 
+      mem_coe, eq_self_iff_true, true_or, ne.def] at *,
+      cases hy,exfalso, exact hne hy.symm, 
+      exact (mem_of_mem_inter_right (hB hy)),},
+    rwa [h, ← mem_neighbor_finset G v],
+    by_cases h2:  y=v,
+      rw h2, simp only [*, ne.def, not_false_iff, coe_union, coe_singleton, set.union_singleton,
+      set.mem_insert_iff, eq_self_iff_true, mem_coe, true_or, false_or] at *,
+      rw [adj_comm,  ← mem_neighbor_finset G v],
+      exact mem_of_mem_inter_right (hB hx),
+    simp only [*, ne.def, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, 
+    mem_coe, false_or, eq_self_iff_true] at *,
+    exact cl hx hy hne,
+    have: 2=1+1:=by norm_num,
+    rw [hC,this, ← add_assoc],
+    convert card_union_eq _,  exact hA.2.symm,
+    rw disjoint_singleton_right, 
+    intros h, apply  (not_mem_res_nbhd G v A) (hB h),
+end
+
+
 -- restricted degree additive over partition of A into B ∪ A\B
-lemma sum_sdf {A B C: finset α} (hB: B ⊆ A) (hC: C ⊆ A): ∑ v in A, G.deg_res v C = ∑v in B, G.deg_res v C + ∑ v in A\B, G.deg_res v C:=
+lemma sum_sdf {A B C: finset α} (hB: B ⊆ A) (hC: C ⊆ A):
+ ∑ v in A, G.deg_res v C = ∑v in B, G.deg_res v C + ∑ v in A\B, G.deg_res v C:=
 begin
   nth_rewrite 0 ← union_sdiff_of_subset hB, exact sum_union (disjoint_sdiff),
 end
@@ -346,9 +406,36 @@ sorry,sorry,
 end
 
 
+---for any (t+2)-clique free set there is a partition into B, a (t+1)-clique free set and A\B 
+-- such that e(A)+e(A\B) ≤ e(B) + |B|(|A|-|B|) 
+lemma furedi_help : ∀A:finset α, G.clique_free_set A (t+2) → ∃B:finset α, B ⊆ A ∧ G.clique_free_set B (t+1) ∧ 
+∑v in A, G.deg_res v A + ∑ v in (A\B), G.deg_res v (A\B) ≤ ∑ v in B, G.deg_res v B + 2*B.card * (A\B).card:=
+begin
+  cases nat.eq_zero_or_pos t with ht,
+  intros A hA,rw ht at *, rw zero_add at *,
+----- t = 0 need to check that ∅ is not a 1-clique. 
+  refine ⟨∅,⟨empty_subset A,(G.clique_free_empty (by norm_num: 0 <1)),_⟩⟩,
+  rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,G.two_clique_free_sum hA],
+----- 0 < t case
+  intros A hA, by_cases hnem: A.nonempty,{
+    obtain ⟨x,hxA,hxM⟩:=G.exists_max_res_deg_vertex hnem, -- get a vert x of max res deg in A
+    set hBA:= (G.sub_res_nbhd_A x A), 
+    set B:=(G.nbhd_res x A) with hB,-- Let B be the res nbhd of the vertex x of max deg_A 
+    refine ⟨B, ⟨hBA,(G.t_clique_free' hA hxA),_⟩⟩,
+   rw [G.deg_res_add_sum hBA (subset_refl A), G.sum_sdf hBA hBA, add_assoc],
+   rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA (sdiff_subset A B)],
+   rw ← hB,
+   ----START HERE NEXT TIME
+  --  nth_rewrite 1 add_comm, rw ← add_assoc,
+   --apply add_le_of_add_le_left _ (G.max_deg_res_sum_le (sdiff_subset A B)), 
+    sorry,},
+    {rw not_nonempty_iff_eq_empty at hnem, 
+    refine ⟨∅,⟨empty_subset A,(G.clique_free_empty (by norm_num: 0 <t+1)),_⟩⟩,
+    rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,hnem,sum_empty],},
+end
 
 -- usual-ish statement of turan upper bound
-theorem turan_ub : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (card α):=
+theorem turan_ub : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (fintype.card α):=
 begin
   intro h,
   have sdG:= G.erdos_simple univ (G.clique_free_graph_imp_set h),
