@@ -5,6 +5,7 @@ import data.nat.basic
 import turan2
 import tactic.core
 import algebra.big_operators
+
 open finset nat
 
 open_locale big_operators 

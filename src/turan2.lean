@@ -42,30 +42,26 @@ begin
   rw [turan_numb, hi, hbm],refl,
 end
 
-variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
+variables (α : Type*)[fintype α][inhabited α][decidable_eq α]
 -- basic structure for a complete (t+1)-partite graph on α
-
 @[ext] 
-structure multi_part :=
+structure multi_part (α : Type*)[decidable_eq α]:=--[fintype α][inhabited α][decidable_eq α]:=
 (t :ℕ) (P: ℕ → finset α) (A :finset α) 
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i<j → disjoint (P i) (P j)) 
 (deg_sum: ℕ:=A.card^2-∑ i in range(t+1), (P i).card^2)
 
 
-
-
-
 -- move a vertex to part i of the partition (given i and h: v belongs to some part)
---def move_v {v: α} (i:ℕ) {M : multi_part} (h: v ∈ M.A ): multi_part :={
---t:= M.t,
---P:= M.P,
---A:= M.A,
---uni:= M.uni,
---disj:=M.disj,}
+def move_v {v: α} (i:ℕ) {M : multi_part α} (h: v ∈ M.A ): multi_part α :={
+t:= M.t,
+P:= M.P,
+A:= M.A,
+uni:= M.uni,
+disj:=M.disj,}
 
 -- extend a t+1 partite-graph on A to (t+2)-partite on A ∪ B with disjoint A B.
-def insert (M : multi_part)  {B : finset α} (h: disjoint M.A B): multi_part :={
+def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
   t:=M.t+1,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
   A:=B ∪ M.A,
@@ -90,21 +86,8 @@ def insert (M : multi_part)  {B : finset α} (h: disjoint M.A B): multi_part :={
     apply h j (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2)),
     push_neg at h_1,push_neg at h_2, rw ← h_2 at h_1, exfalso,
     exact ne_of_lt iltj h_1, 
-  end,}
-
-
-
-
-lemma deg_sum_ext {B :finset α} {M : multi_part} (hB: disjoint M.A B) : 
-M.deg_sum +  B.card * M.A.card = (insert M hB).deg_sum:=
-begin
-  
-sorry,
-
-
-end
-
-
+  end,
+  deg_sum:=M.deg_sum + B.card*M.A.card,}
 
 
 
