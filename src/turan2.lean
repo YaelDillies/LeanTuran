@@ -8,8 +8,9 @@ import algebra.big_operators
 open finset fintype nat
 
 open_locale big_operators 
+
 namespace simple_graph 
-variables {t n : ℕ} 
+--variables {t n : ℕ} 
 -- turan_numb t n is max numb of edges in an n vertex t+1 partite graph 
 ---what about 0-partite? sorry not going there...
 def turan_numb : ℕ → ℕ → ℕ
@@ -42,26 +43,32 @@ begin
 end
 
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
+-- basic structure for a complete (t+1)-partite graph on α
 
--- basic structure for complete (t+1)-partite graph on α
+@[ext] 
 structure multi_part :=
-(t : ℕ) (A: finset α)
-(P: ℕ → finset α)
+(t :ℕ) (P: ℕ → finset α) (A :finset α) 
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i<j → disjoint (P i) (P j)) 
---(deg_sum: ℕ:= A.card^2 - ∑ i in range(t+1), ((P i).card)^2)
+(deg_sum: ℕ:=A.card^2-∑ i in range(t+1), (P i).card^2)
 
 
 
 
 
--- degree sum of complete multipartite graph = |A|^2-∑ |A_i|^2 
---def deg_sum_multi_part  (M : multi_part) : ℕ := (M.A.card)^2 - ∑ i in range(M.t+1), ((M.P i).card)^2
+-- move a vertex to part i of the partition (given i and h: v belongs to some part)
+--def move_v {v: α} (i:ℕ) {M : multi_part} (h: v ∈ M.A ): multi_part :={
+--t:= M.t,
+--P:= M.P,
+--A:= M.A,
+--uni:= M.uni,
+--disj:=M.disj,}
+
 -- extend a t+1 partite-graph on A to (t+2)-partite on A ∪ B with disjoint A B.
-def extend_M  {B : finset α} {M : multi_part} (h: disjoint M.A B): multi_part :={
+def insert (M : multi_part)  {B : finset α} (h: disjoint M.A B): multi_part :={
   t:=M.t+1,
-  A:=B ∪ M.A,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
+  A:=B ∪ M.A,
   uni:= begin
     rw range_succ, rw [bUnion_insert],rw M.uni, split_ifs, contradiction,
     ext,rw [mem_union,mem_union,mem_bUnion,mem_bUnion],
@@ -82,8 +89,24 @@ def extend_M  {B : finset α} {M : multi_part} (h: disjoint M.A B): multi_part :
     rw [M.uni, disjoint_bUnion_left] at h, rw disjoint.comm,
     apply h j (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2)),
     push_neg at h_1,push_neg at h_2, rw ← h_2 at h_1, exfalso,
-    exact ne_of_lt iltj h_1,
-  end,},
+    exact ne_of_lt iltj h_1, 
+  end,}
+
+
+
+
+lemma deg_sum_ext {B :finset α} {M : multi_part} (hB: disjoint M.A B) : 
+M.deg_sum +  B.card * M.A.card = (insert M hB).deg_sum:=
+begin
+  
+sorry,
+
+
+end
+
+
+
+
 
 end simple_graph
 
