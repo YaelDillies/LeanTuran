@@ -48,14 +48,17 @@ structure multi_part :=
 (t : ℕ) (A: finset α)
 (P: ℕ → finset α)
 (uni: A = (range(t+1)).bUnion (λi , P i))
-(disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
-(deg_sum: ℕ:= A.card^2 - ∑ i in range(t+1), ((P i).card)^2)
+(disj: ∀i∈ range(t+1),∀j∈ range(t+1), i<j → disjoint (P i) (P j)) 
+--(deg_sum: ℕ:= A.card^2 - ∑ i in range(t+1), ((P i).card)^2)
 
 
 
--- degree sum of complete multiparite graph = |A|^2-∑ |A_i|^2 
+
+
+-- degree sum of complete multipartite graph = |A|^2-∑ |A_i|^2 
 --def deg_sum_multi_part  (M : multi_part) : ℕ := (M.A.card)^2 - ∑ i in range(M.t+1), ((M.P i).card)^2
-def extend_M  {B : finset α} {M : multi_part} (h: disjoint B M.A): multi_part :={
+-- extend a t+1 partite-graph on A to (t+2)-partite on A ∪ B with disjoint A B.
+def extend_M  {B : finset α} {M : multi_part} (h: disjoint M.A B): multi_part :={
   t:=M.t+1,
   A:=B ∪ M.A,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
@@ -70,14 +73,17 @@ def extend_M  {B : finset α} {M : multi_part} (h: disjoint B M.A): multi_part :
     push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H,
   end,
   disj:= begin
-    intros i hi j hj ne, split_ifs, 
-    refine M.disj i _ j _ ne, sorry,
-  sorry, sorry,sorry,sorry,
-  end,
-  deg_sum:= begin
-  sorry,
-  end,}
-
+    intros i hi j hj iltj, split_ifs, 
+    refine M.disj i _ j _ iltj,
+    exact mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hi) h_1), 
+    exact mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2), 
+    rw [M.uni, disjoint_bUnion_left] at h, 
+    apply h i (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hi) h_1)),
+    rw [M.uni, disjoint_bUnion_left] at h, rw disjoint.comm,
+    apply h j (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2)),
+    push_neg at h_1,push_neg at h_2, rw ← h_2 at h_1, exfalso,
+    exact ne_of_lt iltj h_1,
+  end,},
 
 end simple_graph
 
