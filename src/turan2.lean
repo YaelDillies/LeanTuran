@@ -49,7 +49,7 @@ structure multi_part (α : Type*)[decidable_eq α]:=--[fintype α][inhabited α]
 (t :ℕ) (P: ℕ → finset α) (A :finset α) 
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i<j → disjoint (P i) (P j)) 
-(deg_sum: ℕ:=A.card^2-∑ i in range(t+1), (P i).card^2)
+(deg_sum:=A.card^2-∑ i in range(t+1), (P i).card^2)
 
 
 -- move a vertex to part i of the partition (given i and h: v belongs to some part)
@@ -58,7 +58,8 @@ t:= M.t,
 P:= M.P,
 A:= M.A,
 uni:= M.uni,
-disj:=M.disj,}
+disj:=M.disj,
+deg_sum:=M.deg_sum,}
 
 -- extend a t+1 partite-graph on A to (t+2)-partite on A ∪ B with disjoint A B.
 def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
@@ -89,7 +90,12 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
   end,
   deg_sum:=M.deg_sum + B.card*M.A.card,}
 
+lemma degs_M (M : multi_part α) : M.deg_sum = M.A.card^2-∑i in range(M.t+1),(M.P i).card^2:=
+begin
+  
 
+sorry,
+end
 
 end simple_graph
 
