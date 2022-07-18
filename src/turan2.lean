@@ -42,7 +42,7 @@ begin
   rw [turan_numb, hi, hbm],refl,
 end
 
-variables (α : Type*)[fintype α][inhabited α][decidable_eq α]
+variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 -- basic structure for a complete (t+1)-partite graph on α
 @[ext] 
 structure multi_part (α : Type*)[decidable_eq α]:=--[fintype α][inhabited α][decidable_eq α]:=

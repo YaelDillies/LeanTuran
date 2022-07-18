@@ -361,7 +361,7 @@ end
 -- e(A) + ∑ i≤t, e(A_i) ≤ e(M)
 -- Since e(M) ≤ T(t+1 ,|A|) this implies that for A containing T(t+1, |A|)-s edges 
 -- this implies that A can be made (t+1)-partite by removing at most s edges (those in the parts A_i)
-theorem furedi_stability  : ∀A:finset α, G.clique_free_set A (t+2) → ∃ M:multi_part, M.t=t ∧ M.A = A ∧
+theorem furedi_stability  : ∀A:finset α, G.clique_free_set A (t+2) → ∃ M:multi_part α, M.t=t ∧ M.A = A ∧
  ∑ v in A, G.deg_res v A + ∑  i in range(t+1), ∑ x in M.P i, G.deg_res x (M.P i) ≤ M.deg_sum:=
 begin
    induction t with s hs, intros A hA,
