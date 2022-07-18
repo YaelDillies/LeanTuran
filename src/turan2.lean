@@ -78,36 +78,43 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
     exact iltj h_1, 
   end,}
 
-
+-- member of a part implies member of union
 lemma mem_part{M:multi_part α} {v :α} {i :ℕ}: i∈range(M.t+1) → v ∈ M.P i → v ∈ M.A :=
 begin
   intros hi hv,rw M.uni,rw mem_bUnion, exact ⟨i,hi,hv⟩,
 end
-
-
 -- every vertex in A belongs to a part
 lemma inv_part {M:multi_part α} {v :α} (hA: v∈M.A): ∃ i∈ range(M.t+1), v ∈ M.P i:=
 begin
   rw [M.uni,mem_bUnion] at hA, exact hA,
 end
-
 -- if v belongs to P i and P j then i = j.
 lemma uniq_part {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → v∈M.P i → v∈ M.P j → i = j:=
 begin
   intros hi hj hiv hjv, by_contra, have:=M.disj i hi j hj h, exact this (mem_inter.mpr ⟨hiv,hjv⟩),
 end
-
 -- every part is contained in A
 lemma sub_part {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)) : M.P i ⊆ M.A :=
 begin
   rw M.uni, intros x hx,  rw  mem_bUnion,  exact ⟨i,hi,hx⟩,
 end
 
-lemma compl_part {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)) : M.A = M.A\(M.P i)∪M.P i :=
+--A is the union of each part and the sdiff
+lemma sdiff_part {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)) : M.A = M.A\(M.P i)∪M.P i :=
 begin
   have:= sub_part hi,
   rwa [sdiff_union_self_eq_union, left_eq_union_iff_subset] at *,
 end
+
+
+lemma disjoint_part {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)): disjoint ((M.A)\(M.P i)) (M.P i) := sdiff_disjoint
+
+lemma card_part_uni {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)):  M.A.card= (M.A\(M.P i)).card + (M.P i).card:=
+begin
+  nth_rewrite 0 sdiff_part hi,
+  apply card_disjoint_union sdiff_disjoint,
+end
+
 ---- given a graph on a subset of α can form the bipartite join with rest of α
 --- given a t+1 partition on A form the complete multi-partite graph 
 def mp (M: multi_part α) : simple_graph α:={
