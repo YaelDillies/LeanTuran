@@ -14,7 +14,7 @@ namespace simple_graph
 
 variables {t n : ℕ} 
 
-variables {α : Type*} (G : simple_graph α)[fintype α][inhabited α]{s : finset α}[decidable_eq α] [decidable_rel G.adj]
+variables {α : Type*} (G : simple_graph α)[fintype α][inhabited α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
 
 lemma turan_bd (s : ℕ) {A B :finset α} (hA: A.nonempty) (hB: B⊆A) (hB': B⊂ A): turan_numb s B.card + B.card * (A\B).card ≤ turan_numb s.succ A.card:=
 begin
@@ -361,16 +361,14 @@ end
 -- e(A) + ∑ i≤t, e(A_i) ≤ e(M)
 -- Since e(M) ≤ T(t+1 ,|A|) this implies that for A containing T(t+1, |A|)-s edges 
 -- this implies that A can be made (t+1)-partite by removing at most s edges (those in the parts A_i)
-theorem furedi_stability  : ∀A:finset α, G.clique_free_set A (t+2) → ∃ M:multi_part α, M.t=t ∧ M.A = A ∧
- ∑ v in A, G.deg_res v A + ∑  i in range(t+1), ∑ x in M.P i, G.deg_res x (M.P i) ≤ M.deg_sum:=
-begin
-   induction t with s hs, intros A hA,
+--theorem furedi_stability  : ∀A:finset α, G.clique_free_set A (t+2) → ∃ M:multi_part α, M.t=t ∧ M.A = A ∧
+-- ∑ v in A, G.deg_res v A + ∑  i in range(t+1), ∑ x in M.P i, G.deg_res x (M.P i) ≤ M.deg_sum:=
+--begin
+--   induction t with s hs, intros A hA,
 
-sorry,sorry,
+--sorry,sorry,
 
-end
-
-
+--end
 
 
 ---for any (t+2)-clique free set there is a partition into B, a (t+1)-clique free set and A\B 
@@ -446,39 +444,10 @@ end
   
 
 
--- make a multipartite graph from a list ℕ that is guaranteed to sum to n
-def multipartite {l : list ℕ} (hn: l.sum =n) : simple_graph (fin n):={
-adj:=
-begin
-  set sl: list ℕ:= l.scanl (+) 0,  ---take the list and convert it into intervals e.g [2,2,3,3] -> [0,2,4,7,10]
-  intros x y, -- 0 ≤ x,y ≤ n-1 (ie fin n) are adjacent if x and y lie in different intervals
-  exact (sl.take_while (λa, a<x)) ≠  (sl.take_while (λa, a<y)),-- eg x=3 y=8 have [0,2] ≠ [0,2,4,7] so adj x y
-end,
-symm:= by obviously,
-loopless:= by obviously,}
 
 
 
 
 
----- given a graph on a subset of α can form the bipartite join with rest of α
---- don't currently use this but could to define a complete multipartite graph on α
-def bip_join {A : finset α} (H: simple_graph A) : simple_graph α:={
-adj:=
-begin
-  set F:=spanning_coe H,
-  intros x y, exact F.adj x y ∨ (x∈ A ∧ y ∈ univ\A) ∨ (x ∈ univ\A ∧ y ∈ A), 
-end,
-symm:=
-begin
-  simp only [map_adj, function.embedding.coe_subtype, set_coe.exists, subtype.coe_mk, exists_and_distrib_right,
-  exists_eq_right_right, exists_eq_right, mem_sdiff, mem_univ, true_and] at *, 
-  intros x y hxy,
-  obtain ⟨x1,x2,h1⟩:=hxy,
-  use [x2,x1], rwa adj_comm,
-  cases hxy with h1 h2,right,right, exact ⟨h1.2,h1.1⟩,
-  right,left, exact ⟨h2.2,h2.1⟩,
-end,
-loopless:= by obviously,}
 
 end simple_graph
