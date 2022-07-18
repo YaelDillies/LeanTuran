@@ -115,6 +115,7 @@ begin
   apply card_disjoint_union sdiff_disjoint,
 end
 
+
 ---- given a graph on a subset of α can form the bipartite join with rest of α
 --- given a t+1 partition on A form the complete multi-partite graph 
 def mp (M: multi_part α) : simple_graph α:={
@@ -195,7 +196,7 @@ begin
 end
 
 
-lemma mp_add_iff {M : multi_part α} {v w: α} {i j : ℕ}(hi: i∈ range(M.t+1))(hj: j∈ range(M.t+1))(hvi: v∈M.P i) (hwj: w∈M.P j): 
+lemma mp_adj_iff {M : multi_part α} {v w: α} {i j : ℕ}(hi: i∈ range(M.t+1))(hj: j∈ range(M.t+1))(hvi: v∈M.P i) (hwj: w∈M.P j): 
 (mp M).adj v w ↔  i≠j := ⟨mp_adj_imp hi hj hvi hwj, mp_imp_adj hi hj hvi hwj⟩
 
 
@@ -214,22 +215,20 @@ begin
   refine mp_imp_adj hi hj1 hv hj2 _, by_contra, rw h at hni, exact hni hj2,
 end
 
-lemma mp_nbhd_v (M : multi_part α) (v:α) {i: ℕ} (hv: i∈ range(M.t+1) ∧ v ∈ M.P i) : (mp M).neighbor_finset v = (M.A)\(M.P i) :=
+lemma mp_nbhd {M : multi_part α} {v:α} {i: ℕ} (hv: i∈ range(M.t+1) ∧ v ∈ M.P i) : (mp M).neighbor_finset v = (M.A)\(M.P i) :=
 begin
   ext,split,rw mem_neighbor_finset,intro h, rw adj_comm at h,
   rw mem_sdiff, refine  ⟨nbhrs_imp h,_⟩, exact not_nhbr_same_part hv.1 hv.2 h.symm,
   rw mem_neighbor_finset, exact nbhr_diff_parts hv.1 hv.2,
 end
 
+
+lemma mp_nbhd_comp {M : multi_part α} {v : α} {i: ℕ} (hv: i∈ range(M.t+1) ∧ v∈ M.P i) : (mp M).degree v + (M.P i).card = M.A.card:= 
+begin
+  rw degree, rw mp_nbhd hv, rw (card_part_uni hv.1).symm,
+end
+
 end simple_graph
-
---lemma mp_nbhd_comp (M : multi_part α) {v : α} {i: ℕ} (hv: i∈ range(M.t+1) ∧ v∈ M.P i) : (mp M).degree v + (M.P i).card = M.A.card:= 
---begin
---  rw compl_part hv.1, rw degree,
---  sorry,
---  obtain ⟨i,hi,j ,hj,ne,h1 ⟩:=hx, cases h1, use [i, hi,h1.1], use [j, hj,h1.1], -
---end
-
 
 
 --
