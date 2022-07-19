@@ -13,12 +13,22 @@ namespace simple_graph
 
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 -- basic structure for a complete (t+1)-partite graph on α
+-- not actually a partition in the sense of mathlib since that would
+-- require at most one empty part, while I'm happy to allow any number of
+-- empty parts 
 @[ext] 
 structure multi_part (α : Type*)[decidable_eq α]:=--[fintype α][inhabited α][decidable_eq α]:=
 (t :ℕ) (P: ℕ → finset α) (A :finset α) 
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 
+---M.disj is the same as pairwise_disjoint but without any coercion to set for range(t+1) 
+lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
+
+lemma card_uni  (M : multi_part α) : M.A.card = ∑i in range(M.t+1),(M.P i).card:= begin
+  rw [M.uni, finset.card_eq_sum_ones, sum_bUnion (pair_disjoint M)],
+  apply finset.sum_congr rfl _, intros x hx, rwa ← finset.card_eq_sum_ones,
+end
 
 def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
   t:=M.t+1,
@@ -201,15 +211,28 @@ begin
   rw mp_deg hv, exact card_sdiff (sub_part hv.1),
 end
 
-lemma mp_deg_sum {M : multi_part α} : ∑ v in M.A, (mp M).degree v = M.A.card^2 -∑i in range(M.t+1),(M.P i).card^2:=
+lemma mp_deg_sum {M : multi_part α} : ∑ v in M.A, (mp M).degree v = ∑i in range(M.t+1),(M.P i).card * ((M.A)\(M.P i)).card :=
 begin
- 
-sorry
+  nth_rewrite 0 M.uni,
+  rw sum_bUnion (pair_disjoint M), apply finset.sum_congr rfl _,
+  intros x hx, rw [finset.card_eq_sum_ones, sum_mul, one_mul], apply finset.sum_congr rfl _,
+  intros v hv, exact mp_deg ⟨hx,hv⟩,
 end
---lemma mp_nbhd_comp {M : multi_part α} {v : α} {i: ℕ} (hv: i∈ range(M.t+1) ∧ v∈ M.P i) : (mp M).degree v + (M.P i).card = M.A.card:= 
---begin
---  rw degree, rw mp_nbhd hv, rw (card_part_uni hv.1).symm,
---end
+
+lemma mp_deg_sum_sq' {M : multi_part α} : ∑ v in M.A, (mp M).degree v + ∑i in range(M.t+1), (M.P i).card^2 = M.A.card^2:=
+begin
+  rw mp_deg_sum, rw pow_two, nth_rewrite 0 card_uni, rw ← sum_add_distrib, rw sum_mul, apply finset.sum_congr rfl _,
+  intros x hx,rw pow_two,rw ← mul_add, rw card_part_uni hx, 
+end
+
+
+lemma mp_deg_sum_sq {M : multi_part α} : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
+:=eq_tsub_of_add_eq mp_deg_sum_sq'
+
+
+
+
+
 
 end simple_graph
 
