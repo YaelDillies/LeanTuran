@@ -321,6 +321,7 @@ begin
   rw mem_sdiff, refine  ⟨nbhrs_imp h,_⟩, exact not_nhbr_same_part hv.1 hv.2 h.symm,
   rw mem_neighbor_finset, exact nbhr_diff_parts hv.1 hv.2,
 end
+   
 
 lemma mp_deg {M : multi_part α} {v : α} {i: ℕ} (hv: i∈ range(M.t+1) ∧ v∈ M.P i) : (mp M).degree v = ((M.A)\(M.P i)).card:= 
 begin
@@ -352,17 +353,30 @@ end
 lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
+lemma diff (a b n:ℕ) (hb: b+1<a) (hn: a+b ≤ n):  a*(n-a) +b*(n-b) < (a-1)*(n-a+1)+ (b+1)*(n-b-1):=
+begin
+  rw mul_add, rw add_mul,rw mul_one, rw one_mul,
+  have ha:=tsub_add_cancel_of_le (by linarith [hb]: 1 ≤ a),
+  have : 1≤ n-b,{sorry,},--by linarith [ha,hn],},
+  have hnb:=tsub_add_cancel_of_le  this,
+  nth_rewrite 0 ← ha, nth_rewrite 0 ← hnb,
+  rw [add_mul,mul_add,one_mul,mul_one],
+
+sorry,
+end
+ 
+lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
+(M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card <((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card:=
+begin
+  rw move_Pcard hvi hj hvi.1, rw move_Pcard hvi hj hj.1,rw move_Pcard_sdiff hvi hj hvi.1, rw move_Pcard_sdiff hvi hj hj.1,
+  split_ifs,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h_1.2 rfl,exfalso, exact hj.2 h_2,
+  
+sorry,
+end
 
 end simple_graph
 
- /-
-lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
-((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card<(M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card :=
-begin
-  
-    --- actually need CS or something similar here because terms aren't
-sorry,
-end
+/-
 lemma mp_deg_sum_move_change {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 ∑ w in (move M hvi hj).A,  (mp (move M hvi hj)).degree w < ∑ w in M.A,  (mp M).degree w:=
 begin
