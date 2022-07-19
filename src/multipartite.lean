@@ -17,11 +17,16 @@ variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 -- require at most one empty part, while I'm happy to allow any number of
 -- empty parts 
 @[ext] 
-structure multi_part (α : Type*)[decidable_eq α]:=--[fintype α][inhabited α][decidable_eq α]:=
+structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α]:=
 (t :ℕ) (P: ℕ → finset α) (A :finset α) 
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 
+
+instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
+{default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
+disj:=λ i hi j hj ne, disjoint_empty_left ∅,
+ }}
 ---M.disj is the same as pairwise_disjoint but without any coercion to set for range(t+1) 
 lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
 
@@ -86,7 +91,7 @@ begin
 end
 
 
-lemma disjoint_part {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)): disjoint ((M.A)\(M.P i)) (M.P i) := sdiff_disjoint
+lemma disjoint_part {M:multi_part α} {i : ℕ} : disjoint ((M.A)\(M.P i)) (M.P i) := sdiff_disjoint
 
 lemma card_part_uni {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)):  M.A.card= (M.A\(M.P i)).card + (M.P i).card:=
 begin
@@ -95,7 +100,6 @@ begin
 end
 
 
----- given a graph on a subset of α can form the bipartite join with rest of α
 --- given a t+1 partition on A form the complete multi-partite graph 
 def mp (M: multi_part α) : simple_graph α:={
 adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
@@ -113,7 +117,7 @@ loopless:=begin
 end,}
 
 variables{M : multi_part α}
-
+include M
 instance mp_decidable_rel : decidable_rel (mp M).adj :=
 λ x y, finset.decidable_dexists_finset
 
@@ -159,7 +163,7 @@ begin
   exact abne.symm,
 end
 
-lemma mp_adj_imp' {M : multi_part α} {v w: α} {i j : ℕ}(hi: i∈ range(M.t+1))(hvi: v∈M.P i) :(mp M).adj v w → ∃j ∈ range(M.t+1), w∈ M.P j ∧ i≠j:=
+lemma mp_adj_imp' {M : multi_part α} {v w: α} {i : ℕ}(hi: i∈ range(M.t+1))(hvi: v∈M.P i) :(mp M).adj v w → ∃j ∈ range(M.t+1), w∈ M.P j ∧ i≠j:=
 begin
   intros h,
   obtain ⟨j,hj,k,hk,ne,h1⟩:= h, cases h1, have :=uniq_part hi hj hvi h1.1, rw ← this at ne,
@@ -221,9 +225,11 @@ end
 
 lemma mp_deg_sum_sq' {M : multi_part α} : ∑ v in M.A, (mp M).degree v + ∑i in range(M.t+1), (M.P i).card^2 = M.A.card^2:=
 begin
-  rw mp_deg_sum, rw pow_two, nth_rewrite 0 card_uni, rw ← sum_add_distrib, rw sum_mul, apply finset.sum_congr rfl _,
-  intros x hx,rw pow_two,rw ← mul_add, rw card_part_uni hx, 
+  rw mp_deg_sum, rw pow_two, nth_rewrite 0 card_uni, rw ← sum_add_distrib, rw sum_mul, 
+  refine finset.sum_congr rfl _,
+  intros x hx,rw pow_two,rw ← mul_add, rw card_part_uni hx,
 end
+
 
 
 lemma mp_deg_sum_sq {M : multi_part α} : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
@@ -232,7 +238,7 @@ lemma mp_deg_sum_sq {M : multi_part α} : ∑ v in M.A, (mp M).degree v = M.A.ca
 
 
 
-
+#lint
 
 end simple_graph
 
