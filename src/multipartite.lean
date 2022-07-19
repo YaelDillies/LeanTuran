@@ -353,16 +353,28 @@ end
 lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
-lemma diff (a b n:ℕ) (hb: b+1<a) (hn: a+b ≤ n):  a*(n-a) +b*(n-b) < (a-1)*(n-a+1)+ (b+1)*(n-b-1):=
+
+lemma diff {a b n:ℕ} (hb: b+1<a) (hn: a+b ≤ n):  a*(n-a) +b*(n-b) < (a-1)*(n-a+1)+ (b+1)*(n-b-1):=
 begin
   rw mul_add, rw add_mul,rw mul_one, rw one_mul,
   have ha:=tsub_add_cancel_of_le (by linarith [hb]: 1 ≤ a),
-  have : 1≤ n-b,{sorry,},--by linarith [ha,hn],},
-  have hnb:=tsub_add_cancel_of_le  this,
+  have h2: a ≤ n-b:=le_tsub_of_add_le_right hn,
+  have hnb:=tsub_add_cancel_of_le  (le_trans (by linarith [hb]: 1 ≤ a) h2),
   nth_rewrite 0 ← ha, nth_rewrite 0 ← hnb,
-  rw [add_mul,mul_add,one_mul,mul_one],
-
-sorry,
+  rw [add_mul,mul_add,one_mul,mul_one ,add_assoc,add_assoc],
+  apply (add_lt_add_iff_left _).mpr, rw [add_comm, ← add_assoc, add_comm (a-1), add_assoc, add_assoc],
+  apply (add_lt_add_iff_left _).mpr, 
+  have ab: b< a-1,{by linarith [hb],},
+  have nba: (n-a)< (n-b-1),{
+    have nba': (n-a)<(n-(b+1)),{sorry,},
+    sorry,
+  },
+  exact add_lt_add ab nba,
+  --- why are these needed?
+  exact covariant_add_lt_of_contravariant_add_le ℕ,
+  exact contravariant_add_lt_of_covariant_add_le ℕ,
+  exact covariant_add_lt_of_contravariant_add_le ℕ,
+  exact contravariant_add_lt_of_covariant_add_le ℕ,
 end
  
 lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
@@ -370,7 +382,9 @@ lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ ra
 begin
   rw move_Pcard hvi hj hvi.1, rw move_Pcard hvi hj hj.1,rw move_Pcard_sdiff hvi hj hvi.1, rw move_Pcard_sdiff hvi hj hj.1,
   split_ifs,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h_1.2 rfl,exfalso, exact hj.2 h_2,
+ -- refine diff hc _,
   
+  -- use diff lemma to help here
 sorry,
 end
 
