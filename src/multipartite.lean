@@ -31,14 +31,18 @@ instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α]
 {default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
 disj:=λ i hi j hj ne, disjoint_empty_left ∅,
  }}
+ 
 ---M.disj is the same as pairwise_disjoint but without any coercion to set for range(t+1) 
 lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
 
+-- size of A is sum of size of part
 lemma card_uni  (M : multi_part α) : M.A.card = ∑i in range(M.t+1),(M.P i).card:= begin
   rw [M.uni, finset.card_eq_sum_ones, sum_bUnion (pair_disjoint M)],
   apply finset.sum_congr rfl _, intros x hx, rwa ← finset.card_eq_sum_ones,
 end
 
+
+-- insert new disjoint set to the partition
 def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
   t:=M.t+1,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
@@ -69,20 +73,23 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
 
 -- member of a part implies member of union
 lemma mem_part{M:multi_part α} {v :α} {i :ℕ}: i∈range(M.t+1) → v ∈ M.P i → v ∈ M.A :=
-begin
-  intros hi hv,rw M.uni,rw mem_bUnion, exact ⟨i,hi,hv⟩,
-end
+  begin
+    intros hi hv,rw M.uni,rw mem_bUnion, exact ⟨i,hi,hv⟩,
+  end
+
 -- every vertex in A belongs to a part
 lemma inv_part {M:multi_part α} {v :α} (hA: v∈M.A): ∃ i∈ range(M.t+1), v ∈ M.P i:=
 begin
   rw [M.uni,mem_bUnion] at hA, exact hA,
 end
+
 -- if v belongs to P i and P j then i = j.
 lemma uniq_part {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → v∈M.P i → v∈ M.P j → i = j:=
 begin
   intros hi hj hiv hjv, by_contra, have:=M.disj i hi j hj h, exact this (mem_inter.mpr ⟨hiv,hjv⟩),
 end
 
+-- if v belongs to part i and j≠ i and is in range then v ∉ part j
 lemma uniq_part' {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → i≠ j→ v∈M.P i → v∉ M.P j:=
 begin
   intros hi hj hiv ne, contrapose hiv,push_neg at hiv,rw not_ne_iff, exact uniq_part hi hj ne hiv,
@@ -146,33 +153,35 @@ def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v�
     exfalso, push_neg at h_2,push_neg at h, have bj:= h_2 h_3, have aj:= h h_1,rw aj at ne, rw bj at ne, exact ne rfl,
   end,}
 
+
 --- given a t+1 partition on A form the complete multi-partite graph 
 def mp (M: multi_part α) : simple_graph α:={
-adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
-symm:=
-begin
-  intros x y hxy,
-  obtain ⟨i,hi,j,hj,ne,⟨hx,hy⟩⟩:=hxy,
-  refine ⟨j ,hj, i, hi, ne.symm,_ ⟩, left ,exact ⟨hy,hx⟩,
-  refine ⟨i ,hi, j, hj, ne,_ ⟩, left, rwa and_comm, 
-end,
-loopless:=begin
-  intro x, push_neg, intros i hi j hj ne, 
-  split; intros hxi hxj, exact M.disj i hi j hj ne (mem_inter.mpr ⟨hxi,hxj⟩), 
-  exact M.disj i hi j hj ne (mem_inter.mpr ⟨hxj,hxi⟩), 
+  adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
+  symm:=
+  begin
+    intros x y hxy,
+    obtain ⟨i,hi,j,hj,ne,⟨hx,hy⟩⟩:=hxy,
+    refine ⟨j ,hj, i, hi, ne.symm,_ ⟩, left ,exact ⟨hy,hx⟩,
+    refine ⟨i ,hi, j, hj, ne,_ ⟩, left, rwa and_comm, 
+  end,
+  loopless:=begin
+    intro x, push_neg, intros i hi j hj ne, 
+    split; intros hxi hxj, exact M.disj i hi j hj ne (mem_inter.mpr ⟨hxi,hxj⟩), 
+    exact M.disj i hi j hj ne (mem_inter.mpr ⟨hxj,hxi⟩), 
 end,}
 
 lemma move_A {M : multi_part α} {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :(move M hvi hj).A=M.A:=
 rfl
 
 lemma move_t {M : multi_part α} {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :(move M hvi hj).t=M.t:=
-rfl
+ rfl
 
 lemma move_P {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : k∈ range(M.t+1) → ((move M hvi hj).P k) = ite (k≠i ∧k≠j) (M.P k) (ite (k=i) ((M.P i).erase v) ((M.P j) ∪ {v})):=
 begin
   intros k , refl,
 end
 
+-- how have the sizes of parts changed by moving v
 lemma move_Pcard {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : k∈ range(M.t+1) → ((move M hvi hj).P k).card = ite (k≠i ∧k≠j) (M.P k).card (ite (k=i) ((M.P i).card -1) ((M.P j).card+1)):=
 begin
   intros hk,rw move_P hvi hj hk,split_ifs, 
@@ -214,6 +223,7 @@ begin
   rw sdiff_insert hB hvB, exact card_erase_of_mem this,
 end
 
+-- how have the sizes of the complements of parts changed by moving v
 lemma move_Pcard_sdiff {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :
  k∈ range(M.t+1) → (((move M hvi hj).A)\((move M hvi hj).P k)).card = ite (k≠i ∧k≠j) ((M.A)\(M.P k)).card (ite (k=i) (((M.A)\(M.P i)).card +1) (((M.A)\(M.P j)).card-1)):=
 begin
@@ -343,7 +353,9 @@ lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.ca
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
 
- 
+end simple_graph
+
+ /-
 lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 ((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card<(M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card :=
 begin
@@ -362,9 +374,7 @@ begin
 sorry,
 end
 
-
-
-end simple_graph
+-/
 
 
 --
