@@ -22,6 +22,16 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 
+-- define notion of a vertex than can be moved to increase number of edges in M
+def moveable (M : multi_part α) (v :α) :Prop := ∃ i∈ range(M.t+1),∃ j ∈ range(M.t+1), v∈ M.P i ∧ (M.P j).card +2 ≤ (M.P i).card
+
+def move_to (M : multi_part α) {v :α} (h: moveable M v) :ℕ:=begin
+    
+
+  sorry,
+end
+
+
 
 instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
 {default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
@@ -100,7 +110,7 @@ begin
   apply card_disjoint_union sdiff_disjoint,
 end
 
-
+-- move v ∈ P i to P j,
 def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
   t:=M.t,
   P:= begin intros k, exact ite (k≠i ∧k≠j) (M.P k) (ite (k=i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
@@ -272,6 +282,9 @@ end
 lemma mp_deg_sum_sq {M : multi_part α} : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
+
+
+---lemma mp_deg_sum_move_change {M : multi_part α} {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i):
 
 end simple_graph
 
