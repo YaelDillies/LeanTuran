@@ -62,6 +62,7 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
     exact iltj h_1, 
   end,}
 
+
 -- member of a part implies member of union
 lemma mem_part{M:multi_part α} {v :α} {i :ℕ}: i∈range(M.t+1) → v ∈ M.P i → v ∈ M.A :=
 begin
@@ -99,6 +100,44 @@ begin
   apply card_disjoint_union sdiff_disjoint,
 end
 
+
+
+
+def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
+  t:=M.t,
+  P:= begin intros k, exact ite (k≠i ∧k≠j) (M.P k) (ite (k=i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
+  A:=M.A,
+  uni:=begin 
+    rw M.uni,ext,split, rw [mem_bUnion,mem_bUnion],intros h,simp only [*, mem_range, ne.def, exists_prop] at *,
+    by_cases hav: a=v,
+      refine ⟨j,hj.1,_⟩,rw ← hav at *, split_ifs,exfalso, exact h_1.2 rfl,exfalso, push_neg at h_1,exact hj.2 h_2,
+      refine mem_union_right _ (mem_singleton_self a), 
+      obtain ⟨k,hk1,hk2⟩:=h,
+      refine ⟨k,hk1,_⟩, split_ifs, exact hk2, refine mem_erase.mpr _,rw h_1 at hk2, exact ⟨hav,hk2⟩,
+      push_neg at h, rw (h h_1) at hk2, exact mem_union_left _ hk2,
+    rw [mem_bUnion,mem_bUnion],intros h,simp only [*, mem_range, ne.def, exists_prop] at *,
+    by_cases hav: a=v,
+      rw ← hav at hvi, exact ⟨ i,hvi⟩,
+      obtain ⟨k,hk1,hk2⟩:=h, split_ifs at hk2, exact ⟨k,hk1,hk2⟩, exact ⟨i,hvi.1,(erase_subset v (M.P i)) hk2⟩,
+      refine ⟨j,hj.1,_⟩, rw mem_union at hk2, cases hk2, exact hk2,exfalso, exact hav (mem_singleton.mp hk2), end,
+  disj:=begin 
+    intros a ha b hb ne,split_ifs, exact M.disj a ha b hb ne,
+    have:=M.disj a ha i hvi.1 h.1, apply disjoint_of_subset_right _ this, exact erase_subset _ _,  
+    simp only [disjoint_union_right, disjoint_singleton_right], refine ⟨M.disj a ha j hj.1 h.2,_⟩,
+    intro hv, exact h.1 (uniq_part ha hvi.1 hv hvi.2),
+    have:=M.disj i hvi.1 b hb  h_2.1.symm,apply disjoint_of_subset_left _ this, exact erase_subset _ _, 
+    exfalso, push_neg at h, push_neg at h_2,rw [h_1,h_3] at ne, exact ne rfl,
+    simp only [disjoint_union_right, disjoint_singleton_right, mem_erase, _root_.ne.def, eq_self_iff_true, not_true, false_and,
+    not_false_iff, and_true],
+    have:=M.disj i hvi.1 j hj.1 hj.2.symm, apply disjoint_of_subset_left _ this, exact erase_subset _ _, 
+    simp only [disjoint_union_left, disjoint_singleton_right],
+    refine ⟨M.disj j hj.1 b hb h_2.2.symm,_⟩, rw disjoint_singleton_left,
+    intro hb2, have:= uniq_part hb hvi.1 hb2 hvi.2 , exact h_2.1 this,
+    simp only [disjoint_union_left, disjoint_singleton_left, mem_erase, _root_.ne.def, eq_self_iff_true, not_true, false_and,
+  not_false_iff, and_true],
+    have:=M.disj j hj.1  i hvi.1 hj.2, apply disjoint_of_subset_right _ this, exact erase_subset _ _, 
+    exfalso, push_neg at h_2,push_neg at h, have bj:= h_2 h_3, have aj:= h h_1,rw aj at ne, rw bj at ne, exact ne rfl,
+  end,}
 
 --- given a t+1 partition on A form the complete multi-partite graph 
 def mp (M: multi_part α) : simple_graph α:={
@@ -235,10 +274,6 @@ end
 lemma mp_deg_sum_sq {M : multi_part α} : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
-
-
-
-#lint
 
 end simple_graph
 

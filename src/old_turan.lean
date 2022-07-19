@@ -46,3 +46,5 @@ begin
   rw [← hb2, mul_add, ← add_assoc, add_comm, add_assoc, ←l2],  
   nth_rewrite 0 ← (tsub_add_cancel_of_le (le_of_lt hb1)), ring,
 end
+
+end simple_graph
