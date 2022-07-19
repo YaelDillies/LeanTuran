@@ -5,7 +5,7 @@ import data.list.basic
 import data.nat.basic
 import tactic.core
 import algebra.big_operators
-open finset fintype nat
+open finset nat
 
 open_locale big_operators 
 
@@ -24,12 +24,6 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 
 -- define notion of a vertex than can be moved to increase number of edges in M
 def moveable (M : multi_part α) (v :α) :Prop := ∃ i∈ range(M.t+1),∃ j ∈ range(M.t+1), v∈ M.P i ∧ (M.P j).card +2 ≤ (M.P i).card
-
-def move_to (M : multi_part α) {v :α} (h: moveable M v) :ℕ:=begin
-    
-
-  sorry,
-end
 
 
 
@@ -88,6 +82,11 @@ lemma uniq_part {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j
 begin
   intros hi hj hiv hjv, by_contra, have:=M.disj i hi j hj h, exact this (mem_inter.mpr ⟨hiv,hjv⟩),
 end
+
+lemma uniq_part' {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → i≠ j→ v∈M.P i → v∉ M.P j:=
+begin
+  intros hi hj hiv ne, contrapose hiv,push_neg at hiv,rw not_ne_iff, exact uniq_part hi hj ne hiv,
+end
 -- every part is contained in A
 lemma sub_part {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)) : M.P i ⊆ M.A :=
 begin
@@ -113,7 +112,7 @@ end
 -- move v ∈ P i to P j,
 def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
   t:=M.t,
-  P:= begin intros k, exact ite (k≠i ∧k≠j) (M.P k) (ite (k=i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
+  P:= begin intros k, exact ite (k ≠ i ∧ k ≠ j) (M.P k) (ite (k = i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
   A:=M.A,
   uni:=begin 
     rw M.uni,ext,split, rw [mem_bUnion,mem_bUnion],intros h,simp only [*, mem_range, ne.def, exists_prop] at *,
@@ -162,6 +161,67 @@ loopless:=begin
   split; intros hxi hxj, exact M.disj i hi j hj ne (mem_inter.mpr ⟨hxi,hxj⟩), 
   exact M.disj i hi j hj ne (mem_inter.mpr ⟨hxj,hxi⟩), 
 end,}
+
+lemma move_A {M : multi_part α} {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :(move M hvi hj).A=M.A:=
+rfl
+
+lemma move_t {M : multi_part α} {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :(move M hvi hj).t=M.t:=
+rfl
+
+lemma move_P {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : k∈ range(M.t+1) → ((move M hvi hj).P k) = ite (k≠i ∧k≠j) (M.P k) (ite (k=i) ((M.P i).erase v) ((M.P j) ∪ {v})):=
+begin
+  intros k , refl,
+end
+
+lemma move_Pcard {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : k∈ range(M.t+1) → ((move M hvi hj).P k).card = ite (k≠i ∧k≠j) (M.P k).card (ite (k=i) ((M.P i).card -1) ((M.P j).card+1)):=
+begin
+  intros hk,rw move_P hvi hj hk,split_ifs, 
+  refl,  exact card_erase_of_mem hvi.2,
+  have jv:=uniq_part' hvi.1 hj.1 hj.2.symm hvi.2,
+  rw ← disjoint_singleton_right at jv,
+  apply card_disjoint_union jv,
+end
+
+lemma sdiff_erase {v : α} {A B :finset α} (hB: B⊆A) (hv: v ∈ B) : A\(B.erase v)=(A\B) ∪ {v} :=
+begin
+  ext, split, intro h, rw [mem_union,mem_sdiff] at *,rw mem_sdiff at h,rw mem_erase at h,
+  push_neg at h, by_cases h': a=v,right, exact mem_singleton.mpr h',
+  left, exact ⟨h.1,(h.2 h')⟩,
+  intros h,rw mem_sdiff,rw mem_erase,rw [mem_union,mem_sdiff] at h, push_neg,
+  cases h,exact ⟨h.1,λi,h.2⟩,by_contra h',push_neg at h',
+  have ha:=hB hv,
+  have:=mem_singleton.mp h, rw ← this at ha,
+  have h2:=h' ha, exact h2.1 this,
+end
+
+lemma card_sdiff_erase {v : α} {A B :finset α} (hB: B⊆A) (hv: v ∈ B) : (A\(B.erase v)).card=(A\B).card+1 :=
+begin
+  have hv2: v∉A\B, {rw mem_sdiff,push_neg,intro i, exact hv,},
+  have:=disjoint_singleton_right.mpr hv2,
+  rw sdiff_erase hB hv, exact card_disjoint_union this,
+end
+
+lemma sdiff_insert {v : α} {A B :finset α} (hB: B⊆A) (hv: v ∉ B) : A\(B ∪  {v})=(A\B).erase v:= 
+begin
+  ext,split,intro h,
+  rw mem_erase, rw mem_sdiff at *,rw mem_union at h, push_neg at h,rw mem_singleton at h,  exact ⟨h.2.2,h.1,h.2.1⟩,
+  intro h,rw mem_erase at h, rw mem_sdiff, rw mem_union, push_neg,rw mem_singleton, rw mem_sdiff at h, exact ⟨h.2.1,h.2.2,h.1⟩,
+end
+
+lemma card_sdiff_insert {v : α} {A B :finset α} (hB: B⊆A) (hvB: v ∉ B) (hvA: v ∈ A) : (A\(B ∪ {v})).card=(A\B).card -1:= 
+begin
+  have : v∈A\B:=mem_sdiff.mpr ⟨hvA,hvB⟩,
+  rw sdiff_insert hB hvB, exact card_erase_of_mem this,
+end
+
+lemma move_Pcard_sdiff {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :
+ k∈ range(M.t+1) → (((move M hvi hj).A)\((move M hvi hj).P k)).card = ite (k≠i ∧k≠j) ((M.A)\(M.P k)).card (ite (k=i) (((M.A)\(M.P i)).card +1) (((M.A)\(M.P j)).card-1)):=
+begin
+  intros hk,rw move_P hvi hj hk,rw move_A hvi hj,split_ifs, refl,
+  exact card_sdiff_erase (sub_part  hvi.1) hvi.2,
+  exact card_sdiff_insert (sub_part  hj.1) (uniq_part' hvi.1 hj.1 hj.2.symm hvi.2) (mem_part hvi.1 hvi.2),
+end
+
 
 variables{M : multi_part α}
 include M
@@ -262,7 +322,7 @@ begin
   rw mp_deg hv, exact card_sdiff (sub_part hv.1),
 end
 
-lemma mp_deg_sum {M : multi_part α} : ∑ v in M.A, (mp M).degree v = ∑i in range(M.t+1),(M.P i).card * ((M.A)\(M.P i)).card :=
+lemma mp_deg_sum (M : multi_part α) : ∑ v in M.A, (mp M).degree v = ∑i in range(M.t+1),(M.P i).card * ((M.A)\(M.P i)).card :=
 begin
   nth_rewrite 0 M.uni,
   rw sum_bUnion (pair_disjoint M), apply finset.sum_congr rfl _,
@@ -272,19 +332,37 @@ end
 
 lemma mp_deg_sum_sq' {M : multi_part α} : ∑ v in M.A, (mp M).degree v + ∑i in range(M.t+1), (M.P i).card^2 = M.A.card^2:=
 begin
-  rw mp_deg_sum, rw pow_two, nth_rewrite 0 card_uni, rw ← sum_add_distrib, rw sum_mul, 
+  rw mp_deg_sum M, rw pow_two, nth_rewrite 0 card_uni, rw ← sum_add_distrib, rw sum_mul, 
   refine finset.sum_congr rfl _,
   intros x hx,rw pow_two,rw ← mul_add, rw card_part_uni hx,
 end
 
 
 
-lemma mp_deg_sum_sq {M : multi_part α} : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
+lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
 
+ 
+lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
+((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card<(M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card :=
+begin
+  
+    --- actually need CS or something similar here because terms aren't
+sorry,
+end
+lemma mp_deg_sum_move_change {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
+∑ w in (move M hvi hj).A,  (mp (move M hvi hj)).degree w < ∑ w in M.A,  (mp M).degree w:=
+begin
+  rw mp_deg_sum M,rw mp_deg_sum (move M hvi hj), 
+  rw (move_A hvi hj), rw (move_t hvi hj), 
 
----lemma mp_deg_sum_move_change {M : multi_part α} {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i):
+  refine sum_lt_sum _ _, intros k hk, rw move_Pcard hvi hj, split_ifs,
+  --- actually need CS or something similar here because terms aren't
+sorry,
+end
+
+
 
 end simple_graph
 
