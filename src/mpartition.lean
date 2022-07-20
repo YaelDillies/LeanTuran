@@ -94,6 +94,13 @@ def sum_P (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
 
 def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
 
+lemma bal_sum_sq {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : sum_sq t P = (small_parts h).card * (min_bal h)^2 + (large_parts h).card * (min_bal h+1)^2 
+:=
+begin
+  rw [sum_sq,parts_union h, sum_union (parts_disjoint h)], congr, 
+  rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl,rw small_parts,intros x, rw mem_filter,intro hx,rw hx.2,
+  rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl, rw large_parts,intros x, rw mem_filter,intro hx,rw hx.2,
+end
 
 
 -- sum of parts is (t+1)* smallest + number of large parts
