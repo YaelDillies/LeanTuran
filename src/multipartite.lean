@@ -382,14 +382,10 @@ begin
 end
 
 
-
 lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
 
-
-
- 
 lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 (M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card <((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card:=
 begin
@@ -398,32 +394,28 @@ begin
   rw card_sdiff (sub_part hvi.1), rw card_sdiff (sub_part hj.1),
   exact move_change hc (two_parts hvi.1  hj.1 hj.2.symm),
 end
-
-end simple_graph
-
-/-
-lemma mp_deg_sum_move_change {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
-∑ w in (move M hvi hj).A,  (mp (move M hvi hj)).degree w < ∑ w in M.A,  (mp M).degree w:=
+lemma mp_deg_sum_move_help2{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i)  : 
+∑ (x : ℕ) in ((range (M.t + 1)).erase j).erase i, ((move M hvi hj).P x).card * ((move M hvi hj).A \ (move M hvi hj).P x).card =
+∑ (y : ℕ) in ((range (M.t + 1)).erase j).erase i, (M.P y).card*((M.A\(M.P y)).card):=
 begin
-  rw mp_deg_sum M,rw mp_deg_sum (move M hvi hj), 
-  rw (move_A hvi hj), rw (move_t hvi hj), 
-
-  refine sum_lt_sum _ _, intros k hk, rw move_Pcard hvi hj, split_ifs,
-  --- actually need CS or something similar here because terms aren't
-sorry,
+  apply sum_congr rfl _, intros k hk, rw move_Pcard hvi hj, rw move_Pcard_sdiff hvi hj,split_ifs,refl,
+  exfalso, rw h_1 at hk,exact not_mem_erase i _ hk,exfalso,push_neg at h, simp only [*, ne.def, not_false_iff, mem_erase, eq_self_iff_true] at *,
+  exact mem_of_mem_erase (mem_of_mem_erase hk),   exact mem_of_mem_erase (mem_of_mem_erase hk),  
 end
 
--/
-
-
---
---lemma mp_deg_sum {M : multi_part α} : 
---∑ v in (univ:finset α), (mp M).degree v  =  M.A.card^2 - ∑ i in range(M.t + 1),(M.P i).card^2:=
---begin
---  sorry, 
-  --rw M.uni, unfold degree,
---end
--- extend a t+1 partite-graph on A to (t+2)-partite on A ∪ B with disjoint A B.
+lemma mp_deg_sum_move {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
+∑ w in M.A,  (mp M).degree w < ∑ w in (move M hvi hj).A,  (mp (move M hvi hj)).degree w :=
+begin
+  rw mp_deg_sum M,rw mp_deg_sum (move M hvi hj), 
+  --rw (move_A hvi hj), 
+  rw (move_t hvi hj), 
+  rw [← sum_erase_add (range(M.t+1)) _ hj.1,← sum_erase_add (range(M.t+1)) _ hj.1],
+  rw ← sum_erase_add ((range(M.t+1)).erase j) _ (mem_erase_of_ne_of_mem hj.2.symm hvi.1),
+  rw ← sum_erase_add ((range(M.t+1)).erase j) _ (mem_erase_of_ne_of_mem hj.2.symm hvi.1),
+  rw mp_deg_sum_move_help2,
+  rw [add_assoc,add_assoc], refine (add_lt_add_iff_left _).mpr _ , exact mp_deg_sum_move_help hvi hj hc,
+end
+end simple_graph
 
 
 
