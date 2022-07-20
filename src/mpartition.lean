@@ -28,18 +28,28 @@ begin
   unfold immoveable, unfold moveable,push_neg, refl,
 end
 
-
+-- balanced partition has almost equal parts
 def balanced (t : ℕ) (P : ℕ → ℕ): Prop:= ∀ i ∈ range(t+1),∀ j∈ range(t+1), P i ≤ (P j) + 1
 
 
+-- smallest part is well-defined
+def min_bal {t : ℕ} {P : ℕ → ℕ} (h: balanced t P): ℕ:= begin
+  have nem: ((range(t+1)).image(λi , P i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
+  exact min' ((range(t+1)).image(λi , P i)) nem,
+end
 
-lemma con_sum (t :ℕ) (P :ℕ → ℕ): (balanced t P)  →  ∃ a:ℕ, ∀i∈ range(t+1), P i= a ∨ P i = a+1:=
+-- large parts and small parts
+def large_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_bal h +1 )
+
+def small_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_bal h)
+
+-- in a balanced partition all parts are small or large
+lemma con_sum {t :ℕ} {P :ℕ → ℕ} (h: balanced t P): ∀i∈ range(t+1), P i = min_bal h ∨ P i = min_bal h +1:=
 begin
-  unfold balanced,intro h,
+  unfold balanced at h,
   have nem: ((range(t+1)).image(λi , P i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
   set a:ℕ:=min' ((range(t+1)).image(λi , P i)) nem with ha,
   set b:ℕ:=max' ((range(t+1)).image(λi , P i)) nem with hb,
-  use a,--- split, if proving uniqueness 
   intros i hi,
   have ale: a ≤ P i:= min'_le ((range(t+1)).image(λi , P i)) (P i) (mem_image_of_mem (P ) hi),
   have leb:P i ≤ b:= le_max' ((range(t+1)).image(λi , P i)) (P i) (mem_image_of_mem (P ) hi),
@@ -56,16 +66,37 @@ begin
   by_contra, push_neg at h, cases h,have h1:=lt_of_le_of_ne ale h_left.symm,
   have h2:=lt_of_le_of_ne ple h_right,
   linarith,
-  -- now uniqueness
- -- intros c hc,
---  simp only [*, mem_range, eq_self_iff_true] at *,
-  --specialize hc 0,
+end
+
+lemma large_parts' {t : ℕ} {P:ℕ → ℕ} (h: balanced t P): large_parts h = (range(t+1)).filter (λi, ¬ P i = min_bal h):=
+begin
+  have :=con_sum h, unfold large_parts, ext,rw [mem_filter,mem_filter],split,
+  intro h', refine ⟨h'.1,_⟩, intros h2, rw h2 at h', exact succ_ne_self (min_bal h) h'.2.symm,
+  intros h', refine ⟨h'.1,_⟩, specialize this a h'.1,  cases this, exfalso, exact h'.2 this, exact this,
+end
+
+lemma parts_disjoint {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : disjoint (small_parts h) (large_parts h):=
+begin
+  convert disjoint_filter_filter_neg (range(t+1)) (λi, P i = min_bal h),
+  exact large_parts' h,
+end
+
+lemma parts_union {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : (range(t+1)) = (small_parts h) ∪ (large_parts h):=
+begin
+  have :=con_sum h,
+  ext,unfold small_parts, unfold large_parts, rw mem_union, split,   intro ha,
+  rw [mem_filter,mem_filter],specialize this a ha, cases this, left ,exact ⟨ha,this⟩,right,exact ⟨ha,this⟩,
+  rw [mem_filter,mem_filter],intros h, cases h, exact h_1.1, exact h_1.1,
 end
 
 
-def sum_bal (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
+def sum_P (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
 
---lemma sum_balanced (t: ℕ)(P Q:ℕ→ℕ):   (balanced t P) →  (balanced t Q) → sum_bal t P = sum_bal t Q → 
+def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
+
+
+
+-- sum of parts is (t+1)* smallest + number of large parts
 -- need to prove all balanced partitions have same degree sum
 --- then if either this is the max or there is a moveable partition that is better but then can
 --- move that until can't be moved and get a better immovable partition, a contradition
