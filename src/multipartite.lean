@@ -100,13 +100,22 @@ begin
   rw M.uni, intros x hx,  rw  mem_bUnion,  exact ⟨i,hi,hx⟩,
 end
 
+
+lemma two_parts {M: multi_part α} {i j : ℕ} (hi: i ∈ range(M.t+1))  (hj: j ∈ range(M.t+1)) (hne: i≠ j) : (M.P i).card + (M.P j).card ≤ M.A.card:=
+begin
+  rw card_uni, rw ← sum_erase_add (range(M.t+1)) _ hj, apply (add_le_add_iff_right _).mpr,
+  rw ← sum_erase_add ((range(M.t+1)).erase j) _ (mem_erase_of_ne_of_mem hne hi),
+  nth_rewrite 0 ← zero_add (M.P i).card, apply (add_le_add_iff_right _).mpr,
+  simp only [zero_le],
+  exact has_add.to_covariant_class_right ℕ,  exact contravariant_swap_add_le_of_contravariant_add_le ℕ,
+  exact has_add.to_covariant_class_right ℕ,  exact contravariant_swap_add_le_of_contravariant_add_le ℕ,
+end
 --A is the union of each part and the sdiff
 lemma sdiff_part {M:multi_part α} {i : ℕ} (hi: i ∈ range(M.t+1)) : M.A = M.A\(M.P i)∪M.P i :=
 begin
   have:= sub_part hi,
   rwa [sdiff_union_self_eq_union, left_eq_union_iff_subset] at *,
 end
-
 
 lemma disjoint_part {M:multi_part α} {i : ℕ} : disjoint ((M.A)\(M.P i)) (M.P i) := sdiff_disjoint
 
@@ -231,7 +240,31 @@ begin
   exact card_sdiff_erase (sub_part  hvi.1) hvi.2,
   exact card_sdiff_insert (sub_part  hj.1) (uniq_part' hvi.1 hj.1 hj.2.symm hvi.2) (mem_part hvi.1 hvi.2),
 end
-
+lemma move_change {a b n:ℕ} (hb: b+1<a) (hn: a+b ≤ n):  a*(n-a) +b*(n-b) < (a-1)*(n-a+1)+ (b+1)*(n-b-1):=
+begin
+  rw mul_add, rw add_mul,rw mul_one, rw one_mul,
+  have ha:=tsub_add_cancel_of_le (by linarith [hb]: 1 ≤ a),
+  have h2: a ≤ n-b:=le_tsub_of_add_le_right hn,
+  have hnb:=tsub_add_cancel_of_le  (le_trans (by linarith [hb]: 1 ≤ a) h2),
+  nth_rewrite 0 ← ha, nth_rewrite 0 ← hnb,
+  rw [add_mul,mul_add,one_mul,mul_one ,add_assoc,add_assoc],
+  apply (add_lt_add_iff_left _).mpr, rw [add_comm, ← add_assoc, add_comm (a-1), add_assoc, add_assoc],
+  apply (add_lt_add_iff_left _).mpr, 
+  have ab: b< a-1,{by linarith [hb],},
+  have nba: (n-a)< (n-b-1),{
+    have nba': (n-a)<(n-(b+1)),{
+      have h3:=tsub_pos_of_lt hb,
+      have h4: a ≤ n :=by linarith,
+      have h6:=tsub_add_tsub_cancel (h4) (le_of_lt hb),
+        linarith,}, rw add_comm at nba',
+      rwa tsub_add_eq_tsub_tsub_swap at nba',},
+  exact add_lt_add ab nba,
+  --- why are these needed?
+  exact covariant_add_lt_of_contravariant_add_le ℕ,
+  exact contravariant_add_lt_of_covariant_add_le ℕ,
+  exact covariant_add_lt_of_contravariant_add_le ℕ,
+  exact contravariant_add_lt_of_covariant_add_le ℕ,
+end
 
 variables{M : multi_part α}
 include M
@@ -356,52 +389,14 @@ lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.ca
 
 
 
-lemma xyz {x y z :ℕ} (h1: x<y) (h2: y<z) : z-y<z-x:=
-begin
-  have h4:=tsub_pos_of_lt h1,
-  have h6: (z-y)+(y-x)=(z-x),{
-    exact tsub_add_tsub_cancel (le_of_lt h2) (le_of_lt h1),},
-  linarith [h4,h6],
-end
-
-
-lemma diff {a b n:ℕ} (hb: b+1<a) (hn: a+b ≤ n):  a*(n-a) +b*(n-b) < (a-1)*(n-a+1)+ (b+1)*(n-b-1):=
-begin
-  rw mul_add, rw add_mul,rw mul_one, rw one_mul,
-  have ha:=tsub_add_cancel_of_le (by linarith [hb]: 1 ≤ a),
-  have h2: a ≤ n-b:=le_tsub_of_add_le_right hn,
-  have hnb:=tsub_add_cancel_of_le  (le_trans (by linarith [hb]: 1 ≤ a) h2),
-  nth_rewrite 0 ← ha, nth_rewrite 0 ← hnb,
-  rw [add_mul,mul_add,one_mul,mul_one ,add_assoc,add_assoc],
-  apply (add_lt_add_iff_left _).mpr, rw [add_comm, ← add_assoc, add_comm (a-1), add_assoc, add_assoc],
-  apply (add_lt_add_iff_left _).mpr, 
-  have ab: b< a-1,{by linarith [hb],},
-  have nba: (n-a)< (n-b-1),{
-    have nba': (n-a)<(n-(b+1)),{
-      have h3:=tsub_pos_of_lt hb,
---      have h4: a < n :=by linarith [hn,h2],-- problem here if b=0...
---      have h6:=tsub_add_tsub_cancel (le_of_lt h2) (le_of_lt hb),-- this is using xyz lemma above
-        sorry,
-      },
-    sorry,
-  },
-  exact add_lt_add ab nba,
-  --- why are these needed?
-  exact covariant_add_lt_of_contravariant_add_le ℕ,
-  exact contravariant_add_lt_of_covariant_add_le ℕ,
-  exact covariant_add_lt_of_contravariant_add_le ℕ,
-  exact contravariant_add_lt_of_covariant_add_le ℕ,
-end
  
 lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 (M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card <((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card:=
 begin
   rw move_Pcard hvi hj hvi.1, rw move_Pcard hvi hj hj.1,rw move_Pcard_sdiff hvi hj hvi.1, rw move_Pcard_sdiff hvi hj hj.1,
   split_ifs,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h_1.2 rfl,exfalso, exact hj.2 h_2,
- -- refine diff hc _,
-  
-  -- use diff lemma to help here
-sorry,
+  rw card_sdiff (sub_part hvi.1), rw card_sdiff (sub_part hj.1),
+  exact move_change hc (two_parts hvi.1  hj.1 hj.2.symm),
 end
 
 end simple_graph
