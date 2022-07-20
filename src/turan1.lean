@@ -46,7 +46,6 @@ end
 
 
 variables {t n : ℕ} 
-
 variables {α : Type*} (G : simple_graph α)[fintype α][inhabited α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
 
 lemma turan_bd (s : ℕ) {A B :finset α} (hA: A.nonempty) (hB: B⊆A) (hB': B⊂ A): turan_numb s B.card + B.card * (A\B).card ≤ turan_numb s.succ A.card:=
@@ -186,7 +185,6 @@ lemma clique_free_empty {s : ℕ} (h: 0< s): G.clique_free_set ∅ s:=
 begin
   have:=finset.card_empty, rw ← this at h, exact G.clique_free_card_lt h,
 end
-
 
 
 -- if G has no s-clique then nor does the univ 
@@ -351,6 +349,8 @@ begin
   exact ⟨hB hx.1, hx.2⟩,
 end
 
+
+
 -- main theorem basically erdos proof of degree majorisation of (t+2)-clique-free graph by (t+1)-partite graph
 theorem erdos_simple : ∀A:finset α, G.clique_free_set A (t+2) → ∑ v in A,G.deg_res v A ≤ 2*(turan_numb t A.card):=
 begin
@@ -406,6 +406,7 @@ end
 
 ---for any (t+2)-clique free set there is a partition into B, a (t+1)-clique free set and A\B 
 -- such that e(A)+e(A\B) ≤ e(B) + |B|(|A|-|B|) 
+
 lemma furedi_help : ∀A:finset α, G.clique_free_set A (t+2) → ∃B:finset α, B ⊆ A ∧ G.clique_free_set B (t+1) ∧ 
 ∑v in A, G.deg_res v A + ∑ v in (A\B), G.deg_res v (A\B) ≤ ∑ v in B, G.deg_res v B + 2*B.card * (A\B).card:=
 begin
