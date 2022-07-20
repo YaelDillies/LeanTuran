@@ -68,7 +68,14 @@ begin
   linarith,
 end
 
-
+lemma small_nonempty {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) :(small_parts h).nonempty:=
+begin
+  rw small_parts, have nem: ((range(t+1)).image(λi , P i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
+  set a:ℕ:=min' ((range(t+1)).image(λi , P i)) nem with ha,
+  have ain:= min'_mem ((range(t+1)).image(λi , P i)) nem, rw ← ha at ain,
+  rw mem_image at ain,
+  obtain ⟨k,hk1,hk2⟩:=ain, use k, rw mem_filter,refine ⟨hk1,_⟩,rw ha at hk2,exact hk2,
+end
 
 lemma large_parts' {t : ℕ} {P:ℕ → ℕ} (h: balanced t P): large_parts h = (range(t+1)).filter (λi, ¬ P i = min_bal h):=
 begin
@@ -93,16 +100,18 @@ begin
   rw [mem_filter,mem_filter],intros h, cases h, exact h_1.1, exact h_1.1,
 end
 
-lemma large_parts_card {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : (large_parts h).card ≤ t:=
-begin
--- need to show small_parts ≠ empty
-sorry,
-end
 
 
 lemma parts_card_add {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : (small_parts h).card + (large_parts h).card= t+1:=
 begin
   rw [← card_range (t+1), parts_union h, card_disjoint_union (parts_disjoint h)],
+end
+
+
+lemma large_parts_card {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : (large_parts h).card ≤ t:=
+begin
+  have spos:0 < (small_parts h).card:=card_pos.mpr (small_nonempty h),
+  have := parts_card_add h, linarith,
 end
 
 
@@ -122,30 +131,37 @@ begin
   rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
 end
 
+
+-- inevitable and painful mod (t+1) calculation...
 lemma mod_tplus1 {a b c d t: ℕ} (hc: c ≤ t) (hd:d ≤ t) (ht: (t+1)*a +c =(t+1)*b+d): (a=b)∧(c=d):=
 begin
-  ---
-
-
-sorry,
+  have hc':c<t+1:=by linarith [hc], have hd':d<t+1:=by linarith [hd],
+  have mc: c%(t+1)=c:=mod_eq_of_lt hc',have md: d%(t+1)=d:=mod_eq_of_lt hd',
+  rw [add_comm,add_comm _ d] at ht,
+  have hmtl:(c+(t+1)*a)%(t+1)=c%(t+1):=add_mul_mod_self_left c (t+1) a,
+  have hmtr:(d+(t+1)*b)%(t+1)=d%(t+1):=add_mul_mod_self_left d (t+1) b,
+  rw mc at hmtl, rw md at hmtr,rw ht at hmtl,rw hmtl at hmtr,
+  refine ⟨_,hmtr⟩, rw hmtr at ht,simp only [add_right_inj, mul_eq_mul_left_iff, succ_ne_zero, or_false] at *,
+  exact ht,
 end
 
 
 
-lemma bal_eq_1 {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): (min_bal hbp = min_bal hbq) ∧ (large_parts hbp).card = (large_parts hbq).card:=
+lemma bal_eq_1 {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): 
+(min_bal hbp = min_bal hbq) ∧ (large_parts hbp).card = (large_parts hbq).card:=
 begin
   rw [bal_sum' hbp, bal_sum' hbq] at hs,
   have hc:=large_parts_card hbp,have hd:=large_parts_card hbq,
   exact mod_tplus1 hc hd hs, 
 end
 
-lemma bal_eq_2 {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): (small_parts hbp).card = (small_parts hbq).card ∧ (large_parts hbp).card = (large_parts hbq).card:=
+lemma bal_eq_2 {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q):
+ (small_parts hbp).card = (small_parts hbq).card ∧ (large_parts hbp).card = (large_parts hbq).card:=
 begin
-
-
-sorry,
+  have:=bal_eq_1 hbp hbq hs, refine ⟨_,this.2⟩,
+  have addP:=parts_card_add hbp,
+  have addQ:=parts_card_add hbq, rw this.2 at addP,linarith,
 end
-
 
 
 def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
@@ -158,16 +174,11 @@ begin
   rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl, rw large_parts,intros x, rw mem_filter,intro hx,rw hx.2,
 end
 
-
-
-
-
-lemma bal_sum_sq_eq {t : ℕ} {P Q:ℕ → ℕ} (hpq1: balanced t P ∧ balanced t Q) (hpq2: sum t P = sum t Q): sum_sq t P = sum_sq t Q:=
+-- any two balanced (t+1)-partitions of same size set give the same sum of squares.
+lemma bal_sum_sq_eq {t : ℕ} {P Q:ℕ → ℕ} (hbp: balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): sum_sq t P = sum_sq t Q:=
 begin
-  have hp:=bal_sum_sq hpq1.1, have hq:=bal_sum_sq hpq1.2,
-
-
-sorry,
+  have h1:=bal_sum_sq hbp, have h2:=bal_sum_sq hbq, 
+  have h3:= bal_eq_1 hbp hbq hs,have h4:= bal_eq_2 hbp hbq hs,rw [h1,h2,h3.1,h3.2,h4.1],
 end
 
 -- sum of parts is (t+1)* smallest + number of large parts
