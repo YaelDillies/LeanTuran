@@ -68,6 +68,8 @@ begin
   linarith,
 end
 
+
+
 lemma large_parts' {t : ℕ} {P:ℕ → ℕ} (h: balanced t P): large_parts h = (range(t+1)).filter (λi, ¬ P i = min_bal h):=
 begin
   have :=con_sum h, unfold large_parts, ext,rw [mem_filter,mem_filter],split,
@@ -75,11 +77,13 @@ begin
   intros h', refine ⟨h'.1,_⟩, specialize this a h'.1,  cases this, exfalso, exact h'.2 this, exact this,
 end
 
+
 lemma parts_disjoint {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : disjoint (small_parts h) (large_parts h):=
 begin
   convert disjoint_filter_filter_neg (range(t+1)) (λi, P i = min_bal h),
   exact large_parts' h,
 end
+
 
 lemma parts_union {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : (range(t+1)) = (small_parts h) ∪ (large_parts h):=
 begin
@@ -89,8 +93,60 @@ begin
   rw [mem_filter,mem_filter],intros h, cases h, exact h_1.1, exact h_1.1,
 end
 
+lemma large_parts_card {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : (large_parts h).card ≤ t:=
+begin
+-- need to show small_parts ≠ empty
+sorry,
+end
 
-def sum_P (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
+
+lemma parts_card_add {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : (small_parts h).card + (large_parts h).card= t+1:=
+begin
+  rw [← card_range (t+1), parts_union h, card_disjoint_union (parts_disjoint h)],
+end
+
+
+def sum (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
+
+
+lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : sum t P = (small_parts h).card * (min_bal h) + (large_parts h).card * (min_bal h+1) 
+:=
+begin
+  rw [sum,parts_union h, sum_union (parts_disjoint h)], congr, 
+  rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl,rw small_parts,intros x, rw mem_filter,intro hx,rw hx.2,
+  rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl, rw large_parts,intros x, rw mem_filter,intro hx,rw hx.2,
+end
+lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : sum t P = (t+1)* (min_bal h) + (large_parts h).card 
+:=
+begin
+  rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
+end
+
+lemma mod_tplus1 {a b c d t: ℕ} (hc: c ≤ t) (hd:d ≤ t) (ht: (t+1)*a +c =(t+1)*b+d): (a=b)∧(c=d):=
+begin
+  ---
+
+
+sorry,
+end
+
+
+
+lemma bal_eq_1 {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): (min_bal hbp = min_bal hbq) ∧ (large_parts hbp).card = (large_parts hbq).card:=
+begin
+  rw [bal_sum' hbp, bal_sum' hbq] at hs,
+  have hc:=large_parts_card hbp,have hd:=large_parts_card hbq,
+  exact mod_tplus1 hc hd hs, 
+end
+
+lemma bal_eq_2 {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): (small_parts hbp).card = (small_parts hbq).card ∧ (large_parts hbp).card = (large_parts hbq).card:=
+begin
+
+
+sorry,
+end
+
+
 
 def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
 
@@ -102,6 +158,17 @@ begin
   rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl, rw large_parts,intros x, rw mem_filter,intro hx,rw hx.2,
 end
 
+
+
+
+
+lemma bal_sum_sq_eq {t : ℕ} {P Q:ℕ → ℕ} (hpq1: balanced t P ∧ balanced t Q) (hpq2: sum t P = sum t Q): sum_sq t P = sum_sq t Q:=
+begin
+  have hp:=bal_sum_sq hpq1.1, have hq:=bal_sum_sq hpq1.2,
+
+
+sorry,
+end
 
 -- sum of parts is (t+1)* smallest + number of large parts
 -- need to prove all balanced partitions have same degree sum
