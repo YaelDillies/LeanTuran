@@ -354,6 +354,17 @@ lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.ca
 :=eq_tsub_of_add_eq mp_deg_sum_sq'
 
 
+
+
+lemma xyz {x y z :ℕ} (h1: x<y) (h2: y<z) : z-y<z-x:=
+begin
+  have h4:=tsub_pos_of_lt h1,
+  have h6: (z-y)+(y-x)=(z-x),{
+    exact tsub_add_tsub_cancel (le_of_lt h2) (le_of_lt h1),},
+  linarith [h4,h6],
+end
+
+
 lemma diff {a b n:ℕ} (hb: b+1<a) (hn: a+b ≤ n):  a*(n-a) +b*(n-b) < (a-1)*(n-a+1)+ (b+1)*(n-b-1):=
 begin
   rw mul_add, rw add_mul,rw mul_one, rw one_mul,
@@ -366,7 +377,12 @@ begin
   apply (add_lt_add_iff_left _).mpr, 
   have ab: b< a-1,{by linarith [hb],},
   have nba: (n-a)< (n-b-1),{
-    have nba': (n-a)<(n-(b+1)),{sorry,},
+    have nba': (n-a)<(n-(b+1)),{
+      have h3:=tsub_pos_of_lt hb,
+--      have h4: a < n :=by linarith [hn,h2],-- problem here if b=0...
+--      have h6:=tsub_add_tsub_cancel (le_of_lt h2) (le_of_lt hb),-- this is using xyz lemma above
+        sorry,
+      },
     sorry,
   },
   exact add_lt_add ab nba,
