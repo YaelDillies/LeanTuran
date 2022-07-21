@@ -319,6 +319,23 @@ begin
   exfalso, rw adj_comm at h, exact h h_1,refl,
 end
 
+lemma bip_count_help' {A B : finset α}  (hB: disjoint A B ) : ∑ v in B, G.deg_res v A = ∑ v in B, ∑ w in A, ite (G.adj v w) 1 0:=
+begin
+  simp only [deg_res_ones], congr,ext x, simp only [sum_const, algebra.id.smul_eq_mul, mul_one, sum_boole, cast_id], 
+  congr, ext, rw [mem_res_nbhd,mem_filter,mem_neighbor_finset],
+end
+
+-- edges from A to B (disjoint) equals edges from B to A
+lemma bip_count' {A B : finset α} (hB: disjoint A B ) : ∑ v in B, G.deg_res v A = ∑ v in A, G.deg_res v B:=
+begin
+  rw G.bip_count_help' hB, rw G.bip_count_help' hB.symm,rw sum_comm, congr,
+  ext y, congr,ext x, 
+  split_ifs,refl,exfalso, rw adj_comm at h, exact h_1 h, 
+  exfalso, rw adj_comm at h, exact h h_1,refl,
+end
+
+
+
 -- sum of res_res_deg ≤ sum of res_deg 
 lemma sum_res_le {A B C: finset α} (hB: B ⊆ A) (hC: C ⊆ A): ∑ v in C, G.deg_res v B ≤ ∑ v in C, G.deg_res v A :=
 begin
@@ -343,9 +360,26 @@ begin
  split, intro jc,rw jc at hjr, exact not_mem_range_self hjr,right, rw insert_P,
  split_ifs,exfalso, exact h_1 rfl,rw insert_P, refine ⟨hv,_⟩,split_ifs,exact hjm,
  push_neg at h_2,exfalso, rw h_2 at hjr,  exact not_mem_range_self hjr,
-
 end
 
+
+
+
+lemma mp_old_adj (M :multi_part α) {C : finset α} {v w :α}(h: disjoint M.A C) : v∈ M.A → w ∈ M.A → ((mp M).adj v w ↔ (mp (insert M h)).adj v w):=
+begin
+  intros hv hw,
+  obtain⟨i,hi1,hi2⟩:=inv_part hv,   obtain⟨j,hj1,hj2⟩:=inv_part hw,
+  ---START HERE and then do lemma below
+sorry,
+end
+
+
+lemma mp_old (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_res v M.A=(mp M).deg_res v M.A:=
+begin
+----
+
+sorry,
+end
 lemma mp_ind (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
 begin
   intros hv hw,   have vin:= insert_P' M h v hv,
@@ -360,21 +394,30 @@ begin
   obtain ⟨w,hw,adw⟩ :=(mp (insert M h)).exists_mem_nempty h',exact (((mp (insert M h))).mp_ind M h hv hw) adw, 
 end
 
+lemma mp_ind_sum (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑ v in C, (mp (insert M h)).deg_res v C=0:=
+begin
+  simp only [sum_eq_zero_iff], intros x hx, exact (mp (insert M h)).mp_ind' M h x hx,
+end
 
+lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_res v M.A= ∑ v in M.A,(mp M).deg_res v M.A:=
+begin
+  set H: simple_graph α:= (mp (insert M h)), apply sum_congr rfl,exact (H.mp_old M h),
+end
 --- counting edges in multipartite graph  
 --- if we add in a new part C then the sum of degrees over new vertex set
---  is sum over old + 2 edges in bipartite  M[A,C]
+--  is sum over old + 2 edges in bipartite join
+
 lemma mp_count (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑v in M.A, (mp M).deg_res v M.A +2*(M.A.card)*C.card =
 ∑ v in (insert M h).A, (mp (insert M h)).deg_res v (insert M h).A:=
 begin
   set H: simple_graph α:= (mp (insert M h)),
   simp  [ insert_AB], rw sum_union h, rw [H.deg_res_add_sum' h,H.deg_res_add_sum' h],
-  rw add_assoc,
-  ----have enough maybe to show most of these sums match up.
-
-
-sorry,
+  rw add_assoc, rw H.mp_ind_sum M h, rw add_zero, rw H.bip_count' h.symm,
+  rw ← sum_add_distrib, rw card_eq_sum_ones C,rw mul_sum, rw H.mp_old_sum M h,
+  rw [add_right_inj],apply sum_congr rfl, 
+  rw (by norm_num: 2= 1+1),rw add_mul,  rw one_mul,rw mul_one, intros x hx, rwa (H.mp_com M h x hx),
 end
+
 -- main theorem basically erdos proof of degree majorisation of (t+2)-clique-free graph by (t+1)-partite graph
 theorem erdos_simple : ∀A:finset α, G.clique_free_set A (t+2) → ∑ v in A,G.deg_res v A ≤ 2*(turan_numb t A.card):=
 begin
