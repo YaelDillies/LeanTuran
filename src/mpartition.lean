@@ -13,7 +13,8 @@ open_locale big_operators
 namespace mpartition
 
 -- start with some helper functions that don't need partitions to be defined
--- here P:ℕ → ℕ plays the role of sizes of parts in a (t+1)-partition 
+
+-- here P : ℕ → ℕ plays the role of sizes of parts in a (t+1)-partition 
 
 -- sum of part sizes i.e number of vertices 
 def sum (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
@@ -22,7 +23,8 @@ def sum (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
 def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
 
 -- inevitable and painful mod (t+1) calculation related to sizes of parts in balanced partition
-lemma mod_tplus1 {a b c d t: ℕ} (hc: c ≤ t) (hd:d ≤ t) (ht: (t+1)*a +c =(t+1)*b+d): (a=b)∧(c=d):=
+lemma mod_tplus1 {a b c d t: ℕ} (hc: c ≤ t) (hd:d ≤ t) (ht: (t+1)*a + c = (t+1)*b+d) : 
+ (a = b) ∧ (c = d):=
 begin
   have hc':c<t+1:=by linarith [hc], have hd':d<t+1:=by linarith [hd],
   have mc: c%(t+1)=c:=mod_eq_of_lt hc',have md: d%(t+1)=d:=mod_eq_of_lt hd',
@@ -111,7 +113,7 @@ begin
   rw [← card_range (t+1), parts_union h, card_disjoint_union (parts_disjoint h)],
 end
 
--- not all parts are large since there is at least one part of small size
+-- not all parts are large since there is at least one small part
 lemma large_parts_card {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : (large_parts h).card ≤ t:=
 begin
   have spos:0 < (small_parts h).card:=card_pos.mpr (small_nonempty h),
@@ -165,25 +167,28 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 
--- define notion of a vertex than can be moved to increase number of edges in M
-def moveable (M : multi_part α)  :Prop := ∃ i∈ range(M.t+1),∃ j ∈ range(M.t+1), (M.P j).card +1 < (M.P i).card
 
+-- given M with M.t+1 parts and partition sets P we have P' M is the corresponding sizes of parts
+def P' (M: multi_part α) :ℕ → ℕ:= (λi, (M.P i).card)
+-- a partition is moveable if the part sizes are unbalanced
+--def moveable (M : multi_part α)  :Prop := ∃ i∈ range(M.t+1),∃ j ∈ range(M.t+1), (M.P j).card +1 < (M.P i).card
+def moveable (M : multi_part α)  :Prop := ¬ balanced M.t (P' M)
 --- ie. immoveable means the sizes of parts is such that it is balanced
 def immoveable (M : multi_part α) :Prop :=∀i∈ range(M.t+1),∀j∈ range(M.t+1), (M.P i).card ≤ (M.P j).card +1
-
 -- obviously
 lemma immoveable_iff_not_moveable (M : multi_part α) :immoveable M ↔ ¬moveable M:=
 begin
-  unfold immoveable, unfold moveable,push_neg, refl,
+  unfold immoveable, unfold moveable,push_neg,refl,
 end
 
+-- there is a partition
 instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
 {default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
 disj:=λ i hi j hj ne, disjoint_empty_left ∅,
  }}
 
 -- default mpartition of B into s+1 parts 1 x B and s x ∅
-def default_mp (B:finset α) (s:ℕ)  : multi_part α:={
+def default_M (B:finset α) (s:ℕ)  : multi_part α:={
   t:=s, P:= begin intro i, exact ite (i=0) (B) (∅), end, A:=B,
   uni:= begin ext, split,intro ha,rw mem_bUnion,use 0, rw mem_range, exact ⟨zero_lt_succ s,ha⟩, 
    rw mem_bUnion,intro h, cases h with i h2,cases h2,split_ifs at h2_h,exact h2_h,exfalso, exact h2_h,end,
@@ -222,10 +227,12 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
 --- after insert the vertex set is the union of new and old
 lemma insert_AB (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h).A = B ∪ M.A:=rfl
 
--- there is always a (t+1)-partition of B
+lemma insert_t (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h).t =M.t+1:=rfl
+
+-- there is always a (s+1)-partition of B for any finset α B and nat s
 lemma exists_mpartition (B: finset α) (s:ℕ): ∃ M:multi_part α, M.A=B ∧ M.t=s:=
 begin
-  use default_mp B s, exact ⟨rfl,rfl⟩,
+  use default_M B s, exact ⟨rfl,rfl⟩,
 end
 
 ---M.disj is the same as pairwise_disjoint but without any coercion to set for range(t+1) 
@@ -416,9 +423,9 @@ begin
       have h3:=tsub_pos_of_lt hb,
       have h4: a ≤ n :=by linarith,
       have h6:=tsub_add_tsub_cancel (h4) (le_of_lt hb),
-        linarith,}, rw add_comm at nba',
+      linarith,}, rw add_comm at nba',
       rwa tsub_add_eq_tsub_tsub_swap at nba',},
   exact nat.add_lt_add ab nba,
- end
+end
 
 end mpartition
