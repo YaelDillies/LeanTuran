@@ -36,7 +36,7 @@ end
 
 -- now lots of useful results about balanced partitions
 
--- a balanced partition is one with almost equal parts
+-- a balanced (t+1) partition is one with almost equal parts
 def balanced (t : ℕ) (P : ℕ → ℕ): Prop:= ∀ i ∈ range(t+1),∀ j∈ range(t+1), P i ≤ (P j) + 1
 
 -- smallest part is well-defined
@@ -118,7 +118,6 @@ begin
   have := parts_card_add h, linarith,
 end
 
-
 -- any sum of a function over P is determined by the sizes and parts easily
 lemma bal_sum_f {t : ℕ} {P: ℕ → ℕ} (h: balanced t P) (f: ℕ → ℕ):∑ i in range(t+1), f (P i) = 
 (small_parts h).card * f(min_bal h) + (large_parts h).card * f(min_bal h+1) := 
@@ -177,7 +176,6 @@ lemma immoveable_iff_not_moveable (M : multi_part α) :immoveable M ↔ ¬moveab
 begin
   unfold immoveable, unfold moveable,push_neg, refl,
 end
-
 
 instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
 {default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
