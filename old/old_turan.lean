@@ -15,6 +15,43 @@ open_locale big_operators
 namespace simple_graph
 
 
+-- inductive step for Erdos proof: if A is (t.succ+2)-clique free then for any v ∈ A the restricted nbhd of v in A is (t+2)-clique-free
+lemma t_clique_free {A: finset α} {v :α}(hA : G.clique_free_set A (t.succ + 2)) (hv : v ∈ A) :
+G.clique_free_set (G.nbhd_res v A) (t + 2):=
+begin
+  rw clique_free_set at *,
+  intros B hB, contrapose! hA,
+  set C:= B ∪ {v} with hC,
+  refine ⟨C,_,_⟩,
+  rw hC, apply union_subset (subset_trans hB (G.sub_res_nbhd_A v A)) _,
+  simp only [hv, singleton_subset_iff],
+  rw is_n_clique_iff at *,
+  refine ⟨_,_⟩, 
+  rcases hA with ⟨cl,ca⟩, 
+  rw [is_clique_iff, set.pairwise],
+  intros x hx y hy hne,
+  by_cases x=v,
+    have yB : y∈ G.neighbor_finset v,{ 
+      simp only [*, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, 
+      mem_coe, eq_self_iff_true, true_or, ne.def] at *,
+      cases hy,exfalso, exact hne hy.symm, 
+      exact (mem_of_mem_inter_right (hB hy)),},
+    rwa [h, ← mem_neighbor_finset G v],
+    by_cases h2:  y=v,
+      rw h2, simp only [*, ne.def, not_false_iff, coe_union, coe_singleton, set.union_singleton,
+      set.mem_insert_iff, eq_self_iff_true, mem_coe, true_or, false_or] at *,
+      rw [adj_comm,  ← mem_neighbor_finset G v],
+      exact mem_of_mem_inter_right (hB hx),
+    simp only [*, ne.def, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, 
+    mem_coe, false_or, eq_self_iff_true] at *,
+    exact cl hx hy hne,
+    rw [hC, nat.succ_eq_add_one, add_assoc, add_comm 1, ← add_assoc],
+    convert card_union_eq _,-- rw is_n_clique_iff at hA, 
+    exact hA.2.symm,
+    rw disjoint_singleton_right , 
+    intros h, apply  (not_mem_res_nbhd G v A) (hB h),
+end
+
 --- for any t and n there is a list of (t+1) nats summing to n whose sum of squares is n^2 - 2*Turan(t+1,n)
 --- ie there is a partition of n into t+1 parts so that the multipartite graph on these parts has
 --  t(t+1,n) edges 

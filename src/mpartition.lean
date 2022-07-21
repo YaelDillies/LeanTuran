@@ -225,9 +225,14 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
   end,}
 
 --- after insert the vertex set is the union of new and old
-lemma insert_AB (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h).A = B ∪ M.A:=rfl
+lemma insert_AB (M: multi_part α) {B :finset α} (h: disjoint M.A B):
+(insert M h).A = M.A ∪ B:=union_comm _ _
 
 lemma insert_t (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h).t =M.t+1:=rfl
+
+
+lemma insert_P (M: multi_part α) {B :finset α} (h: disjoint M.A B) :∀i, (insert M h).P i =
+ ite (i≠ M.t+1) (M.P i) (B) :=λi, rfl 
 
 -- there is always a (s+1)-partition of B for any finset α B and nat s
 lemma exists_mpartition (B: finset α) (s:ℕ): ∃ M:multi_part α, M.A=B ∧ M.t=s:=
