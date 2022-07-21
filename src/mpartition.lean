@@ -234,6 +234,14 @@ lemma insert_t (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h
 lemma insert_P (M: multi_part α) {B :finset α} (h: disjoint M.A B) :∀i, (insert M h).P i =
  ite (i≠ M.t+1) (M.P i) (B) :=λi, rfl 
 
+
+lemma insert_P' (M: multi_part α) {B :finset α} (h: disjoint M.A B) : ∀v∈B, v∈ (insert M h).P (M.t+1):=
+begin
+  intros v hv, rw insert_P,split_ifs,exfalso, exact h_1 rfl, exact hv,
+end
+
+
+
 -- there is always a (s+1)-partition of B for any finset α B and nat s
 lemma exists_mpartition (B: finset α) (s:ℕ): ∃ M:multi_part α, M.A=B ∧ M.t=s:=
 begin

@@ -288,9 +288,14 @@ begin
   have db:B∩G.neighbor_finset v⊆B:=inter_subset_left _ _,
   apply disjoint_of_subset_left da, exact disjoint_of_subset_right db h,
 end
+ 
+lemma deg_res_add_sum' {A B C: finset α} (h: disjoint A B) : ∑ v in C, G.deg_res v (A ∪ B) = ∑ v in C, G.deg_res v A +∑ v in C, G.deg_res v B:=
+begin
+ rw ← sum_add_distrib, apply finset.sum_congr rfl _, intros x hx, exact G.deg_res_add' h ,
+end
 
 -- restricted deg add sum
-lemma deg_res_add_sum {A B C : finset α} (hB: B ⊆ A) (hC: C ⊆ A) : ∑ v in C, G.deg_res v A=  ∑ v in C, G.deg_res v B+  ∑ v in C,G.deg_res v (A\B):=
+lemma deg_res_add_sum {A B C : finset α} (hB: B ⊆ A) : ∑ v in C, G.deg_res v A=  ∑ v in C, G.deg_res v B+  ∑ v in C,G.deg_res v (A\B):=
 begin
   rw ← sum_add_distrib, apply finset.sum_congr rfl _, intros x hx, exact G.deg_res_add hB ,--(hC hx),
 end
@@ -324,13 +329,48 @@ begin
   exact ⟨hB hx.1, hx.2⟩,
 end
 
+
+-- vertices in new part are adjacent to all old vertices
+--- should have used lemmas from multipartite for this...
+lemma mp_com (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∀v∈C, (mp (insert M h)).deg_res v M.A=(M.A.card):=
+begin
+ intros v hv, rw deg_res, congr, ext,
+ rw mem_res_nbhd,split,intro h, exact h.1,
+ intros ha, refine ⟨ha,_⟩, rw mem_neighbor_finset, dsimp,
+ obtain⟨j,hjr,hjm⟩ :=inv_part ha,
+ use j,rw insert_t, 
+ refine ⟨_,_,_⟩, rw mem_range at *,linarith [hjr], exact M.t+1, use self_mem_range_succ _,
+ split, intro jc,rw jc at hjr, exact not_mem_range_self hjr,right, rw insert_P,
+ split_ifs,exfalso, exact h_1 rfl,rw insert_P, refine ⟨hv,_⟩,split_ifs,exact hjm,
+ push_neg at h_2,exfalso, rw h_2 at hjr,  exact not_mem_range_self hjr,
+
+end
+
+lemma mp_ind (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
+begin
+  intros hv hw,   have vin:= insert_P' M h v hv,
+  have win:= insert_P' M h w hw,
+  have :=self_mem_range_succ (M.t+1), rw ← insert_t M h at this,
+  contrapose win,push_neg at win, exact not_nhbr_same_part this vin win,
+end
+
+lemma mp_ind' (M : multi_part α) {C :finset α} (h: disjoint M.A C) : ∀v∈C,(mp (insert M h)).deg_res v C=0:=
+begin
+  intros v hv, rw deg_res, rw card_eq_zero, by_contra h', 
+  obtain ⟨w,hw,adw⟩ :=(mp (insert M h)).exists_mem_nempty h',exact (((mp (insert M h))).mp_ind M h hv hw) adw, 
+end
+
+
 --- counting edges in multipartite graph  
 --- if we add in a new part C then the sum of degrees over new vertex set
 --  is sum over old + 2 edges in bipartite  M[A,C]
 lemma mp_count (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑v in M.A, (mp M).deg_res v M.A +2*(M.A.card)*C.card =
 ∑ v in (insert M h).A, (mp (insert M h)).deg_res v (insert M h).A:=
 begin
-  simp  [ insert_AB], rw sum_union h,
+  set H: simple_graph α:= (mp (insert M h)),
+  simp  [ insert_AB], rw sum_union h, rw [H.deg_res_add_sum' h,H.deg_res_add_sum' h],
+  rw add_assoc,
+  ----have enough maybe to show most of these sums match up.
 
 
 sorry,
@@ -351,12 +391,12 @@ begin
     have hBA: B⊆ A:=(G.sub_res_nbhd_A x A), -- B is contained in A
     -- split sum of deg_A using both (1) deg_A v = deg_B v + deg_(A\B) v and (2) the partition: A = B ∪ (A\B)
     -- have ∑ v ∈ A, deg_A v = ∑ v ∈ B, deg_B v + ∑ v ∈ A\B, deg_B v + ∑ v ∈ A, deg_(A\B) v
-    rw [G.deg_res_add_sum hBA (subset_refl A),G.sum_sdf hBA hBA, add_assoc],
+    rw [G.deg_res_add_sum hBA ,G.sum_sdf hBA hBA, add_assoc],
     -- apply inductive hyp to ∑ v ∈ B, deg_B v using the fact that 
     -- res nbhd of x to B = is (s+2)-clique free (since A is (s.succ+2)-clique free)
     apply add_le_of_add_le_right _ (hs (G.nbhd_res x A) (G.t_clique_free hA hxA)),
     -- use ∑ v ∈ A, deg_(A\B) v = ∑ v ∈ A\B, deg_A v
-    rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA (sdiff_subset A B)],
+    rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA ],
     nth_rewrite 1 add_comm, rw ← add_assoc,
     -- the next line is a strict overestimate if A\B contains any edges
     -- since we replace ∑ v ∈ A\B, deg_B v by ∑ v ∈ A\B, deg_A v (i.e. we add in ∑ v∈ A\B, deg_(A\B) v) 
@@ -404,12 +444,12 @@ begin
     set hBA:= (G.sub_res_nbhd_A x A), 
     set B:=(G.nbhd_res x A) with hB,-- Let B be the res nbhd of the vertex x of max deg_A 
     refine ⟨B, ⟨hBA,(G.t_clique_free hA hxA),_⟩⟩,
-    rw [G.deg_res_add_sum hBA (subset_refl A), G.sum_sdf hBA hBA, add_assoc],
-    rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA (sdiff_subset A B)],
+    rw [G.deg_res_add_sum hBA, G.sum_sdf hBA hBA, add_assoc],
+    rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA ],
     rw ← hB, rw ← add_assoc, ring_nf,
     apply add_le_add_left _ (∑ v in B, G.deg_res v B ), 
     rw add_comm, rw add_assoc, nth_rewrite 1 add_comm,
-    rw ← G.deg_res_add_sum hBA (sdiff_subset A B), ring_nf,rw mul_assoc,
+    rw ← G.deg_res_add_sum hBA, ring_nf,rw mul_assoc,
     refine mul_le_mul' (by norm_num) _,
     apply le_trans (G.max_deg_res_sum_le (sdiff_subset A B)) _,
     rw [hxM,deg_res],},
