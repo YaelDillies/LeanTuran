@@ -3,11 +3,12 @@ import combinatorics.simple_graph.degree_sum
 import data.finset.basic
 import data.nat.basic
 import multipartite
+import mpartition
 import tactic.core
 import algebra.big_operators
 
 
-open finset nat
+open finset nat mpartition
 
 open_locale big_operators 
 
@@ -202,7 +203,7 @@ end
 lemma two_clique_free {A: finset α} (hA : G.clique_free_set A 2) :  ∀v∈A, G.deg_res v A =0 :=
 begin
   intros v hv, rw [deg_res,card_eq_zero], 
-  contrapose! hA,
+  contrapose hA,
   obtain ⟨w,hw⟩:=exists_mem_nempty G hA,
   cases hw with h1 h2, 
   have ne: v≠w := adj.ne h2,
@@ -215,52 +216,16 @@ begin
   simp only [mem_insert, mem_singleton] at *,cases hx, rw hx,exact hv,rw hx, exact h1,
 end
 
-
 -- sum of degrees over an independent set (2-clique-free set) is 0
 lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in A, G.deg_res v A = 0:=
 begin
   rw sum_eq_zero_iff, exact G.two_clique_free hA,
 end
 
--- inductive step for Erdos proof: if A is (t.succ+2)-clique free then for any v ∈ A the restricted nbhd of v in A is (t+2)-clique-free
-lemma t_clique_free {A: finset α} {v :α}(hA : G.clique_free_set A (t.succ + 2)) (hv : v ∈ A) :
-G.clique_free_set (G.nbhd_res v A) (t + 2):=
-begin
-  rw clique_free_set at *,
-  intros B hB, contrapose! hA,
-  set C:= B ∪ {v} with hC,
-  refine ⟨C,_,_⟩,
-  rw hC, apply union_subset (subset_trans hB (G.sub_res_nbhd_A v A)) _,
-  simp only [hv, singleton_subset_iff],
-  rw is_n_clique_iff at *,
-  refine ⟨_,_⟩, 
-  rcases hA with ⟨cl,ca⟩, 
-  rw [is_clique_iff, set.pairwise],
-  intros x hx y hy hne,
-  by_cases x=v,
-    have yB : y∈ G.neighbor_finset v,{ 
-      simp only [*, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, 
-      mem_coe, eq_self_iff_true, true_or, ne.def] at *,
-      cases hy,exfalso, exact hne hy.symm, 
-      exact (mem_of_mem_inter_right (hB hy)),},
-    rwa [h, ← mem_neighbor_finset G v],
-    by_cases h2:  y=v,
-      rw h2, simp only [*, ne.def, not_false_iff, coe_union, coe_singleton, set.union_singleton,
-      set.mem_insert_iff, eq_self_iff_true, mem_coe, true_or, false_or] at *,
-      rw [adj_comm,  ← mem_neighbor_finset G v],
-      exact mem_of_mem_inter_right (hB hx),
-    simp only [*, ne.def, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, 
-    mem_coe, false_or, eq_self_iff_true] at *,
-    exact cl hx hy hne,
-    rw [hC, nat.succ_eq_add_one, add_assoc, add_comm 1, ← add_assoc],
-    convert card_union_eq _,-- rw is_n_clique_iff at hA, 
-    exact hA.2.symm,
-    rw disjoint_singleton_right , 
-    intros h, apply  (not_mem_res_nbhd G v A) (hB h),
-end
 
--- version of previous lemma for the stability version 
-lemma t_clique_free' {A: finset α} {v :α}(hA : G.clique_free_set A (t + 2)) (hv : v ∈ A) :
+-- if A set is (t+2)-clique-free then any member vertex 
+-- has restricted nbhd that is (t+1)-clique-free 
+lemma t_clique_free {A: finset α} {v :α}(hA : G.clique_free_set A (t + 2)) (hv : v ∈ A) :
 G.clique_free_set (G.nbhd_res v A) (t + 1):=
 begin
   rw clique_free_set at *,
@@ -306,7 +271,7 @@ end
 
 
 -- restricted deg over A = restricted deg over B + restricted deg over A\B
-lemma deg_res_add  {v : α} {A B : finset α} (hB: B ⊆ A) (hv: v ∈ A): G.deg_res v A=  G.deg_res v B +  G.deg_res v (A\B):=
+lemma deg_res_add  {v : α} {A B : finset α} (hB: B ⊆ A): G.deg_res v A=  G.deg_res v B +  G.deg_res v (A\B):=
 begin
   simp [deg_res,nbhd_res], nth_rewrite 0 ← union_sdiff_of_subset hB, 
   convert card_disjoint_union _,
@@ -314,10 +279,20 @@ begin
   exact sdiff_inter_disj A B _,
 end
 
+lemma deg_res_add'  {v : α} {A B : finset α} (h: disjoint A B): G.deg_res v (A∪B)=  G.deg_res v A +  G.deg_res v B:=
+begin
+  simp [deg_res,nbhd_res],  
+  convert card_disjoint_union _,
+  exact inter_distrib_right _ _ _,
+  have da:A∩G.neighbor_finset v⊆A:=inter_subset_left _ _,
+  have db:B∩G.neighbor_finset v⊆B:=inter_subset_left _ _,
+  apply disjoint_of_subset_left da, exact disjoint_of_subset_right db h,
+end
+
 -- restricted deg add sum
 lemma deg_res_add_sum {A B C : finset α} (hB: B ⊆ A) (hC: C ⊆ A) : ∑ v in C, G.deg_res v A=  ∑ v in C, G.deg_res v B+  ∑ v in C,G.deg_res v (A\B):=
 begin
-  rw ← sum_add_distrib, apply finset.sum_congr rfl _, intros x hx, exact G.deg_res_add hB (hC hx),
+  rw ← sum_add_distrib, apply finset.sum_congr rfl _, intros x hx, exact G.deg_res_add hB ,--(hC hx),
 end
 
 -- counting edges exiting B via ite helper
@@ -349,8 +324,17 @@ begin
   exact ⟨hB hx.1, hx.2⟩,
 end
 
+--- counting edges in multipartite graph  
+--- if we add in a new part C then the sum of degrees over new vertex set
+--  is sum over old + 2 edges in bipartite  M[A,C]
+lemma mp_count (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑v in M.A, (mp M).deg_res v M.A +2*(M.A.card)*C.card =
+∑ v in (insert M h).A, (mp (insert M h)).deg_res v (insert M h).A:=
+begin
+  simp  [ insert_AB], rw sum_union h,
 
 
+sorry,
+end
 -- main theorem basically erdos proof of degree majorisation of (t+2)-clique-free graph by (t+1)-partite graph
 theorem erdos_simple : ∀A:finset α, G.clique_free_set A (t+2) → ∑ v in A,G.deg_res v A ≤ 2*(turan_numb t A.card):=
 begin
@@ -389,19 +373,18 @@ begin
 end
 
 
--- in terms of edges this says that for any subset A of vertices of a  (t+2)-clique free graph
--- there is a (t+1)-multipartite complete graph M=[A_0,...,A_t] on A such that
--- e(A) + ∑ i≤t, e(A_i) ≤ e(M)
--- Since e(M) ≤ T(t+1 ,|A|) this implies that for A containing T(t+1, |A|)-s edges 
--- this implies that A can be made (t+1)-partite by removing at most s edges (those in the parts A_i)
---theorem furedi_stability  : ∀A:finset α, G.clique_free_set A (t+2) → ∃ M:multi_part α, M.t=t ∧ M.A = A ∧
--- ∑ v in A, G.deg_res v A + ∑  i in range(t+1), ∑ x in M.P i, G.deg_res x (M.P i) ≤ M.deg_sum:=
---begin
---   induction t with s hs, intros A hA,
 
---sorry,sorry,
+-- usual-ish statement of turan upper bound
+theorem turan_ub : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (fintype.card α):=
+begin
+  intro h,
+  have sdG:= G.erdos_simple univ (G.clique_free_graph_imp_set h),
+  simp only [deg_res_univ] at sdG,
+  rwa [sum_degrees_eq_twice_card_edges,card_univ,mul_le_mul_left] at sdG, by norm_num,
+end
 
---end
+
+
 
 
 ---for any (t+2)-clique free set there is a partition into B, a (t+1)-clique free set and A\B 
@@ -420,7 +403,7 @@ begin
     obtain ⟨x,hxA,hxM⟩:=G.exists_max_res_deg_vertex hnem, -- get a vert x of max res deg in A
     set hBA:= (G.sub_res_nbhd_A x A), 
     set B:=(G.nbhd_res x A) with hB,-- Let B be the res nbhd of the vertex x of max deg_A 
-    refine ⟨B, ⟨hBA,(G.t_clique_free' hA hxA),_⟩⟩,
+    refine ⟨B, ⟨hBA,(G.t_clique_free hA hxA),_⟩⟩,
     rw [G.deg_res_add_sum hBA (subset_refl A), G.sum_sdf hBA hBA, add_assoc],
     rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA (sdiff_subset A B)],
     rw ← hB, rw ← add_assoc, ring_nf,
@@ -436,23 +419,27 @@ begin
 end
 
 
--- usual-ish statement of turan upper bound
-theorem turan_ub : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (fintype.card α):=
+-- if A is (t+2)-clique-free then there exists a (t+1)-partition of M of A so that 
+-- e(A) +∑ i≤t, e(A_i) ≤ e(complete_multi_partite M)
+-- (Note either A is contained in M or we need to remove edges from inside parts
+-- so this implies that if e(A)=max e(M)-s then it can be made (t+1)-partite by
+-- removing at most s edges)
+lemma furedi : ∀A:finset α, G.clique_free_set A (t+2) → ∃M:multi_part α, M.A=A ∧ M.t =t ∧ 
+∑v in A, G.deg_res v A + ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i) ≤ ∑ v in A, (mp M).deg_res v A:=
 begin
-  intro h,
-  have sdG:= G.erdos_simple univ (G.clique_free_graph_imp_set h),
-  simp only [deg_res_univ] at sdG,
-  rwa [sum_degrees_eq_twice_card_edges,card_univ,mul_le_mul_left] at sdG, by norm_num,
+  induction t with t ht, rw zero_add,
+  intros A ha, use (default_M A 0), refine ⟨rfl,rfl,_⟩, rw G.two_clique_free_sum ha,
+  rw zero_add, unfold default_M, dsimp,simp, apply sum_le_sum,
+  intros x hx, rw G.two_clique_free ha x hx,exact zero_le _,
+  --- t.succ case
+  intros A ha, obtain⟨B,hBa,hBc,hBs⟩:=G.furedi_help A ha,  
+  obtain ⟨M,Ma,Mt,Ms⟩:=ht B hBc,
+  have dAB:disjoint M.A (A\B), {rw Ma, exact disjoint_sdiff,},
+  use (insert M dAB), refine ⟨_,_,_⟩,  
+  rw [insert_AB, Ma], exact union_sdiff_of_subset hBa, rw [insert_t, Mt],
+  --- so we now have the new partition and "just" need to check the degree sum bound..
+  simp  [insert_P,insert_t],
+  sorry,
 end
-
-
-  
-
-
-
-
-
-
-
 
 end simple_graph
