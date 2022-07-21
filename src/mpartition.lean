@@ -228,7 +228,6 @@ begin
   use default_mp B s, exact ⟨rfl,rfl⟩,
 end
 
-
 ---M.disj is the same as pairwise_disjoint but without any coercion to set for range(t+1) 
 lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
 
@@ -271,12 +270,10 @@ end
 -- if there are two different parts then the sum of their sizes is at most the size of the whole
 lemma two_parts {M: multi_part α} {i j : ℕ} (hi: i ∈ range(M.t+1))  (hj: j ∈ range(M.t+1)) (hne: i≠ j) : (M.P i).card + (M.P j).card ≤ M.A.card:=
 begin
-  rw card_uni, rw ← sum_erase_add (range(M.t+1)) _ hj, apply (add_le_add_iff_right _).mpr,
+  rw card_uni, rw ← sum_erase_add (range(M.t+1)) _ hj, apply nat.add_le_add_right,
   rw ← sum_erase_add ((range(M.t+1)).erase j) _ (mem_erase_of_ne_of_mem hne hi),
-  nth_rewrite 0 ← zero_add (M.P i).card, apply (add_le_add_iff_right _).mpr,
+  nth_rewrite 0 ← zero_add (M.P i).card, apply nat.add_le_add_right,
   simp only [zero_le],
-  exact has_add.to_covariant_class_right ℕ,  exact contravariant_swap_add_le_of_contravariant_add_le ℕ,
-  exact has_add.to_covariant_class_right ℕ,  exact contravariant_swap_add_le_of_contravariant_add_le ℕ,
 end
 
 --A is the union of each part and the sdiff
@@ -410,8 +407,9 @@ begin
   have hnb:=tsub_add_cancel_of_le  (le_trans (by linarith [hb]: 1 ≤ a) h2),
   nth_rewrite 0 ← ha, nth_rewrite 0 ← hnb,
   rw [add_mul,mul_add,one_mul,mul_one ,add_assoc,add_assoc],
-  apply (add_lt_add_iff_left _).mpr, rw [add_comm, ← add_assoc, add_comm (a-1), add_assoc, add_assoc],
-  apply (add_lt_add_iff_left _).mpr, 
+  apply nat.add_lt_add_left,
+  rw [add_comm, ← add_assoc, add_comm (a-1), add_assoc, add_assoc],
+  apply nat.add_lt_add_left,
   have ab: b< a-1,{by linarith [hb],},
   have nba: (n-a)< (n-b-1),{
     have nba': (n-a)<(n-(b+1)),{
@@ -420,12 +418,7 @@ begin
       have h6:=tsub_add_tsub_cancel (h4) (le_of_lt hb),
         linarith,}, rw add_comm at nba',
       rwa tsub_add_eq_tsub_tsub_swap at nba',},
-  exact add_lt_add ab nba,
-  --- why are these needed?
-  exact covariant_add_lt_of_contravariant_add_le ℕ,
-  exact contravariant_add_lt_of_covariant_add_le ℕ,
-  exact covariant_add_lt_of_contravariant_add_le ℕ,
-  exact contravariant_add_lt_of_covariant_add_le ℕ,
-end
+  exact nat.add_lt_add ab nba,
+ end
 
 end mpartition
