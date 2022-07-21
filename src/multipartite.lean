@@ -20,6 +20,7 @@ include M
 
 -- given a t+1 partition on A form the complete multi-partite graph on α
 -- with all edges present between parts in M.A and no edges involving vertices outside A
+@[ext]
 def mp (M: multi_part α) : simple_graph α:={
   adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
   symm:=
@@ -107,7 +108,8 @@ begin
   intros h1, by_contra, apply mp_adj_imp hi hi hv h h1,refl, 
 end
 
-lemma nbhr_diff_parts {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) (hw : w∈ M.A\M.P i) : (mp M).adj v w:=
+lemma nbhr_diff_parts {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) (hw : w∈ M.A\M.P i)
+ : (mp M).adj v w:=
 begin
   rw mem_sdiff at hw,
   cases hw with hA hni,
