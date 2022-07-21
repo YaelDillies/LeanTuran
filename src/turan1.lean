@@ -368,18 +368,51 @@ end
 lemma mp_old_adj (M :multi_part α) {C : finset α} {v w :α}(h: disjoint M.A C) : v∈ M.A → w ∈ M.A → ((mp M).adj v w ↔ (mp (insert M h)).adj v w):=
 begin
   intros hv hw,
-  obtain⟨i,hi1,hi2⟩:=inv_part hv,   obtain⟨j,hj1,hj2⟩:=inv_part hw,
-  ---START HERE and then do lemma below
-sorry,
+  split,intro hins,   obtain⟨k,hkr,l,hlr,lnek,lkc⟩:=hins,
+  use k, rw insert_t,rw mem_range at *, refine ⟨_,_,_,_,_⟩, linarith, exact l,
+  rw mem_range,linarith [hlr],exact lnek, simp [insert_P],
+  split_ifs,exfalso,rw ← h_1 at hkr, exact lt_irrefl k hkr,
+  exfalso,rw ← h_1 at hkr, exact lt_irrefl k hkr,
+  exfalso,rw ← h_2 at hlr, exact lt_irrefl l hlr,
+  exact lkc,
+  intro hins, obtain⟨k,hkr,l,hlr,lnek,lkc⟩:=hins,rw insert_t at hkr,rw insert_t at hlr,
+  refine ⟨k,_,l,_,lnek,_⟩, 
+  rw mem_range at *,
+  by_contra h', have :k=M.t+1:=by linarith [hkr,h],
+  cases lkc, rw this at lkc, have vinb:=mem_inter.mpr ⟨hv,insert_C M h lkc.1⟩,
+  exact h vinb, rw this at lkc, have vinb:=mem_inter.mpr ⟨hw,insert_C M h lkc.2⟩,
+  exact h vinb,
+  rw mem_range at *,
+  by_contra h', have :l=M.t+1:=by linarith [hlr,h],
+  cases lkc, rw this at lkc, have vinb:=mem_inter.mpr ⟨hw,insert_C M h lkc.2⟩,
+  exact h vinb, rw this at lkc, have vinb:=mem_inter.mpr ⟨hv,insert_C M h lkc.1⟩,
+  exact h vinb,
+  cases lkc, rw [insert_P,insert_P] at lkc, split_ifs at lkc,left, exact lkc,
+  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
+  exfalso, have vinb:=mem_inter.mpr ⟨hv,lkc.1⟩,exact h vinb,
+  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
+  rw [insert_P,insert_P] at lkc, split_ifs at lkc,right, exact lkc,
+  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
+  exfalso, have vinb:=mem_inter.mpr ⟨hv,lkc.1⟩,exact h vinb,
+  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
 end
 
+
+lemma mp_old' (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).nbhd_res v M.A=(mp M).nbhd_res v M.A:=
+begin
+  set H: simple_graph α:= (mp (insert M h)),
+  intros v hv,ext,split,intros ha, rw mem_res_nbhd at *,refine ⟨ha.1,_⟩,
+  rw mem_neighbor_finset,rw mem_neighbor_finset at ha, exact (H.mp_old_adj M h hv ha.1).mpr ha.2,
+  intros ha, rw mem_res_nbhd at *,refine ⟨ha.1,_⟩,
+  rw mem_neighbor_finset,rw mem_neighbor_finset at ha, exact (H.mp_old_adj M h hv ha.1).mp ha.2,
+end
 
 lemma mp_old (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_res v M.A=(mp M).deg_res v M.A:=
 begin
-----
-
-sorry,
+  set H: simple_graph α:= (mp (insert M h)),
+  intros v hv, rw deg_res,rw deg_res,  rw H.mp_old' M h v hv,
 end
+
 lemma mp_ind (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
 begin
   intros hv hw,   have vin:= insert_P' M h v hv,
@@ -518,10 +551,14 @@ begin
   intros A ha, obtain⟨B,hBa,hBc,hBs⟩:=G.furedi_help A ha,  
   obtain ⟨M,Ma,Mt,Ms⟩:=ht B hBc,
   have dAB:disjoint M.A (A\B), {rw Ma, exact disjoint_sdiff,},
+  set H: simple_graph α:= (mp (insert M dAB)),
   use (insert M dAB), refine ⟨_,_,_⟩,  
   rw [insert_AB, Ma], exact union_sdiff_of_subset hBa, rw [insert_t, Mt],
   --- so we now have the new partition and "just" need to check the degree sum bound..
-  simp  [insert_P,insert_t],
+  -- START HERE and make the next line work.
+ --  rw ← H.mp_count M dAB,
+  simp  [insert_P,insert_t], 
+  
   sorry,
 end
 
