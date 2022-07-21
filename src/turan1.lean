@@ -535,6 +535,7 @@ begin
 end
 
 
+
 -- if A is (t+2)-clique-free then there exists a (t+1)-partition of M of A so that 
 -- e(A) +∑ i≤t, e(A_i) ≤ e(complete_multi_partite M)
 -- (Note either A is contained in M or we need to remove edges from inside parts
@@ -556,12 +557,14 @@ begin
   use (insert M dAB), refine ⟨_,_,_⟩,  
   rw [insert_AB, Ma], exact union_sdiff_of_subset hBa, rw [insert_t, Mt],
   --- so we now have the new partition and "just" need to check the degree sum bound..
-  -- START HERE and make the next line work.
   have mpc:=H.mp_count M dAB, rw [insert_AB, Ma , hAsd] at mpc,
-  --can now do this but maybe later rw ← mpc, 
   -- need to sort out the sum over parts in the larger graph
-  simp  [insert_P,insert_t], 
-  
+  rw ←  mpc, clear mpc,
+  simp only [insert_P, insert_t, ite_not],  
+  have  ru:range((M.t+1)+1)=range(M.t+1) ∪ {M.t+1} := by sorry, rw ru,
+  have rd: disjoint (range(M.t+1)) {M.t+1} := by sorry,
+  rw sum_union rd, simp only [sum_singleton, eq_self_iff_true, if_true], rw ← add_assoc,
+  nth_rewrite 1 add_comm, rw add_assoc,
   sorry,
 end
 
