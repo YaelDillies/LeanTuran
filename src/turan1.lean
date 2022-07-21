@@ -549,6 +549,7 @@ begin
   intros x hx, rw G.two_clique_free ha x hx,exact zero_le _,
   --- t.succ case
   intros A ha, obtain⟨B,hBa,hBc,hBs⟩:=G.furedi_help A ha,  
+  have hAsd:=union_sdiff_of_subset hBa,
   obtain ⟨M,Ma,Mt,Ms⟩:=ht B hBc,
   have dAB:disjoint M.A (A\B), {rw Ma, exact disjoint_sdiff,},
   set H: simple_graph α:= (mp (insert M dAB)),
@@ -556,7 +557,9 @@ begin
   rw [insert_AB, Ma], exact union_sdiff_of_subset hBa, rw [insert_t, Mt],
   --- so we now have the new partition and "just" need to check the degree sum bound..
   -- START HERE and make the next line work.
-  have mpc:=H.mp_count M dAB, rw insert_AB at mpc,
+  have mpc:=H.mp_count M dAB, rw [insert_AB, Ma , hAsd] at mpc,
+  --can now do this but maybe later rw ← mpc, 
+  -- need to sort out the sum over parts in the larger graph
   simp  [insert_P,insert_t], 
   
   sorry,
