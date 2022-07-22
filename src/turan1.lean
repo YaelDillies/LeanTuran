@@ -541,6 +541,29 @@ end
 -- (Note either A is contained in M or we need to remove edges from inside parts
 -- so this implies that if e(A)=max e(M)-s then it can be made (t+1)-partite by
 -- removing at most s edges)
+
+-- counting degrees sums over the parts of the larger partition is what you expect
+lemma internal_count {M: multi_part α} {C : finset α} (h: disjoint M.A C): ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i)+∑ v in C, G.deg_res v C=
+∑ i in range((insert M h).t+1), ∑ v in ((insert M h).P i), G.deg_res v ((insert M h).P i)
+:=
+begin
+  simp [insert_t, insert_P,ite_not],
+  have  ru:range((M.t+1)+1)=range(M.t+1) ∪ {M.t+1},{
+    rw range_succ, rw union_comm, rw insert_eq _,},
+  have nm:(M.t+1)∉(range(M.t+1)):=not_mem_range_self,
+  have rd: disjoint (range(M.t+1)) {M.t+1}:= disjoint_singleton_right.mpr nm,
+  rw [ru,sum_union rd],simp only [sum_singleton, eq_self_iff_true, if_true],
+  apply (add_left_inj _).mpr, apply sum_congr rfl, intros k hk,
+  have nm:(M.t+1)∉(range(M.t+1)):=not_mem_range_self,
+  have kne: k≠M.t+1,{intro h',rw h' at hk, exact nm hk},
+  apply sum_congr, split_ifs,contradiction,refl,
+  intros v hv,split_ifs,contradiction,refl,
+end
+
+-- Furedi's stability theorem: (t+2)-clique-free set A implies there is a (t+1)-partition of A
+-- such that edges in A + edges in parts (counted a second time) ≤ edges in the complete
+-- (t+1)-partite graph on same partition
+-- implies Turan once we have finished with max edges of complete multi-partite....
 lemma furedi : ∀A:finset α, G.clique_free_set A (t+2) → ∃M:multi_part α, M.A=A ∧ M.t =t ∧ 
 ∑v in A, G.deg_res v A + ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i) ≤ ∑ v in A, (mp M).deg_res v A:=
 begin
@@ -559,13 +582,8 @@ begin
   --- so we now have the new partition and "just" need to check the degree sum bound..
   have mpc:=H.mp_count M dAB, rw [insert_AB, Ma , hAsd] at mpc,
   -- need to sort out the sum over parts in the larger graph
-  rw ←  mpc, clear mpc,
-  simp only [insert_P, insert_t, ite_not],  
-  have  ru:range((M.t+1)+1)=range(M.t+1) ∪ {M.t+1} := by sorry, rw ru,
-  have rd: disjoint (range(M.t+1)) {M.t+1} := by sorry,
-  rw sum_union rd, simp only [sum_singleton, eq_self_iff_true, if_true], rw ← add_assoc,
-  nth_rewrite 1 add_comm, rw add_assoc,
-  sorry,
+  rw ←  mpc, rw ← G.internal_count dAB,
+  linarith,
 end
 
 end simple_graph
