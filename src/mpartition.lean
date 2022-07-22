@@ -120,7 +120,7 @@ begin
   have := parts_card_add h, linarith,
 end
 
--- any sum of a function over P is determined by the sizes and parts easily
+-- any sum of a function over P is determined by the sizes and parts
 lemma bal_sum_f {t : ℕ} {P: ℕ → ℕ} (h: balanced t P) (f: ℕ → ℕ):∑ i in range(t+1), f (P i) = 
 (small_parts h).card * f(min_bal h) + (large_parts h).card * f(min_bal h+1) := 
 begin
@@ -133,7 +133,7 @@ end
 lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : sum t P = (small_parts h).card * (min_bal h) + 
   (large_parts h).card * (min_bal h+1) := bal_sum_f h (λi,i)
 
--- alternative version
+-- alternative version of previous
 lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : sum t P = (t+1)* (min_bal h) + (large_parts h).card :=
 begin
   rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
@@ -197,6 +197,7 @@ def default_M (B:finset α) (s:ℕ)  : multi_part α:={
 
 
 -- insert new disjoint set to the partition to increase number of parts
+--- we will need this to build the complete multipartite graph used fro Furedi's stabilty result
 def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
   t:=M.t+1,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
@@ -233,10 +234,6 @@ lemma insert_t (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h
 
 lemma insert_P (M: multi_part α) {B :finset α} (h: disjoint M.A B) :∀i, (insert M h).P i =
  ite (i≠ M.t+1) (M.P i) (B) :=λi, rfl 
-
-
-
-
 
 lemma insert_P' (M: multi_part α) {B :finset α} (h: disjoint M.A B) : ∀v∈B, v∈ (insert M h).P (M.t+1):=
 begin
