@@ -235,6 +235,9 @@ lemma insert_P (M: multi_part α) {B :finset α} (h: disjoint M.A B) :∀i, (ins
  ite (i≠ M.t+1) (M.P i) (B) :=λi, rfl 
 
 
+
+
+
 lemma insert_P' (M: multi_part α) {B :finset α} (h: disjoint M.A B) : ∀v∈B, v∈ (insert M h).P (M.t+1):=
 begin
   intros v hv, rw insert_P,split_ifs,exfalso, exact h_1 rfl, exact hv,
