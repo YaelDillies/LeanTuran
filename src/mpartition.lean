@@ -11,9 +11,7 @@ open_locale big_operators
 -- require at most one empty part, while I'm happy to allow any number of
 -- empty parts 
 namespace mpartition
-
--- start with some helper functions that don't need partitions to be defined
-
+-- start with some helper functions that don't need partitions to be defined.
 -- here P : ℕ → ℕ plays the role of sizes of parts in a (t+1)-partition 
 
 -- sum of part sizes i.e number of vertices 
@@ -83,7 +81,7 @@ begin
   have h2:=lt_of_le_of_ne ple h_right, linarith,
 end
 
--- large parts are just those that aren't small
+-- large parts are those that aren't small
 lemma large_parts' {t : ℕ} {P:ℕ → ℕ} (h: balanced t P): large_parts h = (range(t+1)).filter (λi, ¬ P i = min_bal h):=
 begin
   have :=con_sum h, unfold large_parts, ext,rw [mem_filter,mem_filter],split,
@@ -195,6 +193,7 @@ def default_M (B:finset α) (s:ℕ)  : multi_part α:={
   disj:= begin intros i hi j hj ne,split_ifs,exfalso,rw h at ne,rw h_1 at ne, exact ne rfl, 
     exact disjoint_empty_right _,exact disjoint_empty_left _,exact disjoint_empty_left _,end,}
 
+--
 
 -- insert new disjoint set to the partition to increase number of parts
 --- we will need this to build the complete multipartite graph used fro Furedi's stabilty result
@@ -224,22 +223,26 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
     push_neg at h_1,push_neg at h_2, rw ← h_2 at h_1, exfalso,
     exact iltj h_1, 
   end,}
+--
 
 --- after insert the vertex set is the union of new and old
 lemma insert_AB (M: multi_part α) {B :finset α} (h: disjoint M.A B):
 (insert M h).A = M.A ∪ B:=union_comm _ _
 
+-- t becomes t+1 (so now have (t+2) parts rather than (t+1))
 lemma insert_t (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h).t =M.t+1:=rfl
 
-
+--the parts are the same except the last which is the new set.
 lemma insert_P (M: multi_part α) {B :finset α} (h: disjoint M.A B) :∀i, (insert M h).P i =
  ite (i≠ M.t+1) (M.P i) (B) :=λi, rfl 
 
+--all vertices in the new part are in the last part of the new partition
 lemma insert_P' (M: multi_part α) {B :finset α} (h: disjoint M.A B) : ∀v∈B, v∈ (insert M h).P (M.t+1):=
 begin
   intros v hv, rw insert_P,split_ifs,exfalso, exact h_1 rfl, exact hv,
 end
 
+--conversely if v is in the last part of the new partition then it is from the added part.
 lemma insert_C (M: multi_part α) {B :finset α} (h: disjoint M.A B){v:α} : v∈ (insert M h).P (M.t+1) → v∈ B:=
 begin
   intro h1, rw insert_P at h1,split_ifs at h1,exfalso, exact h_1 rfl, exact h1,
@@ -291,6 +294,7 @@ begin
 end
 
 -- if there are two different parts then the sum of their sizes is at most the size of the whole
+-- could make a version for any number of parts but don't really need it
 lemma two_parts {M: multi_part α} {i j : ℕ} (hi: i ∈ range(M.t+1))  (hj: j ∈ range(M.t+1)) (hne: i≠ j) : (M.P i).card + (M.P j).card ≤ M.A.card:=
 begin
   rw card_uni, rw ← sum_erase_add (range(M.t+1)) _ hj, apply nat.add_le_add_right,
@@ -306,7 +310,7 @@ begin
   rwa [sdiff_union_self_eq_union, left_eq_union_iff_subset] at *,
 end
 
--- part is disjoint from the rest
+-- each part is disjoint from its sdiff with the whole
 lemma disjoint_part {M:multi_part α} {i : ℕ} : disjoint ((M.A)\(M.P i)) (M.P i) := sdiff_disjoint
 
 -- size of uni = sum of rest and part
@@ -316,7 +320,9 @@ begin
   apply card_disjoint_union sdiff_disjoint,
 end
 
--- create new parition by moving v from P i to P j,
+-- create a new partition by moving v from P i to P j,
+-- why could I not use "(M.P j).insert v" invalid field notation, but it didn't complain about "(M.P i).erase v"
+--- Error message :'insert' is not a valid "field" because environment does not contain 'finset.insert' M.P j which has type finset α
 def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
   t:=M.t,
   P:= begin intros k, exact ite (k ≠ i ∧ k ≠ j) (M.P k) (ite (k = i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
@@ -351,8 +357,9 @@ def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v�
   not_false_iff, and_true],
     have:=M.disj j hj.1  i hvi.1 hj.2, apply disjoint_of_subset_right _ this, exact erase_subset _ _, 
     exfalso, push_neg at h_2,push_neg at h, have bj:= h_2 h_3, have aj:= h h_1,rw aj at ne, rw bj at ne, exact ne rfl,
-  end,}
+end,}
 
+-- new whole is same as old
 lemma move_A {M : multi_part α} {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :(move M hvi hj).A=M.A:=
 rfl
 
@@ -389,7 +396,7 @@ begin
   have h2:=h' ha, exact h2.1 this,
 end
 
---size of complement has increased
+--size of complement of erased part has increased
 lemma card_sdiff_erase {v : α} {A B :finset α} (hB: B⊆A) (hv: v ∈ B) : (A\(B.erase v)).card=(A\B).card+1 :=
 begin
   have hv2: v∉A\B, {rw mem_sdiff,push_neg,intro i, exact hv,},
