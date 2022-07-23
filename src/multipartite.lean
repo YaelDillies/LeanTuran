@@ -132,6 +132,7 @@ end
 -- degree sum over all vertices 
 def mp_dsum (M : multi_part α) : ℕ:= ∑ v in M.A, (mp M).degree v
 
+
 -- degree of vertex in P i is card(A\P i)
 lemma mp_deg {M : multi_part α} {v : α} {i: ℕ} (hv: i∈ range(M.t+1) ∧ v∈ M.P i) : (mp M).degree v = ((M.A)\(M.P i)).card:= 
 begin
@@ -154,7 +155,7 @@ begin
 end
 
 ---using squares of part sizes and avoiding tsubtraction
-lemma mp_deg_sum_sq' {M : multi_part α} : ∑ v in M.A, (mp M).degree v + ∑i in range(M.t+1), (M.P i).card^2 = M.A.card^2:=
+lemma mp_deg_sum_sq' (M : multi_part α) : ∑ v in M.A, (mp M).degree v + ∑i in range(M.t+1), (M.P i).card^2 = M.A.card^2:=
 begin
   rw mp_deg_sum M, rw pow_two, nth_rewrite 0 card_uni, rw ← sum_add_distrib, rw sum_mul, 
   refine finset.sum_congr rfl _,
@@ -163,7 +164,7 @@ end
 
 -- standard expression  as |A|^2- ∑ degrees squared.
 lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
-:=eq_tsub_of_add_eq mp_deg_sum_sq'
+:=eq_tsub_of_add_eq (mp_deg_sum_sq' M)
 
 
 -- upper bound on deg sum of any complete multipartite graph on A to show that it can't be improved more than |A|^2 times.
@@ -218,6 +219,24 @@ begin
   rw [add_assoc,add_assoc], refine (add_lt_add_iff_left _).mpr _ , exact mp_deg_sum_move_help hvi hj hc,
 end
 
+lemma sum_sq_c_dec {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
+sum_sq_c (move M hvi hj) < sum_sq_c M:=
+begin
+  unfold sum_sq_c,
+  have h3:=mp_deg_sum_move hvi hj hc, 
+  have h1:=mp_deg_sum_sq' M,   have h2:=mp_deg_sum_sq' (move M hvi hj), rw [move_A, move_t] at *, 
+  rw ← h2 at h1, rw move_t, linarith,
+end
+
+lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A= M.A ∧ N.t=M.t ∧ immoveable N:=
+begin
+  apply well_founded.recursion (measure_wf sum_sq_c) M,
+  intros X h,
+  by_cases h': immoveable X,{exact ⟨X,rfl,rfl,h'⟩,},{
+    obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:=immoveable_imp h',
+    set Y:=(move X ⟨hi,hv⟩ ⟨hj,ne⟩),
+    use h Y (sum_sq_c_dec ⟨hi,hv⟩ ⟨hj,ne⟩ hc),}
+end
 end simple_graph
 
 

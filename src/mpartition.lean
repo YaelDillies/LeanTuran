@@ -169,11 +169,22 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 -- given M with M.t+1 parts and partition sets P we have P' M is the corresponding sizes of parts
 def P' (M: multi_part α) :ℕ → ℕ:= (λi, (M.P i).card)
 
+def sum_sq_c (M: multi_part α): ℕ:= ∑i in range(M.t+1), card(M.P i)^2
+
 -- a partition is moveable if the part sizes are unbalanced
 --def moveable (M : multi_part α)  :Prop := ∃ i∈ range(M.t+1),∃ j ∈ range(M.t+1), (M.P j).card +1 < (M.P i).card
 def moveable (M : multi_part α)  :Prop := ¬ balanced M.t (P' M)
 --- ie. immoveable means the sizes of parts is such that it is balanced
 def immoveable (M : multi_part α) :Prop :=∀i∈ range(M.t+1),∀j∈ range(M.t+1), (M.P i).card ≤ (M.P j).card +1
+
+lemma immoveable_imp {M: multi_part α} (h: ¬immoveable M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
+begin
+
+sorry,
+end
+
+
+
 -- obviously
 lemma immoveable_iff_not_moveable (M : multi_part α) :immoveable M ↔ ¬moveable M:=
 begin
