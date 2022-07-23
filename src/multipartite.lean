@@ -220,7 +220,7 @@ begin
 end
 
 -- moving reduces sum of sum_sq_c
-lemma sum_sq_c_dec {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
+lemma sum_sq_c_dec (M : multi_part α) {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 sum_sq_c (move M hvi hj) < sum_sq_c M:=
 begin
   unfold sum_sq_c,
@@ -230,31 +230,31 @@ begin
 end
 
 -- so given any partition M we can find an immoveable one on the same set with the same number of parts.
-lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A= M.A ∧ N.t=M.t ∧ immoveable N:=
+lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A= M.A ∧ N.t=M.t ∧ immoveable N ∧ mp_dsum M≤ mp_dsum N:=
 begin
   apply well_founded.recursion (measure_wf sum_sq_c) M,
   intros X h,
-  by_cases h': immoveable X,{exact ⟨X,rfl,rfl,h'⟩,},{
+  by_cases h': immoveable X,{exact ⟨X,rfl,rfl,h', le_rfl⟩,},{
     obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:=immoveable_imp h',
-    set Y:=(move X ⟨hi,hv⟩ ⟨hj,ne⟩),
-    use h Y (sum_sq_c_dec ⟨hi,hv⟩ ⟨hj,ne⟩ hc),}
+    set Y:=(move X ⟨hi,hv⟩ ⟨hj,ne⟩) with hY,
+    specialize h Y (sum_sq_c_dec X ⟨hi,hv⟩ ⟨hj,ne⟩ hc), 
+    rw [move_t,move_A] at h, have :=mp_deg_sum_move  ⟨hi,hv⟩ ⟨hj,ne⟩ hc, rw [←mp_dsum,←mp_dsum,← hY] at this,
+    obtain ⟨N,h1,h2,h3,h4⟩:=h, refine ⟨N,h1,h2,h3,_⟩, exact le_trans (le_of_lt this) h4,},
 end
 
 
-
-lemma moved_max (M N:multi_part α): immoveable M → M.A =N.A → M.t =N.t → mp_dsum N≤ mp_dsum M:=
+-- given any partition that is immoveable and one that is moveable the degree sum of the former is strictly larger
+-- ie only Turan graphs maximize number of edges.
+lemma moved_max (M N:multi_part α): M.A =N.A → M.t =N.t → immoveable M →  ¬immoveable N → mp_dsum N < mp_dsum M:=
 begin
-
-
-sorry,
+  intros hA ht him h1,
+  obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:= immoveable_imp h1, 
+  set O:=(move N ⟨hi,hv⟩ ⟨hj,ne⟩) with hO, have Ns:mp_dsum N < mp_dsum O:=mp_deg_sum_move ⟨hi,hv⟩ ⟨hj,ne⟩ hc,
+  obtain ⟨Q,QA,Qt,Qim,Qs⟩:=moved O, have :=immoveable_deg_sum_eq M Q _ _ him Qim,rw this,
+  exact lt_of_lt_of_le Ns Qs, rw [hA,QA], have NOA:N.A=O.A:=move_A ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOA,
+   rw[ht,Qt],  have NOt:N.t=O.t:=move_t ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOt,
 end
 
-lemma moved_max_eq (M N:multi_part α): immoveable M → M.A =N.A → M.t =N.t → mp_dsum N= mp_dsum M → immoveable N:=
-begin
-
-
-sorry,
-end
 
 
 end simple_graph
