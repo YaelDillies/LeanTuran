@@ -219,6 +219,7 @@ begin
   rw [add_assoc,add_assoc], refine (add_lt_add_iff_left _).mpr _ , exact mp_deg_sum_move_help hvi hj hc,
 end
 
+-- moving reduces sum of sum_sq_c
 lemma sum_sq_c_dec {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 sum_sq_c (move M hvi hj) < sum_sq_c M:=
 begin
@@ -228,6 +229,7 @@ begin
   rw ← h2 at h1, rw move_t, linarith,
 end
 
+-- so given any partition M we can find an immoveable one on the same set with the same number of parts.
 lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A= M.A ∧ N.t=M.t ∧ immoveable N:=
 begin
   apply well_founded.recursion (measure_wf sum_sq_c) M,
@@ -237,6 +239,24 @@ begin
     set Y:=(move X ⟨hi,hv⟩ ⟨hj,ne⟩),
     use h Y (sum_sq_c_dec ⟨hi,hv⟩ ⟨hj,ne⟩ hc),}
 end
+
+
+
+lemma moved_max (M N:multi_part α): immoveable M → M.A =N.A → M.t =N.t → mp_dsum N≤ mp_dsum M:=
+begin
+
+
+sorry,
+end
+
+lemma moved_max_eq (M N:multi_part α): immoveable M → M.A =N.A → M.t =N.t → mp_dsum N= mp_dsum M → immoveable N:=
+begin
+
+
+sorry,
+end
+
+
 end simple_graph
 
 
