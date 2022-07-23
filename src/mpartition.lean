@@ -15,7 +15,7 @@ namespace mpartition
 -- here P : ℕ → ℕ plays the role of sizes of parts in a (t+1)-partition 
 
 -- sum of part sizes i.e number of vertices 
-def sum (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
+def psum (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
 
 -- sum of squares of part sizes (basically 2*edges in complement)
 def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
@@ -128,17 +128,17 @@ begin
 end
 
 -- simple equation for sum of parts 
-lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : sum t P = (small_parts h).card * (min_bal h) + 
+lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (small_parts h).card * (min_bal h) + 
   (large_parts h).card * (min_bal h+1) := bal_sum_f h (λi,i)
 
 -- alternative version of previous
-lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : sum t P = (t+1)* (min_bal h) + (large_parts h).card :=
+lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (t+1)* (min_bal h) + (large_parts h).card :=
 begin
   rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
 end
 
 -- balanced partitions have same part sizes and number of each type of part
-lemma bal_eq {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): 
+lemma bal_eq {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: psum t P = psum t Q): 
 (min_bal hbp = min_bal hbq) ∧ (large_parts hbp).card = (large_parts hbq).card ∧ (small_parts hbp).card = (small_parts hbq).card:=
 begin
   rw [bal_sum' hbp, bal_sum' hbq] at hs,
@@ -150,7 +150,7 @@ end
 -- any two balanced (t+1)-partitions of same size set give the same sum of squares.
 -- could be for other functions but not needed 
 -- this tells us that balanced partitions of the same vertex set give the same number of edges
-lemma bal_sum_sq_eq {t : ℕ} {P Q:ℕ → ℕ} (hbp: balanced t P) (hbq: balanced t Q) (hs: sum t P = sum t Q): sum_sq t P = sum_sq t Q:=
+lemma bal_sum_sq_eq {t : ℕ} {P Q:ℕ → ℕ} (hbp: balanced t P) (hbq: balanced t Q) (hs: psum t P = psum t Q): sum_sq t P = sum_sq t Q:=
 begin
   have h1:=bal_sum_f hbp (λx ,x^2), have h2:=bal_sum_f hbq (λx ,x^2), 
   have h3:= bal_eq hbp hbq hs,
@@ -168,6 +168,7 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 
 -- given M with M.t+1 parts and partition sets P we have P' M is the corresponding sizes of parts
 def P' (M: multi_part α) :ℕ → ℕ:= (λi, (M.P i).card)
+
 -- a partition is moveable if the part sizes are unbalanced
 --def moveable (M : multi_part α)  :Prop := ∃ i∈ range(M.t+1),∃ j ∈ range(M.t+1), (M.P j).card +1 < (M.P i).card
 def moveable (M : multi_part α)  :Prop := ¬ balanced M.t (P' M)

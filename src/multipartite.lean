@@ -172,11 +172,15 @@ begin
   rw [mp_dsum, mp_deg_sum_sq], exact tsub_le_self,
 end
 
--- immoveable partition corresponds to balanced partition sizes
+
+-- immoveable partition corresponds to balanced partition sizes so if we have two immoveable partitions of same set A into
+-- the same number of parts then their degree sums are the the same
 lemma immoveable_deg_sum_eq (M N : multi_part α): M.A= N.A → M.t=N.t → immoveable M → immoveable N → mp_dsum M = mp_dsum N:=
 begin
-  
-  sorry,
+   intros hA ht iM iN, unfold mp_dsum,  rw [mp_deg_sum_sq,mp_deg_sum_sq,hA], rw [immoveable_iff_not_moveable, moveable,not_not] at *,
+   apply congr_arg _, unfold P' at *, rw ← ht at iN,  
+   have:= bal_sum_sq_eq iM iN _, unfold sum_sq at this, rwa  ← ht,
+   nth_rewrite 1 ht, rw [mpartition.psum, mpartition.psum,← card_uni,←card_uni],congr, exact hA,
 end
 
 
