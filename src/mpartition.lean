@@ -177,19 +177,24 @@ def moveable (M : multi_part α)  :Prop := ¬ balanced M.t (P' M)
 --- ie. immoveable means the sizes of parts is such that it is balanced
 def immoveable (M : multi_part α) :Prop :=∀i∈ range(M.t+1),∀j∈ range(M.t+1), (M.P i).card ≤ (M.P j).card +1
 
-lemma immoveable_imp {M: multi_part α} (h: ¬immoveable M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
-begin
-
-sorry,
-end
-
-
 
 -- obviously
 lemma immoveable_iff_not_moveable (M : multi_part α) :immoveable M ↔ ¬moveable M:=
 begin
   unfold immoveable, unfold moveable,push_neg,refl,
 end
+
+lemma immoveable_imp {M: multi_part α} (h: ¬immoveable M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
+begin
+  rw [immoveable_iff_not_moveable, not_not,  moveable,balanced,  P'] at h, push_neg at h,
+  obtain ⟨i,hi,j,hj,hc⟩:=h, use [i, hi, j, hj], 
+  have ic: 0<(M.P i).card:= by linarith,
+  rw card_pos at ic, obtain ⟨v,hv⟩:=ic,
+  have cne: (M.P i).card≠(M.P j).card:= by linarith,
+  refine ⟨v,hv,_,hc⟩, intro eq,rw eq at cne, exact cne rfl,
+end
+
+
 
 -- there is a partition
 instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
