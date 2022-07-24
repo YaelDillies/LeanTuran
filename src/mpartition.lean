@@ -98,11 +98,6 @@ def min_p (t : ℕ) (P : ℕ → ℕ) : ℕ:= begin
   exact min' ((range(t+1)).image(λi , P i)) nem,
 end
 
-lemma abc (a b c:ℕ) (h: a<b+c) (h1: 0<b): 0< b-(a-c):=
-begin
-
-sorry,
-end
 
 lemma name (t n :ℕ) : (n)<(t+1)*(n/(t+1)+1):=
 begin
@@ -116,7 +111,7 @@ have :=name t n, rw mul_add at this,rw mul_one at this,
 refine (tsub_lt_iff_left _).mpr this, exact mul_div_le n (t+1),
 end
 
-
+--minimum size of a part of a  Turan partition is n/(t+1)
 lemma Q_min_bal (t n: ℕ) : min_p t (Q_tn t n)= n/(t+1):=
 begin
   unfold min_p, have qm:=Q_min t n, 
@@ -133,6 +128,12 @@ def small_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range
 
 -- .. and large parts
 def large_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_p t P +1 )
+
+
+
+
+
+
 
 -- there is a smallest part 
 lemma small_nonempty {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) :(small_parts h).nonempty:=
@@ -171,6 +172,16 @@ begin
   intro h', refine ⟨h'.1,_⟩, intros h2, rw h2 at h', exact succ_ne_self (min_p t P) h'.2.symm,
   intros h', refine ⟨h'.1,_⟩, specialize this a h'.1,  cases this, exfalso, exact h'.2 this, exact this,
 end
+
+lemma Q_large_p (t n: ℕ) : (large_parts (Q_bal t n)).card=(n-(t+1)*(n/(t+1))):=
+begin
+  have:=Q_min_bal t n,
+  rw large_parts', rw this,rw Q_tn,simp only [ite_eq_left_iff, not_lt, tsub_le_iff_right, nat.succ_ne_self, not_forall, not_false_iff, exists_prop, and_true],
+  ----START HERE  
+sorry,
+end
+
+
 
 -- parts cannot be both small and large
 lemma parts_disjoint {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : disjoint (small_parts h) (large_parts h):=
