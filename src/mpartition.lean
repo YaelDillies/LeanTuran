@@ -11,6 +11,32 @@ open_locale big_operators
 -- require at most one empty part, while I'm happy to allow any number of
 -- empty parts 
 namespace mpartition
+
+def tn : ℕ → ℕ → ℕ:=
+begin
+  intros t n,
+  set a:= n/(t+1),--- size of a small part
+  set b:= n-(t+1)*a,-- number of large parts
+  exact (a^2)*nat.choose(t+1-b)(2)+a*(a+1)*b*(t+1-b)+((a+1)^2)*nat.choose(b)(2),
+end
+
+
+--complement is easier to deal with and also multiply by 2
+-- so 2*(tn t n) = n^2 - (tn' t n) 
+def tn' : ℕ → ℕ → ℕ:=
+begin
+  intros t n,
+  set a:= n/(t+1),--- size of a small part
+  set b:= n-(t+1)*a,-- number of large parts
+  exact a^2*(t+1-b)+b*(a+1),
+end
+
+lemma tn_tn' (t n : ℕ) : 2*(tn t n) = n^2 - (tn' t n):=
+begin
+  
+sorry,
+end
+
 -- start with some helper functions that don't need partitions to be defined.
 -- here P : ℕ → ℕ plays the role of sizes of parts in a (t+1)-partition 
 
@@ -157,6 +183,29 @@ begin
   rw [sum_sq,sum_sq,h1,h2,h3.1,h3.2.1,h3.2.2],
 end
 
+lemma bal_turan_help {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : min_bal hb = n/(t+1) ∧ (large_parts hb).card = n-(t+1)*(n/(t+1)):=
+begin
+
+  sorry,
+end
+
+
+lemma bal_turan_help' {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n)  sum_sq t P = tn' t n:=
+begin
+  --START HERE
+sorry
+end
+
+lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : sum_sq t P + 2*tn t n = n^2:=
+begin
+  rw sum_sq, rw tn, rw bal_sum_f hb (λi,i^2),
+  obtain ⟨hm,hl⟩:=bal_turan_help hb hn,
+  rw hl, rw hm, have hca:=parts_card_add hb, 
+  have hs: (small_parts hb).card = (t+1)-(large_parts hb).card,{
+    rw ← hca, simp only [add_tsub_cancel_right],},
+  rw hl at hs,rw hs, simp  [nat.choose_two_right],ring_nf,
+sorry,
+end
 --- now actually introduce the partitions we use to build complete multipartite graphs
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 @[ext] 
@@ -168,6 +217,8 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 
 -- given M with M.t+1 parts and partition sets P we have P' M is the corresponding sizes of parts
 def P' (M: multi_part α) :ℕ → ℕ:= (λi, (M.P i).card)
+
+
 
 def sum_sq_c (M: multi_part α): ℕ:= ∑i in range(M.t+1), card(M.P i)^2
 
@@ -183,6 +234,7 @@ lemma immoveable_iff_not_moveable (M : multi_part α) :immoveable M ↔ ¬moveab
 begin
   unfold immoveable, unfold moveable,push_neg,refl,
 end
+
 
 lemma immoveable_imp {M: multi_part α} (h: ¬immoveable M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
 begin

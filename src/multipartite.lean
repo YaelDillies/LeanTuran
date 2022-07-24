@@ -255,7 +255,22 @@ begin
    rw[ht,Qt],  have NOt:N.t=O.t:=move_t ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOt,
 end
 
+-- t_n t n is the maximum number of edges in a (t+2)-clique free graph of order n
+-- or equivalently the maximum numb of edges in a complete (t+1)-partite graph order n
+-- or equivalently .... 
 
+
+
+
+lemma turan_bound_M (M: multi_part α): mp_dsum M ≤ 2*tn M.t M.A.card:=
+begin
+  obtain ⟨N,hA,ht,iN,sN⟩:=moved M,
+  apply le_trans sN _, apply le_of_eq,
+  rw immoveable_iff_not_moveable at iN,rw moveable at iN, rw not_not at iN,rw P' at iN, rw ← hA,rw ←ht, 
+  set n:=N.A.card with hn, rw card_uni at hn,
+  have:= bal_turan_bd iN hn.symm, rw ← card_uni at hn,rw sum_sq at this, rw  mp_dsum,rw mp_deg_sum_sq,-- rw← this,  
+  rw hn at this,  rw hn, rw ← this, rw add_comm, simp only [add_tsub_cancel_right],
+end
 
 end simple_graph
 

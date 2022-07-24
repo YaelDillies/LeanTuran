@@ -13,6 +13,20 @@ open finset nat mpartition
 open_locale big_operators 
 
 namespace simple_graph
+
+
+-- t_n t n is the maximum number of edges in a (t+2)-clique free graph of order n
+-- or equivalently the maximum numb of edges in a complete (t+1)-partite graph order n
+-- or equivalently .... 
+def t_n : ℕ → ℕ → ℕ:=
+begin
+  intros t n,
+  set a:= n/(t+1),--- size of a small part
+  set b:= n-(t+1)*a,-- number of large parts
+  exact (a^2)*nat.choose(t+1-b)(2)+a*(a+1)*b*(t+1-b)+((a+1)^2)*nat.choose(b)(2),
+end
+
+
 --variables {t n : ℕ} 
 -- turan_numb t n is max numb of edges in an n vertex t+1 partite graph 
 ---what about 0-partite? sorry not going there...
