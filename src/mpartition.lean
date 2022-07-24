@@ -31,6 +31,20 @@ begin
   exact a^2*(t+1-b)+b*(a+1),
 end
 
+
+
+-- canonical Turan partition
+def Q_tn : ℕ → ℕ → (ℕ → ℕ):=
+begin
+  intros t n,
+  set a:= n/(t+1),--- size of a small part
+  set b:= n-(t+1)*a,-- number of large parts
+  intro i , exact ite (i<t+1-b) (a) (a+1),
+end
+
+
+
+
 lemma tn_tn' (t n : ℕ) : 2*(tn t n) = n^2 - (tn' t n):=
 begin
   
@@ -64,6 +78,52 @@ end
 
 -- a balanced (t+1) partition is one with almost equal parts
 def balanced (t : ℕ) (P : ℕ → ℕ): Prop:= ∀ i ∈ range(t+1),∀ j∈ range(t+1), P i ≤ (P j) + 1
+
+
+lemma Q_bal  : ∀t:ℕ, ∀n:ℕ, balanced t (Q_tn t n):=
+begin
+  intros t n,unfold balanced, intros i hi j hj,
+  unfold Q_tn, simp only, split_ifs, repeat {by linarith},
+end
+
+
+
+/-
+lemma Q_help {a b t n : ℕ} (ha: a=n/(t+1) )( hb: b=n-(t+1)*(n/(t+1))) : (t+1-b)*a+b*(a+1)=n:=
+begin
+
+sorry,
+
+end
+
+
+
+lemma Q_sum  : ∀t:ℕ, ∀n:ℕ, psum t (Q_tn t n) = n:=
+begin
+  intros t n, rw psum,
+  set a:ℕ:=n/(t+1) with ha,
+  set b:ℕ:= n-(t+1)*(n/(t+1)) with hb,
+  have ru:range(t+1)= range(t+1-b) ∪ (finset.Ico (t+1-b) (t+1)),{
+    ext x, rw mem_range, rw mem_union, rw mem_range,rw mem_Ico,split, intro hx, 
+    by_cases  (x < t+1-b),left ,exact h, right, refine ⟨_,hx⟩, push_neg at h, exact h,
+    intros h,cases h, apply lt_of_lt_of_le h (by norm_num: t+1-b ≤ t+1), exact h.2,},
+  
+  have rd : disjoint (range (t+1-b)) (finset.Ico (t+1-b) (t+1)),{
+     intros x hx,  simp only [inf_eq_inter, mem_inter, mem_range, mem_Ico] at hx, 
+     exact lt_irrefl x (lt_of_lt_of_le hx.1 hx.2.1), },
+  rw ru,rw sum_union rd,unfold Q_tn, simp [← hb,←ha], rw sum_ite_of_true,rw sum_ite_of_false,
+  rw [sum_const,sum_const], rw card_range,rw card_Ico,
+  {
+    simp,
+    exact Q_help ha hb,  
+    rw [ha,hb], simp,
+  sorry,
+  },
+  intros x hx,rw mem_Ico at hx, intro h, exact lt_irrefl x (lt_of_lt_of_le h hx.1),
+  intros x hx, rwa mem_range at hx,
+end
+-/
+
 
 -- smallest part is well-defined
 def min_bal {t : ℕ} {P : ℕ → ℕ} (h: balanced t P): ℕ:= begin
@@ -157,6 +217,30 @@ end
 lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (small_parts h).card * (min_bal h) + 
   (large_parts h).card * (min_bal h+1) := bal_sum_f h (λi,i)
 
+
+
+
+lemma ab (a b :ℕ) (h: a≤b) : a+(b-a)=b:=
+begin
+
+  apply add_tsub_cancel_of_le h,
+end
+
+lemma ac (t n): (t+1)*(n/(t+1))≤ n:=
+begin
+
+exact mul_div_le n (t + 1),
+end
+
+
+--
+lemma Q_help {t n : ℕ}: (t+1)*(n/(t+1))+(n-(t+1)*(n/(t+1)))=n:=
+begin
+  exact add_tsub_cancel_of_le (mul_div_le n (t+1)),
+end
+
+
+
 -- alternative version of previous
 lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (t+1)* (min_bal h) + (large_parts h).card :=
 begin
@@ -189,10 +273,24 @@ begin
   sorry,
 end
 
-
-lemma bal_turan_help' {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n)  sum_sq t P = tn' t n:=
+--DO THIS NEXT
+lemma Q_sum  : ∀t:ℕ, ∀n:ℕ, psum t (Q_tn t n) = n:=
 begin
-  --START HERE
+  intros t n,
+  have qb:=Q_bal t n,
+  have qs1:=bal_sum' qb,
+  have mb:min_bal qb = n/(t+1),{sorry,},
+  have lc:(large_parts qb).card= n-(t+1)*(n/(t+1)),{sorry,},
+  rw [mb,lc] at qs1,
+  rw qs1,
+  exact add_tsub_cancel_of_le (mul_div_le n (t+1)),
+end
+
+
+
+lemma bal_turan_help' {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
+begin
+  
 sorry
 end
 
