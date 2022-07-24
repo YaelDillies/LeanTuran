@@ -86,56 +86,53 @@ begin
   unfold Q_tn, simp only, split_ifs, repeat {by linarith},
 end
 
-
-
-/-
-lemma Q_help {a b t n : ℕ} (ha: a=n/(t+1) )( hb: b=n-(t+1)*(n/(t+1))) : (t+1-b)*a+b*(a+1)=n:=
+lemma Q_min  : ∀t:ℕ, ∀n:ℕ, ∀y:ℕ, y∈ image(λ j, Q_tn t n j) (range(t+1)) → n/(t+1) ≤ y:=
 begin
-
-sorry,
-
+  intros t n y,rw mem_image,intro h, cases h with j hj1, cases hj1 with hj h,unfold Q_tn at h,
+  rw ← h, simp only, split_ifs, repeat {by linarith},
 end
-
-
-
-lemma Q_sum  : ∀t:ℕ, ∀n:ℕ, psum t (Q_tn t n) = n:=
-begin
-  intros t n, rw psum,
-  set a:ℕ:=n/(t+1) with ha,
-  set b:ℕ:= n-(t+1)*(n/(t+1)) with hb,
-  have ru:range(t+1)= range(t+1-b) ∪ (finset.Ico (t+1-b) (t+1)),{
-    ext x, rw mem_range, rw mem_union, rw mem_range,rw mem_Ico,split, intro hx, 
-    by_cases  (x < t+1-b),left ,exact h, right, refine ⟨_,hx⟩, push_neg at h, exact h,
-    intros h,cases h, apply lt_of_lt_of_le h (by norm_num: t+1-b ≤ t+1), exact h.2,},
-  
-  have rd : disjoint (range (t+1-b)) (finset.Ico (t+1-b) (t+1)),{
-     intros x hx,  simp only [inf_eq_inter, mem_inter, mem_range, mem_Ico] at hx, 
-     exact lt_irrefl x (lt_of_lt_of_le hx.1 hx.2.1), },
-  rw ru,rw sum_union rd,unfold Q_tn, simp [← hb,←ha], rw sum_ite_of_true,rw sum_ite_of_false,
-  rw [sum_const,sum_const], rw card_range,rw card_Ico,
-  {
-    simp,
-    exact Q_help ha hb,  
-    rw [ha,hb], simp,
-  sorry,
-  },
-  intros x hx,rw mem_Ico at hx, intro h, exact lt_irrefl x (lt_of_lt_of_le h hx.1),
-  intros x hx, rwa mem_range at hx,
-end
--/
-
 
 -- smallest part is well-defined
-def min_bal {t : ℕ} {P : ℕ → ℕ} (h: balanced t P): ℕ:= begin
+def min_p (t : ℕ) (P : ℕ → ℕ) : ℕ:= begin
   have nem: ((range(t+1)).image(λi , P i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
   exact min' ((range(t+1)).image(λi , P i)) nem,
 end
 
+lemma abc (a b c:ℕ) (h: a<b+c) (h1: 0<b): 0< b-(a-c):=
+begin
+
+sorry,
+end
+
+lemma name (t n :ℕ) : (n)<(t+1)*(n/(t+1)+1):=
+begin
+exact lt_mul_div_succ n (by linarith:0<t+1),
+end
+
+
+lemma name2 (t n :ℕ): n-(t+1)*(n/(t+1))<(t+1):=
+begin
+have :=name t n, rw mul_add at this,rw mul_one at this,  
+refine (tsub_lt_iff_left _).mpr this, exact mul_div_le n (t+1),
+end
+
+
+lemma Q_min_bal (t n: ℕ) : min_p t (Q_tn t n)= n/(t+1):=
+begin
+  unfold min_p, have qm:=Q_min t n, 
+  have nem: ((range(t+1)).image(λi , (Q_tn t n) i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
+  have lm:=le_min' _ nem (n/(t+1)) qm,
+  have ism: (n/(t+1))∈ ((range(t+1)).image(λi , (Q_tn t n) i)),{
+    rw mem_image,refine⟨ 0,_, _⟩,rw mem_range, linarith, unfold Q_tn, simp only, split_ifs, refl,exfalso,
+    have ltd:=lt_mul_div_succ n (by linarith:0<t+1),rw mul_add at ltd,rw mul_one at ltd,rw add_comm at ltd,
+    have :=name2 t n, exact h (tsub_pos_of_lt this),},
+  have ml:=min'_le _ (n/(t+1)) ism, exact le_antisymm ml lm,
+end
 -- indices of small parts
-def small_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_bal h)
+def small_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_p t P)
 
 -- .. and large parts
-def large_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_bal h +1 )
+def large_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_p t P +1 )
 
 -- there is a smallest part 
 lemma small_nonempty {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) :(small_parts h).nonempty:=
@@ -148,7 +145,7 @@ begin
 end
 
 -- in a balanced partition all parts are small or large
-lemma con_sum {t :ℕ} {P :ℕ → ℕ} (h: balanced t P): ∀i∈ range(t+1), P i = min_bal h ∨ P i = min_bal h +1:=
+lemma con_sum {t :ℕ} {P :ℕ → ℕ} (h: balanced t P): ∀i∈ range(t+1), P i = min_p t P ∨ P i = min_p t P +1:=
 begin
   unfold balanced at h,
   have nem: ((range(t+1)).image(λi , P i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
@@ -168,17 +165,17 @@ begin
 end
 
 -- large parts are those that aren't small
-lemma large_parts' {t : ℕ} {P:ℕ → ℕ} (h: balanced t P): large_parts h = (range(t+1)).filter (λi, ¬ P i = min_bal h):=
+lemma large_parts' {t : ℕ} {P:ℕ → ℕ} (h: balanced t P): large_parts h = (range(t+1)).filter (λi, ¬ P i = min_p t P):=
 begin
   have :=con_sum h, unfold large_parts, ext,rw [mem_filter,mem_filter],split,
-  intro h', refine ⟨h'.1,_⟩, intros h2, rw h2 at h', exact succ_ne_self (min_bal h) h'.2.symm,
+  intro h', refine ⟨h'.1,_⟩, intros h2, rw h2 at h', exact succ_ne_self (min_p t P) h'.2.symm,
   intros h', refine ⟨h'.1,_⟩, specialize this a h'.1,  cases this, exfalso, exact h'.2 this, exact this,
 end
 
 -- parts cannot be both small and large
 lemma parts_disjoint {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : disjoint (small_parts h) (large_parts h):=
 begin
-  convert disjoint_filter_filter_neg (range(t+1)) (λi, P i = min_bal h),
+  convert disjoint_filter_filter_neg (range(t+1)) (λi, P i = min_p t P),
   exact large_parts' h,
 end
 
@@ -206,7 +203,7 @@ end
 
 -- any sum of a function over P is determined by the sizes and parts
 lemma bal_sum_f {t : ℕ} {P: ℕ → ℕ} (h: balanced t P) (f: ℕ → ℕ):∑ i in range(t+1), f (P i) = 
-(small_parts h).card * f(min_bal h) + (large_parts h).card * f(min_bal h+1) := 
+(small_parts h).card * f(min_p t P) + (large_parts h).card * f(min_p t P+1) := 
 begin
   rw [parts_union h, sum_union (parts_disjoint h)], congr, 
   rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl,rw small_parts,intros x, rw mem_filter,intro hx,rw hx.2,
@@ -214,42 +211,23 @@ begin
 end
 
 -- simple equation for sum of parts 
-lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (small_parts h).card * (min_bal h) + 
-  (large_parts h).card * (min_bal h+1) := bal_sum_f h (λi,i)
+lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (small_parts h).card * (min_p t P) + 
+  (large_parts h).card * (min_p t P+1) := bal_sum_f h (λi,i)
 
 
 
-
-lemma ab (a b :ℕ) (h: a≤b) : a+(b-a)=b:=
-begin
-
-  apply add_tsub_cancel_of_le h,
-end
-
-lemma ac (t n): (t+1)*(n/(t+1))≤ n:=
-begin
-
-exact mul_div_le n (t + 1),
-end
-
-
---
-lemma Q_help {t n : ℕ}: (t+1)*(n/(t+1))+(n-(t+1)*(n/(t+1)))=n:=
-begin
-  exact add_tsub_cancel_of_le (mul_div_le n (t+1)),
-end
 
 
 
 -- alternative version of previous
-lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (t+1)* (min_bal h) + (large_parts h).card :=
+lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (t+1)* (min_p t P) + (large_parts h).card :=
 begin
   rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
 end
 
 -- balanced partitions have same part sizes and number of each type of part
 lemma bal_eq {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: psum t P = psum t Q): 
-(min_bal hbp = min_bal hbq) ∧ (large_parts hbp).card = (large_parts hbq).card ∧ (small_parts hbp).card = (small_parts hbq).card:=
+(min_p t P = min_p t Q) ∧ (large_parts hbp).card = (large_parts hbq).card ∧ (small_parts hbp).card = (small_parts hbq).card:=
 begin
   rw [bal_sum' hbp, bal_sum' hbq] at hs,
   have hc:=large_parts_card hbp,have hd:=large_parts_card hbq,
@@ -267,11 +245,12 @@ begin
   rw [sum_sq,sum_sq,h1,h2,h3.1,h3.2.1,h3.2.2],
 end
 
-lemma bal_turan_help {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : min_bal hb = n/(t+1) ∧ (large_parts hb).card = n-(t+1)*(n/(t+1)):=
+lemma bal_turan_help {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : min_p t P = n/(t+1) ∧ (large_parts hb).card = n-(t+1)*(n/(t+1)):=
 begin
 
   sorry,
 end
+
 
 --DO THIS NEXT
 lemma Q_sum  : ∀t:ℕ, ∀n:ℕ, psum t (Q_tn t n) = n:=
@@ -279,7 +258,8 @@ begin
   intros t n,
   have qb:=Q_bal t n,
   have qs1:=bal_sum' qb,
-  have mb:min_bal qb = n/(t+1),{sorry,},
+  have mb:min_p t (Q_tn t n) = n/(t+1),{
+    sorry,},
   have lc:(large_parts qb).card= n-(t+1)*(n/(t+1)),{sorry,},
   rw [mb,lc] at qs1,
   rw qs1,
