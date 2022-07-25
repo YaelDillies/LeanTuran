@@ -59,12 +59,12 @@ begin
   unfold tn tn', dsimp,
   have t1:t+1-1=t:=tsub_eq_of_eq_add rfl,
   have n1:=div_add_mod n (t+1),
-  have n2:=le_of_lt (mod_lt n (succ_pos t)), rw succ_eq_add_one at n2,
-  have n3: (t+1)-n%(t+1)+n%(t+1)=(t+1):= tsub_add_cancel_of_le n2,
+  have n2:=(mod_lt n (succ_pos t)), rw succ_eq_add_one at n2,
+  have n3: (t+1)-n%(t+1)+n%(t+1)=(t+1):= tsub_add_cancel_of_le (le_of_lt n2),
   set a:= n/(t+1) with ha, set b:= n%(t+1) with hb,
   cases nat.eq_zero_or_pos n with hn,{ rw hn at *, simp only [*, nat.zero_div, zero_pow', ne.def, bit0_eq_zero, nat.one_ne_zero, not_false_iff, mul_zero, zero_add, zero_mul,
   choose_zero_succ] at *,},{
-  cases (eq_zero_or_eq_succ_pred b) with hb',{
+  cases nat.eq_zero_or_pos b with hb',{
     rw hb' at *,ring_nf, rw two, rw tsub_zero, rw add_zero at n1,
     rw nat.choose,
     rw [mul_zero,mul_zero,add_zero,add_zero,add_zero,← n1,t1],ring_nf,  
@@ -75,10 +75,11 @@ begin
   nth_rewrite 0 mul_comm 2 _, nth_rewrite 1 mul_comm 2 _,
   rw mul_assoc,rw mul_assoc _ 2, rw [two,two], 
   rw square ((t+1-b)*a) (b*(a+1)),
-  --- follow plan on paper
------START HERE  
-  
-  sorry,},},
+  rw mul_comm _ (a^2),
+  set c:=(t+1-b) with hc,  have hc1:1≤ c:=by linarith,have hb1:1≤ b:=by linarith,
+  have hc2:(c-1+1=c):=by linarith,have hb2:(b-1+1=b):=by linarith,
+  ring_nf,rw hc2, rw hb2, nth_rewrite 3 ← mul_one 2,rw ← mul_add 2,rw hb2,
+  ring_nf,},},
 end
 
 -- start with some helper functions that don't need partitions to be defined.
