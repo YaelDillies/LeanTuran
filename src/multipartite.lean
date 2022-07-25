@@ -235,7 +235,7 @@ begin
   apply well_founded.recursion (measure_wf sum_sq_c) M,
   intros X h,
   by_cases h': immoveable X,{exact ⟨X,rfl,rfl,h', le_rfl⟩,},{
-    obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:=immoveable_imp h',
+    obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:=not_immoveable_imp h',
     set Y:=(move X ⟨hi,hv⟩ ⟨hj,ne⟩) with hY,
     specialize h Y (sum_sq_c_dec X ⟨hi,hv⟩ ⟨hj,ne⟩ hc), 
     rw [move_t,move_A] at h, have :=mp_deg_sum_move  ⟨hi,hv⟩ ⟨hj,ne⟩ hc, rw [←mp_dsum,←mp_dsum,← hY] at this,
@@ -248,7 +248,7 @@ end
 lemma moved_max (M N:multi_part α): M.A =N.A → M.t =N.t → immoveable M →  ¬immoveable N → mp_dsum N < mp_dsum M:=
 begin
   intros hA ht him h1,
-  obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:= immoveable_imp h1, 
+  obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:= not_immoveable_imp h1, 
   set O:=(move N ⟨hi,hv⟩ ⟨hj,ne⟩) with hO, have Ns:mp_dsum N < mp_dsum O:=mp_deg_sum_move ⟨hi,hv⟩ ⟨hj,ne⟩ hc,
   obtain ⟨Q,QA,Qt,Qim,Qs⟩:=moved O, have :=immoveable_deg_sum_eq M Q _ _ him Qim,rw this,
   exact lt_of_lt_of_le Ns Qs, rw [hA,QA], have NOA:N.A=O.A:=move_A ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOA,
