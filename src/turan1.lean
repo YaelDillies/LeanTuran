@@ -578,7 +578,7 @@ end
 -- such that edges in A + edges in parts (counted a second time) ≤ edges in the complete
 -- (t+1)-partite graph on same partition
 -- implies Turan once we have finished with max edges of complete multi-partite....
-lemma furedi : ∀A:finset α, G.clique_free_set A (t+2) → ∃M:multi_part α, M.A=A ∧ M.t =t ∧ 
+theorem furedi : ∀A:finset α, G.clique_free_set A (t+2) → ∃M:multi_part α, M.A=A ∧ M.t =t ∧ 
 ∑v in A, G.deg_res v A + ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i) ≤ ∑ v in A, (mp M).deg_res v A:=
 begin
   induction t with t ht, rw zero_add,
@@ -598,6 +598,21 @@ begin
   -- need to sort out the sum over parts in the larger graph
   rw ←  mpc, rw ← G.internal_count dAB,
   linarith,
+end
+
+-- usual-ish statement of turan upper bound
+theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ tn t (fintype.card α):=
+begin
+  intro h,
+  obtain ⟨M,hA,ht,hs⟩:=G.furedi univ (G.clique_free_graph_imp_set h),
+  simp only [deg_res_univ] at hs,
+---  rw [sum_degrees_eq_twice_card_edges,sum_degrees_eq_twice_card_edges,card_univ,mul_le_mul_left] at hs, by norm_num,
+----  START HERE 
+
+
+
+  sorry,
+
 end
 
 end simple_graph

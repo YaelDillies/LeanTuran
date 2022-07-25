@@ -250,6 +250,13 @@ begin
   rw tn', rw sum_sq, rw bal_sum_n_f hb hn (λi, i^2),
 end
 
+lemma bal_turan_help' {n t :ℕ} {P Q:ℕ→ ℕ} (hp: balanced t P) (hq: balanced t Q) (hn: (∑i in range(t+1), P i)=(∑i in range(t+1), Q i)): 
+ sum_sq t P = sum_sq t Q:=
+begin
+  set n:=(∑i in range(t+1), P i) with hn',
+  rw bal_turan_help hp hn', rw bal_turan_help hq hn.symm, 
+end
+
 
 --converted for use in bounding size of complete (t+1)-partite graph
 lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : sum_sq t P + 2*tn t n = n^2:=
