@@ -35,21 +35,50 @@ end
 
 lemma two (a :ℕ) :2*nat.choose a 2= a*(a-1):=
 begin
+  induction a with a ha,{ dsimp,
+      rw [zero_mul, mul_zero],},{
+    rw nat.choose, simp,rw mul_add, norm_num,rw  ha,
+    cases (eq_zero_or_eq_succ_pred a),{rw h, ring,},
+    set b:=a.pred,rw h,ring,},
+end
 
+lemma cd (c d:ℕ) :c+d-d=c:=
+begin
+exact tsub_eq_of_eq_add rfl,
+end
 
-sorry,
+lemma square (b c:ℕ) : (b+c)^2=b^2+2*b*c+c^2:=
+begin
+ring,
 end
 
 -- the actual mess is here
+-- need to rewrite n as n= ((t+1-b)*a + b *(a+1)) 
 lemma tn_tn' (t n : ℕ) : (tn' t n) + 2*(tn t n) = n^2:=
 begin
-  unfold tn tn', dsimp, 
-  have :=div_add_mod n (t+1),set a:= n/(t+1), set b:= n%(t+1),
-  nth_rewrite_rhs 0 ← this,rw mul_add,rw mul_add,rw ← mul_assoc 2 ,rw ← mul_assoc 2 ((a+1)^2),
+  unfold tn tn', dsimp,
+  have t1:t+1-1=t:=tsub_eq_of_eq_add rfl,
+  have n1:=div_add_mod n (t+1),
+  have n2:=le_of_lt (mod_lt n (succ_pos t)), rw succ_eq_add_one at n2,
+  have n3: (t+1)-n%(t+1)+n%(t+1)=(t+1):= tsub_add_cancel_of_le n2,
+  set a:= n/(t+1) with ha, set b:= n%(t+1) with hb,
+  cases nat.eq_zero_or_pos n with hn,{ rw hn at *, simp only [*, nat.zero_div, zero_pow', ne.def, bit0_eq_zero, nat.one_ne_zero, not_false_iff, mul_zero, zero_add, zero_mul,
+  choose_zero_succ] at *,},{
+  cases (eq_zero_or_eq_succ_pred b) with hb',{
+    rw hb' at *,ring_nf, rw two, rw tsub_zero, rw add_zero at n1,
+    rw nat.choose,
+    rw [mul_zero,mul_zero,add_zero,add_zero,add_zero,← n1,t1],ring_nf,  
+  },{
+  rw ← n3 at n1, rw add_mul at n1,nth_rewrite 2 ← mul_one b at n1, rw add_assoc at n1, rw ← mul_add  b at n1,
+  nth_rewrite_rhs 0 ← n1,
+  rw mul_add,rw mul_add,rw ← mul_assoc 2 ,rw ← mul_assoc 2 ((a+1)^2),
   nth_rewrite 0 mul_comm 2 _, nth_rewrite 1 mul_comm 2 _,
   rw mul_assoc,rw mul_assoc _ 2, rw [two,two], 
-  ---START HERE
-sorry,
+  rw square ((t+1-b)*a) (b*(a+1)),
+  --- follow plan on paper
+-----START HERE  
+  
+  sorry,},},
 end
 
 -- start with some helper functions that don't need partitions to be defined.
