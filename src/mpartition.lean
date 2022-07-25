@@ -33,24 +33,6 @@ end
 
 
 
--- canonical Turan partition
-def Q_tn : ℕ → ℕ → (ℕ → ℕ):=
-begin
-  intros t n,
-  set a:= n/(t+1),--- size of a small part
-  set b:= n-(t+1)*a,-- number of large parts
-  intro i , exact ite (i<t+1-b) (a) (a+1),
-end
-
-def Qa_tn : ℕ → ℕ → (ℕ → ℕ):=
-begin
-  intros t n,
-  set a:= n/(t+1),--- size of a small part
-  set b:= n%(t+1),-- number of large parts
-  intro i , exact ite (i<t+1-b) (a) (a+1),
-end
-
-
 
 lemma tn_tn' (t n : ℕ) : 2*(tn t n) = n^2 - (tn' t n):=
 begin
@@ -84,7 +66,7 @@ end
 ---can this be used to simplify the previous lemma ?
 lemma mod_tplus1' {t n:ℕ} : (t+1)*(n/(t+1))+n%(t+1)=n:=
 begin
-exact div_add_mod n (t+1),
+  exact div_add_mod n (t+1),
 end
 
 
@@ -93,76 +75,12 @@ end
 -- a balanced (t+1) partition is one with almost equal parts
 def balanced (t : ℕ) (P : ℕ → ℕ): Prop:= ∀ i ∈ range(t+1),∀ j∈ range(t+1), P i ≤ (P j) + 1
 
-lemma Qa_bal :∀t:ℕ, ∀n:ℕ, balanced t (Qa_tn t n):=
-begin
-intros t n,unfold balanced, intros i hi j hj,unfold Qa_tn,simp only, split_ifs, repeat {by linarith},
-end
-
-
-lemma Qa_sum :∀t:ℕ, ∀n:ℕ, psum t (Qa_tn t n)=n:=
-begin
-  intros t n, rw psum, unfold Qa_tn,rw [sum_ite], rw sum_add_distrib, 
-  rw [← add_assoc,sum_filter_add_sum_filter_not, sum_const, sum_const],
-  dsimp, rw [card_range _, mul_one], push_neg, 
-  have :(filter (λx, t+1-n%(t+1)≤ x) (range(t+1)))=Ico (t+1-n%(t+1)) (t+1),{
-    ext, rw mem_filter, rw mem_Ico,rw mem_range,tauto,},
-    rw [this, card_Ico], 
-    have : (t+1)-((t+1)-n%(t+1)) = n%(t+1) := nat.sub_sub_self (le_of_lt (mod_lt n (succ_pos t))),
-    rw this, exact div_add_mod n (t+1),
-end
-
-
-
-
-
-lemma Q_bal  : ∀t:ℕ, ∀n:ℕ, balanced t (Q_tn t n):=
-begin
-  intros t n,unfold balanced, intros i hi j hj,
-  unfold Q_tn, simp only, split_ifs, repeat {by linarith},
-end
-
-lemma Q_min  : ∀t:ℕ, ∀n:ℕ, ∀y:ℕ, y∈ image(λ j, Q_tn t n j) (range(t+1)) → n/(t+1) ≤ y:=
-begin
-  intros t n y,rw mem_image,intro h, cases h with j hj1, cases hj1 with hj h,unfold Q_tn at h,
-  rw ← h, simp only, split_ifs, repeat {by linarith},
-end
-
 -- smallest part is well-defined
 def min_p (t : ℕ) (P : ℕ → ℕ) : ℕ:= begin
   have nem: ((range(t+1)).image(λi , P i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
   exact min' ((range(t+1)).image(λi , P i)) nem,
 end
 
-lemma Qa_min_bal (t n: ℕ) : min_p t (Q_tn t n)= n/(t+1):=
-begin
-
-sorry,
-end
-
-lemma name (t n :ℕ) : (n)<(t+1)*(n/(t+1)+1):=
-begin
-exact lt_mul_div_succ n (by linarith:0<t+1),
-end
-
-
-lemma name2 (t n :ℕ): n-(t+1)*(n/(t+1))<(t+1):=
-begin
-have :=name t n, rw mul_add at this,rw mul_one at this,  
-refine (tsub_lt_iff_left _).mpr this, exact mul_div_le n (t+1),
-end
-
---minimum size of a part of a  Turan partition is n/(t+1)
-lemma Q_min_bal (t n: ℕ) : min_p t (Q_tn t n)= n/(t+1):=
-begin
-  unfold min_p, have qm:=Q_min t n, 
-  have nem: ((range(t+1)).image(λi , (Q_tn t n) i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
-  have lm:=le_min' _ nem (n/(t+1)) qm,
-  have ism: (n/(t+1))∈ ((range(t+1)).image(λi , (Q_tn t n) i)),{
-    rw mem_image,refine⟨ 0,_, _⟩,rw mem_range, linarith, unfold Q_tn, simp only, split_ifs, refl,exfalso,
-    have ltd:=lt_mul_div_succ n (by linarith:0<t+1),rw mul_add at ltd,rw mul_one at ltd,rw add_comm at ltd,
-    have :=name2 t n, exact h (tsub_pos_of_lt this),},
-  have ml:=min'_le _ (n/(t+1)) ism, exact le_antisymm ml lm,
-end
 -- indices of small parts
 def small_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_p t P)
 
@@ -207,16 +125,6 @@ begin
   intros h', refine ⟨h'.1,_⟩, specialize this a h'.1,  cases this, exfalso, exact h'.2 this, exact this,
 end
 
-lemma Q_large_p (t n: ℕ) : (large_parts (Q_bal t n)).card=(n-(t+1)*(n/(t+1))):=
-begin
-  have:=Q_min_bal t n,
-  rw large_parts', rw this,rw Q_tn,simp only [ite_eq_left_iff, not_lt, nat.succ_ne_self, not_forall, not_false_iff, exists_prop, and_true],
-  rw ← card_Ico ((t+1)*(n/(t+1))) n,  
-sorry,
-end
-
-
-
 -- parts cannot be both small and large
 lemma parts_disjoint {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : disjoint (small_parts h) (large_parts h):=
 begin
@@ -248,11 +156,9 @@ end
 
 lemma small_parts_card  {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : (small_parts h).card =(t+1)-(large_parts h).card:=
 begin
-
-
-sorry,
-
+  rw ← parts_card_add h, rwa [add_tsub_cancel_right],
 end
+
 -- any sum of a function over P is determined by the sizes and parts
 lemma bal_sum_f {t : ℕ} {P: ℕ → ℕ} (h: balanced t P) (f: ℕ → ℕ):∑ i in range(t+1), f (P i) = 
 (small_parts h).card * f(min_p t P) + (large_parts h).card * f(min_p t P+1) := 
@@ -272,7 +178,7 @@ begin
   rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
 end
 
--- given a balanced partition of n into (t+1)-parts the parts are as expected
+-- given a balanced partition of n into (t+1)-parts the small part is n/(t+1) and there are n%(t+1) lare parts
 lemma bal_sum_n {t n :ℕ} {P :ℕ→ ℕ} (hp: balanced t P) (hn: psum t P = n): min_p t P = n/(t+1) ∧ (large_parts hp).card = n%(t+1):=
 begin
   rw [bal_sum' hp, ← div_add_mod n (t+1)] at hn, exact mod_tplus1 (large_parts_card hp) (le_of_lt_succ (mod_lt n (succ_pos t))) hn,
@@ -316,24 +222,6 @@ begin
 end
 
 
---DO THIS NEXT
-lemma Q_sum  : ∀t:ℕ, ∀n:ℕ, psum t (Q_tn t n) = n:=
-begin
-  intros t n,
-  have qb:=Q_bal t n,
-  have qs1:=bal_sum' qb,
-  have mb:min_p t (Q_tn t n) = n/(t+1),{
-    sorry,},
-  have lc:(large_parts qb).card= n-(t+1)*(n/(t+1)),{sorry,},
-  rw [mb,lc] at qs1,
-  rw qs1,
-  exact add_tsub_cancel_of_le (mul_div_le n (t+1)),
-end
-
-lemma ab ( a b :ℕ): b≤a → a-(a-b)=b :=
-begin
-  exact nat.sub_sub_self,
-end
 
 lemma bal_turan_help' {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
 begin
