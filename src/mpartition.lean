@@ -42,6 +42,13 @@ begin
   intro i , exact ite (i<t+1-b) (a) (a+1),
 end
 
+def Qa_tn : ℕ → ℕ → (ℕ → ℕ):=
+begin
+  intros t n,
+  set a:= n/(t+1),--- size of a small part
+  set b:= n%(t+1),-- number of large parts
+  intro i , exact ite (i<t+1-b) (a) (a+1),
+end
 
 
 
@@ -74,10 +81,23 @@ begin
   exact ht,
 end
 
+---can this be used to simplify the previous lemma
+lemma mod_tplus1' {t n:ℕ} : (t+1)*(n/(t+1))+n%(t+1)=n:=
+begin
+exact div_add_mod n (t+1),
+end
+
+
 -- now lots of useful results about balanced partitions
 
 -- a balanced (t+1) partition is one with almost equal parts
 def balanced (t : ℕ) (P : ℕ → ℕ): Prop:= ∀ i ∈ range(t+1),∀ j∈ range(t+1), P i ≤ (P j) + 1
+
+lemma Qa_bal :∀t:ℕ, ∀n:ℕ, balanced t (Qa_tn t n):=
+begin
+intros t n,unfold balanced, intros i hi j hj,unfold Qa_tn,simp only, split_ifs, repeat {by linarith},
+end
+
 
 
 lemma Q_bal  : ∀t:ℕ, ∀n:ℕ, balanced t (Q_tn t n):=
@@ -176,8 +196,8 @@ end
 lemma Q_large_p (t n: ℕ) : (large_parts (Q_bal t n)).card=(n-(t+1)*(n/(t+1))):=
 begin
   have:=Q_min_bal t n,
-  rw large_parts', rw this,rw Q_tn,simp only [ite_eq_left_iff, not_lt, tsub_le_iff_right, nat.succ_ne_self, not_forall, not_false_iff, exists_prop, and_true],
-  ----START HERE  
+  rw large_parts', rw this,rw Q_tn,simp only [ite_eq_left_iff, not_lt, nat.succ_ne_self, not_forall, not_false_iff, exists_prop, and_true],
+  rw ← card_Ico ((t+1)*(n/(t+1))) n,  
 sorry,
 end
 
@@ -258,7 +278,7 @@ end
 
 lemma bal_turan_help {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : min_p t P = n/(t+1) ∧ (large_parts hb).card = n-(t+1)*(n/(t+1)):=
 begin
-
+  
   sorry,
 end
 
@@ -277,7 +297,22 @@ begin
   exact add_tsub_cancel_of_le (mul_div_le n (t+1)),
 end
 
+lemma ab ( a b :ℕ): b≤a → a-(a-b)=b :=
+begin
+  exact nat.sub_sub_self,
+end
 
+lemma Qa_sum :∀t:ℕ, ∀n:ℕ, psum t (Qa_tn t n)=n:=
+begin
+  intros t n, rw psum, unfold Qa_tn,rw [sum_ite], rw sum_add_distrib, 
+  rw [← add_assoc,sum_filter_add_sum_filter_not, sum_const, sum_const],
+  dsimp, rw [card_range _, mul_one], push_neg, 
+  have :(filter (λx, t+1-n%(t+1)≤ x) (range(t+1)))=Ico (t+1-n%(t+1)) (t+1),{
+    ext, rw mem_filter, rw mem_Ico,rw mem_range,tauto,},
+    rw [this, card_Ico], 
+    have : (t+1)-((t+1)-n%(t+1)) = n%(t+1) := nat.sub_sub_self (le_of_lt (mod_lt n (succ_pos t))),
+    rw this, exact div_add_mod n (t+1),
+end
 
 lemma bal_turan_help' {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
 begin
