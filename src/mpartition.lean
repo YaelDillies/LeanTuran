@@ -12,6 +12,7 @@ open_locale big_operators
 -- empty parts 
 namespace mpartition
 
+--classical Turan numbers 
 def tn : ℕ → ℕ → ℕ:=
 begin
   intros t n,
@@ -30,8 +31,6 @@ begin
   set b:= n%(t+1),-- number of large parts
   exact (t+1-b)*a^2 + b*(a+1)^2,
 end
-
-
 
 -- the actual mess is here
 lemma tn_tn' (t n : ℕ) : (tn' t n) + 2*(tn t n) = n^2:=
@@ -69,7 +68,6 @@ lemma mod_tplus1' {t n:ℕ} : (t+1)*(n/(t+1))+n%(t+1)=n:=
 begin
   exact div_add_mod n (t+1),
 end
-
 
 -- now lots of useful results about balanced partitions
 
@@ -155,6 +153,7 @@ begin
   have := parts_card_add h, linarith,
 end
 
+-- number of small parts is (t+1) - number of large
 lemma small_parts_card  {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : (small_parts h).card =(t+1)-(large_parts h).card:=
 begin
   rw ← parts_card_add h, rwa [add_tsub_cancel_right],
@@ -203,29 +202,14 @@ begin
   have addQ:=parts_card_add hbq, rw this.2 at addP, refine ⟨this.1,this.2,_⟩, linarith,
 end
 
-
-
-
--- any two balanced (t+1)-partitions of same size set give the same sum of squares.
--- could be for other functions but not needed 
--- this tells us that balanced partitions of the same vertex set give the same number of edges
-lemma bal_sum_sq_eq {t : ℕ} {P Q:ℕ → ℕ} (hbp: balanced t P) (hbq: balanced t Q) (hs: psum t P = psum t Q): sum_sq t P = sum_sq t Q:=
-begin
-  have h1:=bal_sum_f hbp (λx ,x^2), have h2:=bal_sum_f hbq (λx ,x^2), 
-  have h3:= bal_eq hbp hbq hs,
-  rw [sum_sq,sum_sq,h1,h2,h3.1,h3.2.1,h3.2.2],
-end
-
-
-
-
+-- sum of squares of balanced partition is tn'
 lemma bal_turan_help {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
 begin
   rw tn', rw sum_sq, rw bal_sum_n_f hb hn (λi, i^2),
 end
 
 
-
+--converted for use in bounding size of complete (t+1)-partite graph
 lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : sum_sq t P + 2*tn t n = n^2:=
 begin
   rw bal_turan_help hb hn, exact tn_tn' t n,
@@ -247,11 +231,10 @@ def P' (M: multi_part α) :ℕ → ℕ:= (λi, (M.P i).card)
 def sum_sq_c (M: multi_part α): ℕ:= ∑i in range(M.t+1), card(M.P i)^2
 
 -- a partition is moveable if the part sizes are unbalanced
---def moveable (M : multi_part α)  :Prop := ∃ i∈ range(M.t+1),∃ j ∈ range(M.t+1), (M.P j).card +1 < (M.P i).card
 def moveable (M : multi_part α)  :Prop := ¬ balanced M.t (P' M)
+
 --- ie. immoveable means the sizes of parts is such that it is balanced
 def immoveable (M : multi_part α) :Prop :=∀i∈ range(M.t+1),∀j∈ range(M.t+1), (M.P i).card ≤ (M.P j).card +1
-
 
 -- obviously
 lemma immoveable_iff_not_moveable (M : multi_part α) :immoveable M ↔ ¬moveable M:=
@@ -259,8 +242,8 @@ begin
   unfold immoveable, unfold moveable,push_neg,refl,
 end
 
-
-lemma immoveable_imp {M: multi_part α} (h: ¬immoveable M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
+-- if a partition is not immoveable then we can find two parts and a vertex to move from one to the other
+lemma not_immoveable_imp {M: multi_part α} (h: ¬immoveable M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
 begin
   rw [immoveable_iff_not_moveable, not_not,  moveable,balanced,  P'] at h, push_neg at h,
   obtain ⟨i,hi,j,hj,hc⟩:=h, use [i, hi, j, hj], 
@@ -269,8 +252,6 @@ begin
   have cne: (M.P i).card≠(M.P j).card:= by linarith,
   refine ⟨v,hv,_,hc⟩, intro eq,rw eq at cne, exact cne rfl,
 end
-
-
 
 -- there is a partition
 instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
