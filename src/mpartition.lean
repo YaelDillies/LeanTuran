@@ -32,10 +32,22 @@ begin
   exact (t+1-b)*a^2 + b*(a+1)^2,
 end
 
+
+lemma two (a :ℕ) :2*nat.choose a 2= a*(a-1):=
+begin
+
+
+sorry,
+end
+
 -- the actual mess is here
 lemma tn_tn' (t n : ℕ) : (tn' t n) + 2*(tn t n) = n^2:=
 begin
-  unfold tn tn', simp,
+  unfold tn tn', dsimp, 
+  have :=div_add_mod n (t+1),set a:= n/(t+1), set b:= n%(t+1),
+  nth_rewrite_rhs 0 ← this,rw mul_add,rw mul_add,rw ← mul_assoc 2 ,rw ← mul_assoc 2 ((a+1)^2),
+  nth_rewrite 0 mul_comm 2 _, nth_rewrite 1 mul_comm 2 _,
+  rw mul_assoc,rw mul_assoc _ 2, rw [two,two], 
   ---START HERE
 sorry,
 end
