@@ -81,7 +81,7 @@ begin
   exact ht,
 end
 
----can this be used to simplify the previous lemma
+---can this be used to simplify the previous lemma ?
 lemma mod_tplus1' {t n:ℕ} : (t+1)*(n/(t+1))+n%(t+1)=n:=
 begin
 exact div_add_mod n (t+1),
@@ -97,6 +97,21 @@ lemma Qa_bal :∀t:ℕ, ∀n:ℕ, balanced t (Qa_tn t n):=
 begin
 intros t n,unfold balanced, intros i hi j hj,unfold Qa_tn,simp only, split_ifs, repeat {by linarith},
 end
+
+
+lemma Qa_sum :∀t:ℕ, ∀n:ℕ, psum t (Qa_tn t n)=n:=
+begin
+  intros t n, rw psum, unfold Qa_tn,rw [sum_ite], rw sum_add_distrib, 
+  rw [← add_assoc,sum_filter_add_sum_filter_not, sum_const, sum_const],
+  dsimp, rw [card_range _, mul_one], push_neg, 
+  have :(filter (λx, t+1-n%(t+1)≤ x) (range(t+1)))=Ico (t+1-n%(t+1)) (t+1),{
+    ext, rw mem_filter, rw mem_Ico,rw mem_range,tauto,},
+    rw [this, card_Ico], 
+    have : (t+1)-((t+1)-n%(t+1)) = n%(t+1) := nat.sub_sub_self (le_of_lt (mod_lt n (succ_pos t))),
+    rw this, exact div_add_mod n (t+1),
+end
+
+
 
 
 
@@ -118,6 +133,11 @@ def min_p (t : ℕ) (P : ℕ → ℕ) : ℕ:= begin
   exact min' ((range(t+1)).image(λi , P i)) nem,
 end
 
+lemma Qa_min_bal (t n: ℕ) : min_p t (Q_tn t n)= n/(t+1):=
+begin
+
+sorry,
+end
 
 lemma name (t n :ℕ) : (n)<(t+1)*(n/(t+1)+1):=
 begin
@@ -148,12 +168,6 @@ def small_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range
 
 -- .. and large parts
 def large_parts {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : finset ℕ:=(range(t+1)).filter (λi, P i = min_p t P +1 )
-
-
-
-
-
-
 
 -- there is a smallest part 
 lemma small_nonempty {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) :(small_parts h).nonempty:=
@@ -232,6 +246,13 @@ begin
   have := parts_card_add h, linarith,
 end
 
+lemma small_parts_card  {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) : (small_parts h).card =(t+1)-(large_parts h).card:=
+begin
+
+
+sorry,
+
+end
 -- any sum of a function over P is determined by the sizes and parts
 lemma bal_sum_f {t : ℕ} {P: ℕ → ℕ} (h: balanced t P) (f: ℕ → ℕ):∑ i in range(t+1), f (P i) = 
 (small_parts h).card * f(min_p t P) + (large_parts h).card * f(min_p t P+1) := 
@@ -245,15 +266,24 @@ end
 lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (small_parts h).card * (min_p t P) + 
   (large_parts h).card * (min_p t P+1) := bal_sum_f h (λi,i)
 
-
-
-
-
-
--- alternative version of previous
+-- nicer version of previous
 lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (t+1)* (min_p t P) + (large_parts h).card :=
 begin
   rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
+end
+
+-- given a balanced partition of n into (t+1)-parts the parts are as expected
+lemma bal_sum_n {t n :ℕ} {P :ℕ→ ℕ} (hp: balanced t P) (hn: psum t P = n): min_p t P = n/(t+1) ∧ (large_parts hp).card = n%(t+1):=
+begin
+  rw [bal_sum' hp, ← div_add_mod n (t+1)] at hn, exact mod_tplus1 (large_parts_card hp) (le_of_lt_succ (mod_lt n (succ_pos t))) hn,
+end
+
+-- sum of a function f over parts of a balanced partition  of n into (t+1) parts is:
+lemma bal_sum_n_f {t n : ℕ} {P: ℕ → ℕ} (hp: balanced t P) (hn: psum t P = n) (f: ℕ → ℕ) :∑ i in range(t+1), f (P i) = 
+(t+1-n%(t+1)) * f(n/(t+1)) + (n%(t+1)) * f(n/(t+1)+1) := 
+begin
+  obtain hf :=bal_sum_f hp, obtain ⟨mn,ln⟩:= bal_sum_n hp hn, 
+  specialize hf f,  rwa [mn, small_parts_card, ln] at hf, 
 end
 
 -- balanced partitions have same part sizes and number of each type of part
@@ -266,6 +296,9 @@ begin
   have addQ:=parts_card_add hbq, rw this.2 at addP, refine ⟨this.1,this.2,_⟩, linarith,
 end
 
+
+
+
 -- any two balanced (t+1)-partitions of same size set give the same sum of squares.
 -- could be for other functions but not needed 
 -- this tells us that balanced partitions of the same vertex set give the same number of edges
@@ -276,9 +309,9 @@ begin
   rw [sum_sq,sum_sq,h1,h2,h3.1,h3.2.1,h3.2.2],
 end
 
-lemma bal_turan_help {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : min_p t P = n/(t+1) ∧ (large_parts hb).card = n-(t+1)*(n/(t+1)):=
+lemma bal_turan_help {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : min_p t P = n/(t+1) ∧ (large_parts hb).card = n%(t+1):=
 begin
-  
+
   sorry,
 end
 
@@ -300,18 +333,6 @@ end
 lemma ab ( a b :ℕ): b≤a → a-(a-b)=b :=
 begin
   exact nat.sub_sub_self,
-end
-
-lemma Qa_sum :∀t:ℕ, ∀n:ℕ, psum t (Qa_tn t n)=n:=
-begin
-  intros t n, rw psum, unfold Qa_tn,rw [sum_ite], rw sum_add_distrib, 
-  rw [← add_assoc,sum_filter_add_sum_filter_not, sum_const, sum_const],
-  dsimp, rw [card_range _, mul_one], push_neg, 
-  have :(filter (λx, t+1-n%(t+1)≤ x) (range(t+1)))=Ico (t+1-n%(t+1)) (t+1),{
-    ext, rw mem_filter, rw mem_Ico,rw mem_range,tauto,},
-    rw [this, card_Ico], 
-    have : (t+1)-((t+1)-n%(t+1)) = n%(t+1) := nat.sub_sub_self (le_of_lt (mod_lt n (succ_pos t))),
-    rw this, exact div_add_mod n (t+1),
 end
 
 lemma bal_turan_help' {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
