@@ -16,7 +16,7 @@ def tn : ℕ → ℕ → ℕ:=
 begin
   intros t n,
   set a:= n/(t+1),--- size of a small part
-  set b:= n-(t+1)*a,-- number of large parts
+  set b:= n%(t+1),-- number of large parts
   exact (a^2)*nat.choose(t+1-b)(2)+a*(a+1)*b*(t+1-b)+((a+1)^2)*nat.choose(b)(2),
 end
 
@@ -27,16 +27,17 @@ def tn' : ℕ → ℕ → ℕ:=
 begin
   intros t n,
   set a:= n/(t+1),--- size of a small part
-  set b:= n-(t+1)*a,-- number of large parts
-  exact a^2*(t+1-b)+b*(a+1),
+  set b:= n%(t+1),-- number of large parts
+  exact (t+1-b)*a^2 + b*(a+1)^2,
 end
 
 
 
-
-lemma tn_tn' (t n : ℕ) : 2*(tn t n) = n^2 - (tn' t n):=
+-- the actual mess is here
+lemma tn_tn' (t n : ℕ) : (tn' t n) + 2*(tn t n) = n^2:=
 begin
-  
+  unfold tn tn', simp,
+  ---START HERE
 sorry,
 end
 
@@ -215,29 +216,19 @@ begin
   rw [sum_sq,sum_sq,h1,h2,h3.1,h3.2.1,h3.2.2],
 end
 
-lemma bal_turan_help {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : min_p t P = n/(t+1) ∧ (large_parts hb).card = n%(t+1):=
-begin
 
-  sorry,
+
+
+lemma bal_turan_help {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
+begin
+  rw tn', rw sum_sq, rw bal_sum_n_f hb hn (λi, i^2),
 end
 
 
-
-lemma bal_turan_help' {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
-begin
-  
-sorry
-end
 
 lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : sum_sq t P + 2*tn t n = n^2:=
 begin
-  rw sum_sq, rw tn, rw bal_sum_f hb (λi,i^2),
-  obtain ⟨hm,hl⟩:=bal_turan_help hb hn,
-  rw hl, rw hm, have hca:=parts_card_add hb, 
-  have hs: (small_parts hb).card = (t+1)-(large_parts hb).card,{
-    rw ← hca, simp only [add_tsub_cancel_right],},
-  rw hl at hs,rw hs, simp  [nat.choose_two_right],ring_nf,
-sorry,
+  rw bal_turan_help hb hn, exact tn_tn' t n,
 end
 --- now actually introduce the partitions we use to build complete multipartite graphs
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
