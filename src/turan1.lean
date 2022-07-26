@@ -252,7 +252,7 @@ def indb {A B : finset α} (h: disjoint A B): simple_graph α :={
 
 
 --so now can count edges in induced parts in place of summing restricted degrees...
-lemma induced_edge_sum (A : finset α): ∑  v in A, G.deg_res v A = 2* ((G.ind A).edge_finset.card ) :=
+lemma ind_edge_count {A : finset α}: ∑  v in A, G.deg_res v A = 2* ((G.ind A).edge_finset.card ) :=
 begin
   rw [← sum_degrees_eq_twice_card_edges,G.ind_deg_sum],
 end
@@ -573,21 +573,22 @@ begin
   linarith,
 end
 
----START HERE and write edge counting version using induced subgraphs sums 
+-- standard-ish Furedi stability result
+-- if G is K_{t+2}-free wiht vertex set α then there is a (t+1)-partition M of α
+-- such that the e(G)+ ∑ i< t+1, e(G[M_i]) ≤ e(complete_multipartite M)
+-- together with our bound on the number of edges in any complete multipartite graph 
+---this easily implies Turan with equality iff G is a complete multipartite graph on a 
+--- balanced partition (ie. a Turan graph)
 
--- usual-ish statement of turan upper bound
-theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ tn t (fintype.card α):=
+theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ 
+G.edge_finset.card + ∑ i in range(t+1), (G.ind (M.P i)).edge_finset.card ≤ (mp M).edge_finset.card:=
 begin
   intro h,
   obtain ⟨M,hA,ht,hs⟩:=G.furedi univ (G.clique_free_graph_imp_set h),
-  simp only [deg_res_univ] at hs,
----  rw [sum_degrees_eq_twice_card_edges,sum_degrees_eq_twice_card_edges,card_univ,mul_le_mul_left] at hs, by norm_num,
-
-
-
-
-  sorry,
-
-end
+  refine ⟨M,ht,_⟩,apply (mul_le_mul_left (by norm_num:0<2)).mp, rw mul_add,rw mul_sum, simp only [deg_res_univ] at hs,
+  rw  [← G.sum_degrees_eq_twice_card_edges,← (mp M).sum_degrees_eq_twice_card_edges],--,card_univ,mul_le_mul_left] at hs, by norm_num,
+  refine le_trans _ hs, apply add_le_add_left,  apply le_of_eq, apply sum_congr, rwa ht,
+  intros i hi,exact ((G.ind (M.P i)).ind_edge_count).symm,
+end 
 
 end simple_graph
