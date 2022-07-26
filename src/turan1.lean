@@ -580,15 +580,31 @@ end
 ---this easily implies Turan with equality iff G is a complete multipartite graph on a 
 --- balanced partition (ie. a Turan graph)
 
-theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ 
+theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
 G.edge_finset.card + ∑ i in range(t+1), (G.ind (M.P i)).edge_finset.card ≤ (mp M).edge_finset.card:=
 begin
   intro h, obtain ⟨M,hA,ht,hs⟩:=G.furedi univ (G.clique_free_graph_imp_set h),
-  refine ⟨M,ht,_⟩,apply (mul_le_mul_left (by norm_num:0<2)).mp, rw mul_add,rw mul_sum, simp only [deg_res_univ] at hs,
-  rw  [← G.sum_degrees_eq_twice_card_edges,← (mp M).sum_degrees_eq_twice_card_edges],--,card_univ,mul_le_mul_left] at hs, by norm_num,
+  refine ⟨M,ht,hA,_⟩,apply (mul_le_mul_left (by norm_num:0<2)).mp, rw mul_add,rw mul_sum, simp only [deg_res_univ] at hs,
+  rw  [← G.sum_degrees_eq_twice_card_edges,← (mp M).sum_degrees_eq_twice_card_edges],
   apply le_trans _ hs, apply add_le_add_left,  apply le_of_eq, apply sum_congr, rwa ht,
   intros i hi, rw ← ind_edge_count,
 end 
 
---use turan_bound_M deduce Turan's theorem here
+--Now deduce Turan's theorem 
+theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ tn t (fintype.card α):=
+begin
+  intro h, obtain ⟨M,ht,hA,hc⟩:=G.furedi_stability h,
+  have :=turan_max_edges M hA,rw ht at this,
+  apply le_trans (le_of_add_le_left hc) this,
+end
+
+-- uniqueness? 
+--- there are three places where G can fail to achieve equality in Furedi's stability theorem
+-- 1) there are "internal" edges, ie edges inside a part of the (t+1)-partition these are counted in the LHS
+-- 2) the partition can fail to be balanced (and hence #edges < turan_numb)
+--3)  The multipartite induced graph G ⊓ (mp M) may not be complete (we don't currently track this)
+-- Clearly for equality in Furedi-Turan hybrid ie LHS of Furedi with RHS of Turan
+-- need M is a Turan partition and G is multipartite (ie no internal edges)
+-- could then prove in this case G ≤ (mp M) = T and hence G = T for equality.   
+
 end simple_graph

@@ -274,6 +274,14 @@ begin
   rw hn at this,  rw hn, rw ← this, rw add_comm, simp only [add_tsub_cancel_right],
 end
 
+lemma turan_max_edges (M: multi_part α): M.A=univ → (mp M).edge_finset.card ≤ tn M.t (fintype.card α):=
+begin
+  intro hA, apply (mul_le_mul_left (by norm_num:0<2)).mp,
+  rw ← sum_degrees_eq_twice_card_edges, have:=turan_bound_M M,  unfold mp_dsum at this,rw hA at this,
+  rwa card_univ at this,
+end
+
+
 end simple_graph
 
 
