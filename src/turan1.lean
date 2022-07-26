@@ -237,20 +237,12 @@ begin
   rw sum_eq_zero_iff, exact G.two_clique_free hA,
 end
 
---@[reducible] def spanning_coe_f (A : finset α) (G : simple_graph A) : simple_graph α :=
---G.map (function.embedding.subtype _)
-
-
-
---@[reducible] def ind (A : finset α) (G : simple_graph α) : simple_graph α :=
---spanning_coe_f A (G.comap (function.embedding.subtype _))
--- defining by own induced graph for ease of use
 @[ext,reducible]
 def ind (A : finset α) : simple_graph α :={
-  adj:= begin intros  x y,exact  G.adj x y ∧ x∈A ∧ y ∈ A, end, 
+  adj:= begin intros  x y,exact  G.adj x y ∧ x ∈ A ∧ y ∈ A, end, 
   symm:=
   begin
-    intros x y hxy, rw adj_comm, exact ⟨hxy.1 ,hxy.2.2,hxy.2.1⟩, 
+    intros x y hxy, rw adj_comm, tauto, 
   end,
   loopless:= by obviously}
 
@@ -265,9 +257,19 @@ begin
   apply_instance,
 end
 
-
 instance induced_edges_fintype [decidable_eq α] [fintype α] [decidable_rel G.adj]{A:finset α} :
   fintype (G.ind A).edge_set := subtype.fintype _
+
+
+--induced bipartite graph
+@[ext,reducible]
+def indb {A B : finset α} (h: disjoint A B): simple_graph α :={
+  adj:= begin intros  x y,exact  G.adj x y ∧ ((x ∈ A ∧ y ∈ B)∨ (x∈ B ∧ y∈ A)), end, 
+  symm:=
+  begin
+    intros x y hxy, rw adj_comm, tauto, 
+  end,
+  loopless:= by obviously}
 
 
 
