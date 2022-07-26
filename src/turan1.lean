@@ -202,6 +202,7 @@ begin
 end
 
 
+
 -- if G has no s-clique then nor does the univ 
 lemma clique_free_graph_imp_set {s : ℕ} (h: G.clique_free s) :  G.clique_free_set univ s:=
 begin
@@ -234,6 +235,49 @@ end
 lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in A, G.deg_res v A = 0:=
 begin
   rw sum_eq_zero_iff, exact G.two_clique_free hA,
+end
+
+--@[reducible] def spanning_coe_f (A : finset α) (G : simple_graph A) : simple_graph α :=
+--G.map (function.embedding.subtype _)
+
+
+
+--@[reducible] def ind (A : finset α) (G : simple_graph α) : simple_graph α :=
+--spanning_coe_f A (G.comap (function.embedding.subtype _))
+-- defining by own induced graph for ease of use
+@[ext,reducible]
+def ind (A : finset α) : simple_graph α :={
+  adj:= begin intros  x y,exact  G.adj x y ∧ x∈A ∧ y ∈ A, end, 
+  symm:=
+  begin
+    intros x y hxy, rw adj_comm, exact ⟨hxy.1 ,hxy.2.2,hxy.2.1⟩, 
+  end,
+  loopless:= by obviously}
+
+instance ind_decidable_rel {A:finset α} :decidable_rel (G.ind A).adj:=
+begin
+apply_instance,
+end
+
+instance induced_decidable_mem_edge_set {A:finset α} :
+  decidable_pred (∈ (G.ind A).edge_set) := 
+begin
+  apply_instance,
+end
+
+
+instance induced_edges_fintype [decidable_eq α] [fintype α] [decidable_rel G.adj]{A:finset α} :
+  fintype (G.ind A).edge_set := subtype.fintype _
+
+
+
+lemma induced_edge_sum (A : finset α): ∑  v in A, (G.ind A).deg_res v A = 2* ((G.ind A).edge_finset.card ) :=
+begin
+  rw ← sum_degrees_eq_twice_card_edges,--simp only [ind_deg_out], 
+  
+
+  sorry,
+
 end
 
 
