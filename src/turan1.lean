@@ -15,76 +15,13 @@ open_locale big_operators
 namespace simple_graph
 
 
--- t_n t n is the maximum number of edges in a (t+2)-clique free graph of order n
--- or equivalently the maximum numb of edges in a complete (t+1)-partite graph order n
--- or equivalently .... 
-def t_n : ℕ → ℕ → ℕ:=
-begin
-  intros t n,
-  set a:= n/(t+1),--- size of a small part
-  set b:= n-(t+1)*a,-- number of large parts
-  exact (a^2)*nat.choose(t+1-b)(2)+a*(a+1)*b*(t+1-b)+((a+1)^2)*nat.choose(b)(2),
-end
-
-
---variables {t n : ℕ} 
--- turan_numb t n is max numb of edges in an n vertex t+1 partite graph 
----what about 0-partite? sorry not going there...
-def turan_numb : ℕ → ℕ → ℕ
-| _       0 := 0
-| 0       _ := 0
-| (t+1) (n+1) :=option.get_or_else ((range(n+1)).image(λa, turan_numb t a + a*(n+1-a))).max 0 
-
-
-lemma tn_simp (t :ℕ): turan_numb t 0 = 0 := by cases t;refl
-
-lemma tn_simp' (n :ℕ): turan_numb 0 n = 0 := by cases n;refl
-
---the turan number is the maximum of the lhs below 
-lemma tn_le (t c n : ℕ) (h: c ∈ range (n+1)): turan_numb t c +c*(n+1-c) ≤ turan_numb (t+1) (n+1):=
-begin
-  obtain ⟨x, hx : _ = _⟩ := finset.max_of_mem (mem_image_of_mem (λa, turan_numb t a + a*(n+1-a)) h),
-  have := finset.le_max_of_mem (mem_image_of_mem _ h) hx,
-  rw [turan_numb, hx], apply le_trans this,refl,
-end
-
--- obtain the optimal choice of size of new part in turan graph T (t+1)(n+1)
-lemma tn_max_mem (t c n : ℕ) (h: c∈ range (n+1)) : ∃ b ∈ range(n+1), turan_numb t b +b*(n+1-b) = turan_numb (t+1) (n+1):=
-begin
-  obtain ⟨i, hi : _ = _⟩ := finset.max_of_mem (mem_image_of_mem (λa, turan_numb t a + a*(n+1-a)) h),
-  have := mem_of_max  hi,
-  rw mem_image at this,
-  rcases this with ⟨b,hbr,hbm⟩,
-  use [b,hbr],
-  rw [turan_numb, hi, hbm],refl,
-end
-
 
 variables {t n : ℕ} 
 variables {α : Type*} (G : simple_graph α)[fintype α][inhabited α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
 
-lemma turan_bd (s : ℕ) {A B :finset α} (hA: A.nonempty) (hB: B⊆A) (hB': B⊂ A): turan_numb s B.card + B.card * (A\B).card ≤ turan_numb s.succ A.card:=
-begin
-  have : A.card = B.card +(A\B).card,{
-    convert card_disjoint_union _, exact (union_sdiff_of_subset hB).symm , apply sdiff_disjoint.symm,},
-  rw add_comm at this, 
-  obtain ⟨c,hc⟩:=nat.exists_eq_succ_of_ne_zero (ne_of_gt (finset.card_pos.mpr hA)), 
-  rw [hc, nat.succ_eq_add_one] at this,
-  convert tn_le s B.card _ _,
-  exact (tsub_eq_of_eq_add this).symm,
-  rw [mem_range,  ← nat.succ_eq_add_one, ← hc],
-  exact card_lt_card hB',
-end
 
 lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
-begin
- have d1:disjoint (B ∩ C) (A\(B ∩ C)):= sdiff_disjoint.symm,
- convert disjoint_of_subset_right _ d1,
- intros x hx, rw mem_inter at hx,
- rw [mem_sdiff,mem_inter] at *, push_neg, refine ⟨hx.1.1,_⟩, intro hb, exfalso, exact hx.1.2 hb,
-end
-
-
+disjoint_of_subset_right (inter_subset_left (A\B) C) ((disjoint_of_subset_left (inter_subset_left B C)) disjoint_sdiff)
 
 
 include G
@@ -186,33 +123,31 @@ begin
   intro x, rw mem_res_nbhd, intro h, exact h.2,
 end
 
--- A is a t-clique free set of vertices in G
+-- A is a t-clique-free set of vertices in G
 def clique_free_set (A : finset α) (s : ℕ): Prop:= ∀ B ⊆ A, ¬G.is_n_clique s B
 
-
+--clique-free if small
 lemma clique_free_card_lt {A : finset α} {s: ℕ} (h: A.card <s): G.clique_free_set A s:=
 begin
   rw clique_free_set,intros B hB,rw is_n_clique_iff,push_neg,intro h1,
   apply ne_of_lt (lt_of_le_of_lt (card_le_of_subset hB) h), 
 end
 
+--clique-free of empty (unless s=0)
 lemma clique_free_empty {s : ℕ} (h: 0< s): G.clique_free_set ∅ s:=
 begin
   have:=finset.card_empty, rw ← this at h, exact G.clique_free_card_lt h,
 end
-
-
 
 -- if G has no s-clique then nor does the univ 
 lemma clique_free_graph_imp_set {s : ℕ} (h: G.clique_free s) :  G.clique_free_set univ s:=
 begin
   revert h, contrapose,
   rw clique_free_set,push_neg,intro h, rw clique_free, push_neg,
-  obtain ⟨B,h1,h2⟩:=h,
-  exact ⟨B,h2⟩,
+  obtain ⟨B,h1,h2⟩:=h,  exact ⟨B,h2⟩,
 end
 
--- base case for Erdos proof:
+-- base case for Erdos/Furedi proof:
 -- if A has no 2-clique then restricted degrees are all zero 
 -- i.e. A is an independent set
 lemma two_clique_free {A: finset α} (hA : G.clique_free_set A 2) :  ∀v∈A, G.deg_res v A =0 :=
@@ -232,11 +167,14 @@ begin
 end
 
 -- sum of degrees over an independent set (2-clique-free set) is 0
+-- e (G.ind A)=0
 lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in A, G.deg_res v A = 0:=
 begin
   rw sum_eq_zero_iff, exact G.two_clique_free hA,
 end
 
+
+-- Graph induced by A ⊆ α, defined be a simple_graph α (so all vertices outside A have all edges removed)
 @[ext,reducible]
 def ind (A : finset α) : simple_graph α :={
   adj:= begin intros  x y,exact  G.adj x y ∧ x ∈ A ∧ y ∈ A, end, 
@@ -261,6 +199,47 @@ instance induced_edges_fintype [decidable_eq α] [fintype α] [decidable_rel G.a
   fintype (G.ind A).edge_set := subtype.fintype _
 
 
+--nbhd of v ∈ A in the graph induced by A is exactly the nbhd of v restricted to A
+lemma ind_nbhd_mem {A : finset α} {v : α} : v∈ A → (G.ind A).neighbor_finset v =  G.nbhd_res v A:=
+begin
+  intros hv,unfold neighbor_finset nbhd_res, ext, 
+  simp only [*, set.mem_to_finset, mem_neighbor_set, and_self] at *, 
+  split,intro ha,rw mem_inter, rw [set.mem_to_finset,mem_neighbor_set],exact ⟨ha.2.2,ha.1⟩,
+  rw mem_inter, rw set.mem_to_finset, rw mem_neighbor_set, tauto,
+end
+
+-- if v∉A then v has no neighbors in the induced graph G.ind A
+lemma ind_nbhd_nmem {A : finset α} {v : α} : v∉A → ((G.ind A).neighbor_finset v) = ∅:=
+begin 
+  contrapose,  push_neg,intros h, obtain ⟨w,hw⟩:=nonempty.bex (nonempty_of_ne_empty h),
+  rw mem_neighbor_finset at hw, cases hw,exact hw_right.1, 
+end
+
+
+-- so degrees of v in the induced graph are deg_res A or 0 depending on whether v ∈ A
+lemma ind_deg {A :finset α}{v:α} : (G.ind A).degree v = ite (v∈A) (G.deg_res v A) (0):=
+begin
+  unfold degree,
+  split_ifs,unfold deg_res,congr, exact G.ind_nbhd_mem h,
+  rw G.ind_nbhd_nmem h, apply card_eq_zero.mpr rfl,
+end
+
+lemma ind_deg_sum {A :finset α}: ∑v, (G.ind A).degree v = ∑v in A,(G.deg_res v A):=
+begin
+  simp only [ind_deg], rw sum_ite,rw sum_const, rw smul_zero,rw add_zero, congr,
+  ext,rw mem_filter,simp only [mem_univ],tauto,
+end
+
+--(t+1)-partite subgraph of G induced by (t+1)-partition M
+def indmp (M: multi_part α) : simple_graph α:=G ⊓ (mp M)
+
+-- subgraph of G induced inside parts of M (careful if M.A≠ univ)
+--def indmp_c (M : multi_part α) : simple_graph α:=G ⊓ ((mp M)ᶜ)
+
+-- Would like to have G K_t+2-free implies there is a (t+1)-partition of α
+-- with e(G)+∑i < t+1, e(G.ind M_i) ≤ e(mp M)
+
+
 --induced bipartite graph
 @[ext,reducible]
 def indb {A B : finset α} (h: disjoint A B): simple_graph α :={
@@ -272,14 +251,10 @@ def indb {A B : finset α} (h: disjoint A B): simple_graph α :={
   loopless:= by obviously}
 
 
-
-lemma induced_edge_sum (A : finset α): ∑  v in A, (G.ind A).deg_res v A = 2* ((G.ind A).edge_finset.card ) :=
+--so now can count edges in induced parts in place of summing restricted degrees...
+lemma induced_edge_sum (A : finset α): ∑  v in A, G.deg_res v A = 2* ((G.ind A).edge_finset.card ) :=
 begin
-  rw ← sum_degrees_eq_twice_card_edges,--simp only [ind_deg_out], 
-  
-
-  sorry,
-
+  rw [← sum_degrees_eq_twice_card_edges,G.ind_deg_sum],
 end
 
 
@@ -295,7 +270,7 @@ begin
   rw hC, apply union_subset (subset_trans hB (G.sub_res_nbhd_A v A)) _,
   simp only [hv, singleton_subset_iff],
   rw is_n_clique_iff at *,
-  refine ⟨_,_⟩, 
+  refine ⟨_,_⟩,
   rcases hA with ⟨cl,ca⟩, 
   rw [is_clique_iff, set.pairwise],
   intros x hx y hy hne,
@@ -511,54 +486,6 @@ begin
   rw (by norm_num: 2= 1+1),rw add_mul,  rw one_mul,rw mul_one, intros x hx, rwa (H.mp_com M h x hx),
 end
 
--- main theorem basically erdos proof of degree majorisation of (t+2)-clique-free graph by (t+1)-partite graph
-theorem erdos_simple : ∀A:finset α, G.clique_free_set A (t+2) → ∑ v in A,G.deg_res v A ≤ 2*(turan_numb t A.card):=
-begin
-  induction t with s hs, intros A hA,
-  rw [tn_simp',mul_zero], rw zero_add at hA, 
-  have := G.two_clique_free hA, 
-  rwa [nonpos_iff_eq_zero, sum_eq_zero_iff], 
-  -- s.succ case 
-  intros A hA, 
-  by_cases hnem: A.nonempty,{
-    obtain ⟨x,hxA,hxM⟩:=G.exists_max_res_deg_vertex hnem, -- get a vert x of max res deg in A
-    -- Let B be the res nbhd of the vertex x of max deg_A 
-    set B:= (G.nbhd_res x A), 
-    have hBA: B⊆ A:=(G.sub_res_nbhd_A x A), -- B is contained in A
-    -- split sum of deg_A using both (1) deg_A v = deg_B v + deg_(A\B) v and (2) the partition: A = B ∪ (A\B)
-    -- have ∑ v ∈ A, deg_A v = ∑ v ∈ B, deg_B v + ∑ v ∈ A\B, deg_B v + ∑ v ∈ A, deg_(A\B) v
-    rw [G.deg_res_add_sum hBA ,G.sum_sdf hBA hBA, add_assoc],
-    -- apply inductive hyp to ∑ v ∈ B, deg_B v using the fact that 
-    -- res nbhd of x to B = is (s+2)-clique free (since A is (s.succ+2)-clique free)
-    apply add_le_of_add_le_right _ (hs (G.nbhd_res x A) (G.t_clique_free hA hxA)),
-    -- use ∑ v ∈ A, deg_(A\B) v = ∑ v ∈ A\B, deg_A v
-    rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA ],
-    nth_rewrite 1 add_comm, rw ← add_assoc,
-    -- the next line is a strict overestimate if A\B contains any edges
-    -- since we replace ∑ v ∈ A\B, deg_B v by ∑ v ∈ A\B, deg_A v (i.e. we add in ∑ v∈ A\B, deg_(A\B) v) 
-    apply add_le_of_add_le_left _ (G.sum_res_le hBA (sdiff_subset A B)),
-    ring_nf, rw ← mul_add, refine mul_le_mul' _ _, refl,
-    -- now overestimate by assuming all v ∈ A\B have max deg (i.e. assuming G[A\B,B] is complete bipartite )
-    apply add_le_of_add_le_left _ (G.max_deg_res_sum_le (sdiff_subset A B)), 
-    rw [hxM,nbhd_res],
-    -- use our bound on Turan numbers 
-    exact turan_bd s hnem hBA (G.ssub_res_nbhd_of_mem hxA),},
-    -- ¬ A.nonempty ie A = ∅
-  { rw not_nonempty_iff_eq_empty at hnem, 
-    rw [hnem,finset.card_empty,turan_numb, mul_zero,finset.sum_empty],},
-end
-
-
-
--- usual-ish statement of turan upper bound
-theorem turan_ub : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (fintype.card α):=
-begin
-  intro h,
-  have sdG:= G.erdos_simple univ (G.clique_free_graph_imp_set h),
-  simp only [deg_res_univ] at sdG,
-  rwa [sum_degrees_eq_twice_card_edges,card_univ,mul_le_mul_left] at sdG, by norm_num,
-end
-
 
 
 
@@ -646,6 +573,8 @@ begin
   linarith,
 end
 
+---START HERE and write edge counting version using induced subgraphs sums 
+
 -- usual-ish statement of turan upper bound
 theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ tn t (fintype.card α):=
 begin
@@ -653,7 +582,7 @@ begin
   obtain ⟨M,hA,ht,hs⟩:=G.furedi univ (G.clique_free_graph_imp_set h),
   simp only [deg_res_univ] at hs,
 ---  rw [sum_degrees_eq_twice_card_edges,sum_degrees_eq_twice_card_edges,card_univ,mul_le_mul_left] at hs, by norm_num,
-----  START HERE 
+
 
 
 
