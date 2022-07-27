@@ -416,6 +416,12 @@ begin
   rw M.uni, intros x hx,  rw  mem_bUnion,  exact ⟨i,hi,hx⟩,
 end
 
+-- M.A is the union of its parts
+lemma bUnion_parts (M:multi_part α) :M.A=finset.bUnion (range(M.t+1)) (λi,(M.P i)):=
+begin
+  ext,rw mem_bUnion, split,intros hA, use inv_part hA,
+  intro hA, obtain ⟨i,hi,hi2⟩:=hA,exact mem_part hi hi2,
+end
 -- if there are two different parts then the sum of their sizes is at most the size of the whole
 -- could make a version for any number of parts but don't really need it
 lemma two_parts {M: multi_part α} {i j : ℕ} (hi: i ∈ range(M.t+1))  (hj: j ∈ range(M.t+1)) (hne: i≠ j) : (M.P i).card + (M.P j).card ≤ M.A.card:=
