@@ -198,6 +198,16 @@ end
 instance induced_edges_fintype [decidable_eq α] [fintype α] [decidable_rel G.adj]{A:finset α} :
   fintype (G.ind A).edge_set := subtype.fintype _
 
+lemma ind_adj_imp {A :finset α} {v w :α} : (G.ind A).adj v w→ G.adj v w:=
+begin
+  intro h, cases h, exact h_left,
+end
+
+lemma ind_adj_imp' {A :finset α} {v w :α} : (G.ind A).adj v w→ v∈A ∧ w ∈ A:=
+begin
+  intro h, cases h,exact h_right,
+end
+
 
 --nbhd of v ∈ A in the graph induced by A is exactly the nbhd of v restricted to A
 lemma ind_nbhd_mem {A : finset α} {v : α} : v∈ A → (G.ind A).neighbor_finset v =  G.nbhd_res v A:=
@@ -230,9 +240,90 @@ begin
   ext,rw mem_filter,simp only [mem_univ],tauto,
 end
 
+lemma ind_sub {A : finset α} : (G.ind A)≤ G:=
+begin
+  dsimp, intros x y, exact G.ind_adj_imp ,
+end
+
 --(t+1)-partite subgraph of G induced by (t+1)-partition M
+@[ext]
 def indmp (M: multi_part α) : simple_graph α:=G ⊓ (mp M)
 
+
+
+-- internal edges induced by parts of a partition
+-- would have defined this as G \(⋃ (G.ind M.P i)) if I 
+-- could have made it work.. defining the bUnion operator for simple_graphs
+-- was a step too far..
+@[ext,reducible]
+def ind_int_mp (M: multi_part α) : simple_graph α:={
+adj:= λ v w , (G.adj v w) ∧ (∃ i ∈ range(M.t+1), v∈(M.P i) ∧w∈ (M.P i)),
+symm:= begin
+intros x y hxy, rw adj_comm at hxy,
+obtain⟨ha,i,hi,hx,hy⟩:=hxy, exact ⟨ha,i,hi,hy,hx⟩, end,
+loopless:= by obviously,}
+
+
+lemma ind_int_mp_sub (M : multi_part α) : (G.ind_int_mp M)≤ G:=
+begin
+  dsimp, intros x y h,cases h,exact h_left,
+end
+
+-- G with the internal edges removed is G ∩ (mp M)
+lemma MG {M: multi_part α} (h: M.A =univ)  : G\(G.ind_int_mp M) = G⊓(mp M):=
+begin
+  ext x y,dsimp, 
+  have hx: x∈ M.A:=by {rw h, exact mem_univ x},
+  have hy: y∈ M.A:=by {rw h, exact mem_univ y},
+  obtain ⟨i,hi,hx1⟩:=inv_part hx,
+  obtain ⟨j,hj,hy1⟩:=inv_part hy,
+  split,{
+    rintros ⟨hadj,h2⟩,refine ⟨hadj,_⟩, push_neg at h2, have h3:=h2 hadj,
+    specialize h3 i hi hx1,
+    refine mp_imp_adj hi hj hx1 hy1 _,
+    intro ne,rw ne at h3, exact h3 hy1,},{
+    rintros ⟨hadj,h2⟩, refine ⟨hadj,_⟩, push_neg, intros hadj' i hi hx hy,
+    exact not_nhbr_same_part hi hx h2 hy },
+end
+
+-- G is the join of the edges induced by the parts and those in the complete 
+-- multipartite graph M on α
+lemma self_eq_int_ext_mp {M :multi_part α} (h: M.A=univ) : G = (G.ind_int_mp M) ⊔ (G⊓(mp M)):=
+begin
+  rw ← G.MG h,simp only [sup_sdiff_self_right, right_eq_sup], exact G.ind_int_mp_sub M,
+end
+
+
+lemma int_edge_help {M :multi_part α} (h: M.A=univ) {v w:α}{i:ℕ}: i∈ range(M.t+1) → v ∈ (M.P i) →  w∈M.A →
+((G.ind_int_mp M).adj v w ↔ (G.ind (M.P i)).adj v w)
+:=
+begin
+  intros hi hv hw, obtain ⟨j,hj,hw⟩:=inv_part hw,dsimp, 
+  by_cases i=j,{
+      split, intros h1,rw ←h at hw,exact ⟨h1.1,hv,hw⟩,
+      intros h1, cases h1, exact ⟨h1_left,i,hi,h1_right⟩,}, 
+  { split,intros h1, cases h1 with h2 h3, exfalso, rcases h3 with ⟨k, hkr, hk⟩,
+  have ieqk:=uniq_part hi hkr hv hk.1,have jeqk:=uniq_part hj hkr hw hk.2,
+  rw ← jeqk at ieqk, exact h ieqk,
+  intros h1, exfalso, exact uniq_part' hi hj h h1.2.2 hw, },
+end
+
+lemma int_edge_help' {M :multi_part α} (h: M.A=univ) {v w:α}{i:ℕ}: i∈ range(M.t+1) → v ∈ (M.P i) → 
+(G.ind_int_mp M).degree v = (G.ind (M.P i)).degree v:=
+begin
+--START HERE
+sorry,
+end
+
+
+
+lemma int_edge_count' {M :multi_part α} (h: M.A=univ) :
+ ∑v,(G.ind_int_mp M).degree v =  ∑  i in range(M.t+1), ∑ v, (G.ind (M.P i)).degree v:=
+begin
+  
+
+sorry,
+end
 -- subgraph of G induced inside parts of M (careful if M.A≠ univ)
 --def indmp_c (M : multi_part α) : simple_graph α:=G ⊓ ((mp M)ᶜ)
 
