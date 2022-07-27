@@ -296,7 +296,7 @@ begin
   rw ← G.MG h,simp only [sup_sdiff_self_right, right_eq_sup], exact G.ind_int_mp_sub M,
 end
 
-
+-- 
 lemma int_edge_help {M :multi_part α} (h: M.A=univ) {v w:α}{i:ℕ}: i∈ range(M.t+1) → v ∈ (M.P i) →  w∈M.A →
 ((G.ind_int_mp M).adj v w ↔ (G.ind (M.P i)).adj v w)
 :=
@@ -682,7 +682,7 @@ begin
   intros i hi, rw ← ind_edge_count,
 end 
 
---Now deduce Turan's theorem 
+--Now deduce Turan's theorem without worring about case of equality yet
 theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ tn t (fintype.card α):=
 begin
   intro h, obtain ⟨M,ht,hA,hc⟩:=G.furedi_stability h,
@@ -698,5 +698,28 @@ end
 -- Clearly for equality in Furedi-Turan hybrid ie LHS of Furedi with RHS of Turan
 -- need M is a Turan partition and G is multipartite (ie no internal edges)
 -- could then prove in this case G ≤ (mp M) = T and hence G = T for equality.   
+
+
+-- So we have e(G)+edges internal to the partiton ≤ edges of complete (t+1)-partite M
+theorem furedi_stability' : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
+G.edge_finset.card + (G.ind_int_mp M).edge_finset.card ≤ (mp M).edge_finset.card:=
+begin
+  intro h, obtain⟨M,ht,hu,hle⟩:=G.furedi_stability h, rw ← ht at hle,rw ← G.int_ind_edge_sum hu at hle,
+  exact ⟨M,ht,hu,hle⟩,
+end
+theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = tn t (fintype.card α) → ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ immoveable M ∧ G=mp M:=
+begin
+  intro h,obtain ⟨M,ht,hu,hle⟩:=G.furedi_stability' h.1, rw h.2 at hle,
+  refine ⟨M,ht,hu,_⟩, have tm:=turan_max_edges M hu, rw ht at tm, 
+  have inz:(G.ind_int_mp M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
+  have inem: (G.ind_int_mp M)=⊥,{
+    ext,split,intro he,exfalso, rw adj_iff_exists_edge at he, obtain ⟨_,e,e1,e2⟩:=he, rw ← mem_edge_finset at e1,
+    simp only [*, not_mem_empty] at *, simp only [bot_adj, forall_false_left],  },
+  have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
+  have ieq:(mp M).edge_finset.card= tn t (fintype.card α):=by linarith, rw ← ht at ieq,
+  refine ⟨turan_eq_imp M hu ieq,_⟩,
+--- have G ≤ mp M just need to show equality of edge cards implie equality..
+sorry,
+end
 
 end simple_graph

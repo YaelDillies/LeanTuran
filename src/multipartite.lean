@@ -281,6 +281,11 @@ begin
   rwa card_univ at this,
 end
 
+lemma turan_eq_imp (M: multi_part α) (hu: M.A=univ):  (mp M).edge_finset.card = tn M.t (fintype.card α) → immoveable M:=
+begin
+
+sorry,
+end
 
 end simple_graph
 
