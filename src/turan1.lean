@@ -225,7 +225,10 @@ begin
   rw mem_neighbor_finset at hw, cases hw,exact hw_right.1, 
 end
 
-
+lemma ind_deg_nmem {A : finset α} {v : α} : v∉A → (G.ind A).degree v=0:=
+begin
+  intro h,exact card_eq_zero.mpr (G.ind_nbhd_nmem h),
+end
 -- so degrees of v in the induced graph are deg_res A or 0 depending on whether v ∈ A
 lemma ind_deg {A :finset α}{v:α} : (G.ind A).degree v = ite (v∈A) (G.deg_res v A) (0):=
 begin
@@ -311,36 +314,34 @@ end
 lemma int_edge_help' {M :multi_part α} (h: M.A=univ) {v w:α}{i:ℕ}: i∈ range(M.t+1) → v ∈ (M.P i) → 
 (G.ind_int_mp M).degree v = (G.ind (M.P i)).degree v:=
 begin
---START HERE
-sorry,
+  intros hi hv, unfold degree, apply congr_arg _, ext,
+  have :=mem_univ a,rw ← h at this, have:=G.int_edge_help h hi hv this,
+  rwa [mem_neighbor_finset,mem_neighbor_finset],
 end
 
 
 
-lemma int_edge_count' {M :multi_part α} (h: M.A=univ) :
+lemma int_ind_deg_sum {M :multi_part α} (h: M.A=univ) :
  ∑v,(G.ind_int_mp M).degree v =  ∑  i in range(M.t+1), ∑ v, (G.ind (M.P i)).degree v:=
 begin
-  
-
-sorry,
+have :=bUnion_parts M, rw ← h,nth_rewrite 0 this,
+ rw sum_bUnion (pair_disjoint M),
+ refine sum_congr rfl _,
+ intros i hi, rw (sdiff_part hi), rw sum_union (sdiff_disjoint), 
+ have :∑x in M.A\(M.P i),(G.ind (M.P i)).degree x =0,{
+  apply sum_eq_zero,intros x hx, rw mem_sdiff at hx, exact G.ind_deg_nmem hx.2,},
+  rw this,rw zero_add, apply sum_congr rfl, intros x hx, apply (G.int_edge_help' h) hi hx, exact x,
 end
--- subgraph of G induced inside parts of M (careful if M.A≠ univ)
---def indmp_c (M : multi_part α) : simple_graph α:=G ⊓ ((mp M)ᶜ)
-
--- Would like to have G K_t+2-free implies there is a (t+1)-partition of α
--- with e(G)+∑i < t+1, e(G.ind M_i) ≤ e(mp M)
 
 
---induced bipartite graph
-@[ext,reducible]
-def indb {A B : finset α} (h: disjoint A B): simple_graph α :={
-  adj:= begin intros  x y,exact  G.adj x y ∧ ((x ∈ A ∧ y ∈ B)∨ (x∈ B ∧ y∈ A)), end, 
-  symm:=
-  begin
-    intros x y hxy, rw adj_comm, tauto, 
-  end,
-  loopless:= by obviously}
-
+-- number of edges in the subgraph induced inside all the is the sum of those induced in each part
+lemma int_ind_edge_sum {M :multi_part α} (h: M.A=univ) :
+(G.ind_int_mp M).edge_finset.card =  ∑  i in range(M.t+1), (G.ind (M.P i)).edge_finset.card:=
+begin
+--  apply (by norm_num:0<2)).mp,
+  apply (nat.mul_right_inj (by norm_num:0<2)).mp, rw mul_sum,
+  simp only [← sum_degrees_eq_twice_card_edges], exact G.int_ind_deg_sum h,
+end
 
 --so now can count edges in induced parts in place of summing restricted degrees...
 lemma ind_edge_count {A : finset α}: ∑  v in A, G.deg_res v A = 2* ((G.ind A).edge_finset.card ) :=
