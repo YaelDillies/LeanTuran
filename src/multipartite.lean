@@ -281,10 +281,15 @@ begin
   rwa card_univ at this,
 end
 
+
+-- just need to reformulate our bound to say any complete multipartite graph on α that attains turan bound is immoveable
 lemma turan_eq_imp (M: multi_part α) (hu: M.A=univ):  (mp M).edge_finset.card = tn M.t (fintype.card α) → immoveable M:=
 begin
-
-sorry,
+  intros h, contrapose h, apply ne_of_lt, obtain ⟨N,NA,Nt,iN,le⟩:= moved M,
+  apply (mul_lt_mul_left (by norm_num:0<2)).mp, rw ←sum_degrees_eq_twice_card_edges, 
+  have lt:=moved_max N M NA Nt iN h,
+  have le2:=turan_bound_M N, unfold mp_dsum at *, rw hu at *,rw NA at *,rw Nt at *,rw card_univ at *,
+  exact lt_of_lt_of_le lt le2,
 end
 
 end simple_graph
