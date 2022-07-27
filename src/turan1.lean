@@ -17,12 +17,37 @@ namespace simple_graph
 
 
 variables {t n : ℕ} 
-variables {α : Type*} (G : simple_graph α)[fintype α][inhabited α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
+variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : finset α}
+[decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
 
 lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
 disjoint_of_subset_right (inter_subset_left (A\B) C) ((disjoint_of_subset_left (inter_subset_left B C)) disjoint_sdiff)
 
+--surely this should be much easier? 
+lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G≤H ↔ G.edge_finset ⊆ H.edge_finset:=
+begin
+  split,intro h, intro e,  rw [mem_edge_finset,mem_edge_finset], intro he, work_on_goal 1 { induction e, work_on_goal 1 { cases e, solve_by_elim }, refl }, intros ᾰ v w ᾰ_1, dsimp at *, simp at *,
+  rw adj_iff_exists_edge at *, obtain ⟨ne,e,w,h⟩:=ᾰ_1, exact ⟨ne,e,(ᾰ w),h⟩,
+end
+
+
+lemma eq_iff_edges_eq  {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G=H ↔ G.edge_finset = H.edge_finset:= 
+begin
+  split, intro eq, have ghss:G.edge_finset ⊆ H.edge_finset:=subgraph_edge_subset.mp (le_of_eq eq),
+  have hgss:H.edge_finset ⊆ G.edge_finset:=subgraph_edge_subset.mp (le_of_eq eq.symm),
+  exact subset_antisymm ghss hgss,
+  intro eq,  have ghss:G≤H:=subgraph_edge_subset.mpr (subset_of_eq eq),
+  have hgss:H≤ G:=subgraph_edge_subset.mpr (subset_of_eq eq.symm),
+  exact le_antisymm ghss hgss,  
+end
+-- a subgraph of the same size or larger is the same graph
+lemma edge_eq_sub_imp_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj]
+(hs: G≤ H) (hc: H.edge_finset.card ≤ G.edge_finset.card): G = H:=
+begin
+  have :G.edge_finset=H.edge_finset:=finset.eq_of_subset_of_card_le (subgraph_edge_subset.mp hs) hc,
+  exact eq_iff_edges_eq.mpr  this,
+end
 
 include G
 -- res nbhd is part of nbhd in A
@@ -707,6 +732,8 @@ begin
   intro h, obtain⟨M,ht,hu,hle⟩:=G.furedi_stability h, rw ← ht at hle,rw ← G.int_ind_edge_sum hu at hle,
   exact ⟨M,ht,hu,hle⟩,
 end
+
+--now deduce case of equality in Turan's theorem
 theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = tn t (fintype.card α) → ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ immoveable M ∧ G=mp M:=
 begin
   intro h,obtain ⟨M,ht,hu,hle⟩:=G.furedi_stability' h.1, rw h.2 at hle,
@@ -717,9 +744,9 @@ begin
     simp only [*, not_mem_empty] at *, simp only [bot_adj, forall_false_left],  },
   have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
   have ieq:(mp M).edge_finset.card= tn t (fintype.card α):=by linarith, rw ← ht at ieq,
-  refine ⟨turan_eq_imp M hu ieq,_⟩,
---- have G ≤ mp M just need to show equality of edge cards implie equality..
-sorry,
+  refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
+--- have G ≤ mp M just need to show equality of edge cards implies equality..
+  exact edge_eq_sub_imp_eq dec tm,
 end
 
 end simple_graph
