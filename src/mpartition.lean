@@ -326,18 +326,15 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
     obtain ⟨a1, H, H2⟩:=hP,split_ifs at H2, {use [a1,H, H2]},{
     push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H},},},},
   end,
-  ---START HERE with {}
   disj:= begin
-    intros i hi j hj iltj, split_ifs, 
-    refine M.disj i _ j _ iltj,
-    exact mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hi) h_1), 
-    exact mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2), 
-    rw [M.uni, disjoint_bUnion_left] at h, 
-    apply h i (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hi) h_1)),
-    rw [M.uni, disjoint_bUnion_left] at h, rw disjoint.comm,
-    apply h j (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2)),
-    push_neg at h_1,push_neg at h_2, rw ← h_2 at h_1, exfalso,
-    exact iltj h_1, 
+    intros i hi j hj iltj, split_ifs,{ refine M.disj i _ j _ iltj,
+    {exact mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hi) h_1)}, 
+    {exact mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2)}}, 
+    {{rw [M.uni, disjoint_bUnion_left] at h, 
+    apply h i (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hi) h_1))},},
+    {{rw [M.uni, disjoint_bUnion_left] at h, rw disjoint.comm,
+    apply h j (mem_range.mpr (lt_of_le_of_ne (mem_range_succ_iff.mp hj) h_2))},},
+    {{push_neg at h_1,push_neg at h_2, rw ← h_2 at h_1, exfalso, exact iltj h_1},}, 
   end,}
 --
 
@@ -355,13 +352,13 @@ lemma insert_P (M: multi_part α) {B :finset α} (h: disjoint M.A B) :∀i, (ins
 --all vertices in the new part are in the last part of the new partition
 lemma insert_P' (M: multi_part α) {B :finset α} (h: disjoint M.A B) : ∀v∈B, v∈ (insert M h).P (M.t+1):=
 begin
-  intros v hv, rw insert_P,split_ifs,exfalso, exact h_1 rfl, exact hv,
+  intros v hv, rw insert_P,split_ifs,{exfalso, exact h_1 rfl}, {exact hv},
 end
 
 --conversely if v is in the last part of the new partition then it is from the added part.
 lemma insert_C (M: multi_part α) {B :finset α} (h: disjoint M.A B){v:α} : v∈ (insert M h).P (M.t+1) → v∈ B:=
 begin
-  intro h1, rw insert_P at h1,split_ifs at h1,exfalso, exact h_1 rfl, exact h1,
+  intro h1, rw insert_P at h1,split_ifs at h1,{exfalso, exact h_1 rfl}, {exact h1},
 end
 
 -- there is always a (s+1)-partition of B for any finset α B and nat s
@@ -412,9 +409,10 @@ end
 -- M.A is the union of its parts
 lemma bUnion_parts (M:multi_part α) :M.A=finset.bUnion (range(M.t+1)) (λi,(M.P i)):=
 begin
-  ext,rw mem_bUnion, split,intros hA, use inv_part hA,
-  intro hA, obtain ⟨i,hi,hi2⟩:=hA,exact mem_part hi hi2,
+  ext,rw mem_bUnion, split,{intros hA, use inv_part hA},
+  {intro hA, obtain ⟨i,hi,hi2⟩:=hA,exact mem_part hi hi2},
 end
+
 -- if there are two different parts then the sum of their sizes is at most the size of the whole
 -- could make a version for any number of parts but don't really need it
 lemma two_parts {M: multi_part α} {i j : ℕ} (hi: i ∈ range(M.t+1))  (hj: j ∈ range(M.t+1)) (hne: i≠ j) : (M.P i).card + (M.P j).card ≤ M.A.card:=
@@ -443,42 +441,42 @@ begin
 end
 
 -- create a new partition by moving v from P i to P j,
--- why could I not use "(M.P j).insert v" invalid field notation, but it didn't complain about "(M.P i).erase v"
+-- "(M.P j).insert v" invalid field notation, but it didn't complain about "(M.P i).erase v"
 --- Error message :'insert' is not a valid "field" because environment does not contain 'finset.insert' M.P j which has type finset α
 def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
   t:=M.t,
   P:= begin intros k, exact ite (k ≠ i ∧ k ≠ j) (M.P k) (ite (k = i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
   A:=M.A,
   uni:=begin 
-    rw M.uni,ext,split, rw [mem_bUnion,mem_bUnion],intros h,simp only [*, mem_range, ne.def, exists_prop] at *,
-    by_cases hav: a=v,
-      refine ⟨j,hj.1,_⟩,rw ← hav at *, split_ifs,exfalso, exact h_1.2 rfl,exfalso, push_neg at h_1,exact hj.2 h_2,
-      refine mem_union_right _ (mem_singleton_self a), 
-      obtain ⟨k,hk1,hk2⟩:=h,
-      refine ⟨k,hk1,_⟩, split_ifs, exact hk2, refine mem_erase.mpr _,rw h_1 at hk2, exact ⟨hav,hk2⟩,
-      push_neg at h, rw (h h_1) at hk2, exact mem_union_left _ hk2,
-    rw [mem_bUnion,mem_bUnion],intros h,simp only [*, mem_range, ne.def, exists_prop] at *,
-    by_cases hav: a=v,
-      rw ← hav at hvi, exact ⟨ i,hvi⟩,
-      obtain ⟨k,hk1,hk2⟩:=h, split_ifs at hk2, exact ⟨k,hk1,hk2⟩, exact ⟨i,hvi.1,(erase_subset v (M.P i)) hk2⟩,
-      refine ⟨j,hj.1,_⟩, rw mem_union at hk2, cases hk2, exact hk2,exfalso, exact hav (mem_singleton.mp hk2), end,
+    rw M.uni,ext,split, {rw [mem_bUnion,mem_bUnion],intros h,simp only [*, mem_range, ne.def, exists_prop] at *,
+    by_cases hav: a=v,{
+      refine ⟨j,hj.1,_⟩,rw ← hav at *, split_ifs,{exfalso, exact h_1.2 rfl},{exfalso, push_neg at h_1,exact hj.2 h_2},
+      {refine mem_union_right _ (mem_singleton_self a)}, },
+      {obtain ⟨k,hk1,hk2⟩:=h,
+      refine ⟨k,hk1,_⟩, split_ifs, {exact hk2}, {refine mem_erase.mpr _,rw h_1 at hk2, exact ⟨hav,hk2⟩},
+      {push_neg at h, rw (h h_1) at hk2, exact mem_union_left _ hk2},},},
+    {rw [mem_bUnion,mem_bUnion],intros h,simp only [*, mem_range, ne.def, exists_prop] at *,
+    by_cases hav: a=v,{
+      rw ← hav at hvi, exact ⟨ i,hvi⟩},
+      {obtain ⟨k,hk1,hk2⟩:=h, split_ifs at hk2, {exact ⟨k,hk1,hk2⟩}, {exact ⟨i,hvi.1,(erase_subset v (M.P i)) hk2⟩},
+      {refine ⟨j,hj.1,_⟩, rw mem_union at hk2, cases hk2, {exact hk2},{exfalso, exact hav (mem_singleton.mp hk2)},},},}, end,
   disj:=begin 
-    intros a ha b hb ne,split_ifs, exact M.disj a ha b hb ne,
-    have:=M.disj a ha i hvi.1 h.1, apply disjoint_of_subset_right _ this, exact erase_subset _ _,  
-    simp only [disjoint_union_right, disjoint_singleton_right], refine ⟨M.disj a ha j hj.1 h.2,_⟩,
-    intro hv, exact h.1 (uniq_part ha hvi.1 hv hvi.2),
-    have:=M.disj i hvi.1 b hb  h_2.1.symm,apply disjoint_of_subset_left _ this, exact erase_subset _ _, 
-    exfalso, push_neg at h, push_neg at h_2,rw [h_1,h_3] at ne, exact ne rfl,
-    simp only [disjoint_union_right, disjoint_singleton_right, mem_erase, _root_.ne.def, eq_self_iff_true, not_true, false_and,
+    intros a ha b hb ne,split_ifs, {exact M.disj a ha b hb ne},
+    {have:=M.disj a ha i hvi.1 h.1, apply disjoint_of_subset_right _ this, exact erase_subset _ _},  
+    {simp only [disjoint_union_right, disjoint_singleton_right], refine ⟨M.disj a ha j hj.1 h.2,_⟩,
+    intro hv, exact h.1 (uniq_part ha hvi.1 hv hvi.2)},
+    {have:=M.disj i hvi.1 b hb  h_2.1.symm,apply disjoint_of_subset_left _ this, exact erase_subset _ _}, 
+    {exfalso, push_neg at h, push_neg at h_2,rw [h_1,h_3] at ne, exact ne rfl},
+    {simp only [disjoint_union_right, disjoint_singleton_right, mem_erase, _root_.ne.def, eq_self_iff_true, not_true, false_and,
     not_false_iff, and_true],
-    have:=M.disj i hvi.1 j hj.1 hj.2.symm, apply disjoint_of_subset_left _ this, exact erase_subset _ _, 
-    simp only [disjoint_union_left, disjoint_singleton_right],
+    have:=M.disj i hvi.1 j hj.1 hj.2.symm, apply disjoint_of_subset_left _ this, exact erase_subset _ _}, 
+    {simp only [disjoint_union_left, disjoint_singleton_right],
     refine ⟨M.disj j hj.1 b hb h_2.2.symm,_⟩, rw disjoint_singleton_left,
-    intro hb2, have:= uniq_part hb hvi.1 hb2 hvi.2 , exact h_2.1 this,
-    simp only [disjoint_union_left, disjoint_singleton_left, mem_erase, _root_.ne.def, eq_self_iff_true, not_true, false_and,
-  not_false_iff, and_true],
-    have:=M.disj j hj.1  i hvi.1 hj.2, apply disjoint_of_subset_right _ this, exact erase_subset _ _, 
-    exfalso, push_neg at h_2,push_neg at h, have bj:= h_2 h_3, have aj:= h h_1,rw aj at ne, rw bj at ne, exact ne rfl,
+    intro hb2, have:= uniq_part hb hvi.1 hb2 hvi.2 , exact h_2.1 this},
+    {simp only [disjoint_union_left, disjoint_singleton_left, mem_erase, _root_.ne.def, eq_self_iff_true], 
+    simp only [not_true, false_and,not_false_iff, and_true],
+    have:=M.disj j hj.1  i hvi.1 hj.2, apply disjoint_of_subset_right _ this, exact erase_subset _ _}, 
+    {exfalso, push_neg at h_2,push_neg at h, have bj:= h_2 h_3, have aj:= h h_1,rw aj at ne, rw bj at ne, exact ne rfl},
 end,}
 
 -- new whole is same as old
@@ -499,23 +497,23 @@ end
 lemma move_Pcard {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : k∈ range(M.t+1) → ((move M hvi hj).P k).card = ite (k≠i ∧k≠j) (M.P k).card (ite (k=i) ((M.P i).card -1) ((M.P j).card+1)):=
 begin
   intros hk,rw move_P hvi hj hk,split_ifs, 
-  refl,  exact card_erase_of_mem hvi.2,
+  {refl},  {exact card_erase_of_mem hvi.2},{
   have jv:=uniq_part' hvi.1 hj.1 hj.2.symm hvi.2,
   rw ← disjoint_singleton_right at jv,
-  apply card_disjoint_union jv,
+  apply card_disjoint_union jv},
 end
 
 --- the complement of the part with v has gained v
 lemma sdiff_erase {v : α} {A B :finset α} (hB: B⊆A) (hv: v ∈ B) : A\(B.erase v)=(A\B) ∪ {v} :=
 begin
-  ext, split, intro h, rw [mem_union,mem_sdiff] at *,rw mem_sdiff at h,rw mem_erase at h,
-  push_neg at h, by_cases h': a=v,right, exact mem_singleton.mpr h',
-  left, exact ⟨h.1,(h.2 h')⟩,
-  intros h,rw mem_sdiff,rw mem_erase,rw [mem_union,mem_sdiff] at h, push_neg,
-  cases h,exact ⟨h.1,λi,h.2⟩,by_contra h',push_neg at h',
+  ext, split, {intro h, rw [mem_union,mem_sdiff] at *,rw mem_sdiff at h,rw mem_erase at h,
+  push_neg at h, by_cases h': a=v,{right, exact mem_singleton.mpr h'},
+  {left, exact ⟨h.1,(h.2 h')⟩}},
+  {intros h,rw mem_sdiff,rw mem_erase,rw [mem_union,mem_sdiff] at h, push_neg,
+  cases h,{exact ⟨h.1,λi,h.2⟩},{by_contra h',push_neg at h',
   have ha:=hB hv,
   have:=mem_singleton.mp h, rw ← this at ha,
-  have h2:=h' ha, exact h2.1 this,
+  have h2:=h' ha, exact h2.1 this},},
 end
 
 --size of complement of erased part has increased
@@ -529,9 +527,9 @@ end
 --  complement of part without v has lost v 
 lemma sdiff_insert {v : α} {A B :finset α} (hB: B⊆A) (hv: v ∉ B) : A\(B ∪  {v})=(A\B).erase v:= 
 begin
-  ext,split,intro h,
-  rw mem_erase, rw mem_sdiff at *,rw mem_union at h, push_neg at h,rw mem_singleton at h,  exact ⟨h.2.2,h.1,h.2.1⟩,
-  intro h,rw mem_erase at h, rw mem_sdiff, rw mem_union, push_neg,rw mem_singleton, rw mem_sdiff at h, exact ⟨h.2.1,h.2.2,h.1⟩,
+  ext,split,{intro h,
+  rw mem_erase, rw mem_sdiff at *,rw mem_union at h, push_neg at h,rw mem_singleton at h,  exact ⟨h.2.2,h.1,h.2.1⟩},
+  {intro h,rw mem_erase at h, rw mem_sdiff, rw mem_union, push_neg,rw mem_singleton, rw mem_sdiff at h, exact ⟨h.2.1,h.2.2,h.1⟩},
 end
 
 ---size of complement decreased
@@ -545,9 +543,9 @@ end
 lemma move_Pcard_sdiff {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :
  k∈ range(M.t+1) → (((move M hvi hj).A)\((move M hvi hj).P k)).card = ite (k≠i ∧k≠j) ((M.A)\(M.P k)).card (ite (k=i) (((M.A)\(M.P i)).card +1) (((M.A)\(M.P j)).card-1)):=
 begin
-  intros hk,rw move_P hvi hj hk,rw move_A hvi hj,split_ifs, refl,
-  exact card_sdiff_erase (sub_part  hvi.1) hvi.2,
-  exact card_sdiff_insert (sub_part  hj.1) (uniq_part' hvi.1 hj.1 hj.2.symm hvi.2) (mem_part hvi.1 hvi.2),
+  intros hk,rw move_P hvi hj hk,rw move_A hvi hj,split_ifs, {refl},
+  {exact card_sdiff_erase (sub_part  hvi.1) hvi.2},
+  {exact card_sdiff_insert (sub_part  hj.1) (uniq_part' hvi.1 hj.1 hj.2.symm hvi.2) (mem_part hvi.1 hvi.2)},
 end
 
 -- key increment inequality we need to show moving a vertex in a moveable partition is increases deg sum
@@ -562,7 +560,7 @@ begin
   apply nat.add_lt_add_left,
   rw [add_comm, ← add_assoc, add_comm (a-1), add_assoc, add_assoc],
   apply nat.add_lt_add_left,
-  have ab: b< a-1,{by linarith [hb],},
+  have ab: b< a-1:=by linarith [hb],
   have nba: (n-a)< (n-b-1),{
     have nba': (n-a)<(n-(b+1)),{
       have h3:=tsub_pos_of_lt hb,

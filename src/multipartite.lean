@@ -38,16 +38,9 @@ end,}
 instance mp_decidable_rel : decidable_rel (mp M).adj :=
 λ x y, finset.decidable_dexists_finset
 
-instance neighbor_mp_set.mem_decidable (v : α):
-  decidable_pred (∈ (mp M).neighbor_set v) := 
-begin
-  unfold neighbor_set, apply_instance,
-end
+instance neighbor_mp_set.mem_decidable (v : α): decidable_pred (∈ (mp M).neighbor_set v) :=by apply_instance
 
-instance multi_partite_fintype  : fintype (mp M).edge_set := 
-begin
-  unfold edge_set, apply_instance, 
-end
+instance multi_partite_fintype  : fintype (mp M).edge_set :=by apply_instance 
 
 --any vertex in α but not in A is isolated
 lemma no_nbhrs {M: multi_part α} {v w: α} (hA: v∉M.A) : ¬(mp M).adj v w:=
@@ -103,10 +96,17 @@ lemma mp_adj_iff {M : multi_part α} {v w: α} {i j : ℕ}(hi: i∈ range(M.t+1)
 (mp M).adj v w ↔  i≠j := ⟨mp_adj_imp hi hj hvi hwj, mp_imp_adj hi hj hvi hwj⟩
 
 --if v in P i and vw is an edge then w ∉ P i
-lemma not_nhbr_same_part {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) : (mp M).adj v w → w ∉ M.P i:=
+lemma not_nbhr_same_part {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) : (mp M).adj v w → w ∉ M.P i:=
 begin
   intros h1, by_contra, apply mp_adj_imp hi hi hv h h1,refl, 
 end
+
+lemma not_nbhr_same_part' {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) (hw: w∈ M.P i): ¬(mp M).adj v w :=
+begin
+  intros h1, contrapose hw, exact not_nbhr_same_part hi hv h1, 
+end
+
+
 
 -- if v in P i  and w in A\(P i) then vw is an edge
 lemma nbhr_diff_parts {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) (hw : w∈ M.A\M.P i)
@@ -122,9 +122,9 @@ end
 --if v is in P i then its nbhd is A\(P i)
 lemma mp_nbhd {M : multi_part α} {v:α} {i: ℕ} (hv: i∈ range(M.t+1) ∧ v ∈ M.P i) : (mp M).neighbor_finset v = (M.A)\(M.P i) :=
 begin
-  ext,split,rw mem_neighbor_finset,intro h, rw adj_comm at h,
-  rw mem_sdiff, refine  ⟨nbhrs_imp h,_⟩, exact not_nhbr_same_part hv.1 hv.2 h.symm,
-  rw mem_neighbor_finset, exact nbhr_diff_parts hv.1 hv.2,
+  ext,split,{rw mem_neighbor_finset,intro h, rw adj_comm at h,
+  rw mem_sdiff, refine  ⟨nbhrs_imp h,_⟩, exact not_nbhr_same_part hv.1 hv.2 h.symm},
+  {rw mem_neighbor_finset, exact nbhr_diff_parts hv.1 hv.2},
 end
  
 -- degree sum over all vertices 
@@ -178,10 +178,10 @@ lemma immoveable_deg_sum_eq (M N : multi_part α): M.A= N.A → M.t=N.t → immo
 begin
    intros hA ht iM iN, unfold mp_dsum,  rw [mp_deg_sum_sq,mp_deg_sum_sq,hA], rw [immoveable_iff_not_moveable, moveable,not_not] at *,
    apply congr_arg _, unfold P' at *, rw ← ht at iN,  
-   have:= bal_turan_help' iM iN _, 
-   unfold sum_sq at this,  rwa  ← ht, 
-   let n:=∑i in range(M.t+1), (M.P i).card, exact n,
-   rw ← card_uni,rw ht,rw ← card_uni,congr, exact hA,
+   have:= bal_turan_help' iM iN _,{ 
+   unfold sum_sq at this,  rwa  ← ht}, 
+   {let n:=∑i in range(M.t+1), (M.P i).card, exact n},
+   {rw ← card_uni,rw ht,rw ← card_uni,congr, exact hA},
 end
 
 
@@ -191,27 +191,25 @@ lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ ra
 (M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card <((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card:=
 begin
   rw move_Pcard hvi hj hvi.1, rw move_Pcard hvi hj hj.1,rw move_Pcard_sdiff hvi hj hvi.1, rw move_Pcard_sdiff hvi hj hj.1,
-  split_ifs,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h.1 rfl,exfalso, exact h_1.2 rfl,exfalso, exact hj.2 h_2,
-  rw card_sdiff (sub_part hvi.1), rw card_sdiff (sub_part hj.1),
-  exact move_change hc (two_parts hvi.1  hj.1 hj.2.symm),
+  split_ifs,{exfalso, exact h.1 rfl},{exfalso, exact h.1 rfl},{exfalso, exact h.1 rfl},{exfalso, exact h_1.2 rfl},{exfalso, exact hj.2 h_2},
+  {rw card_sdiff (sub_part hvi.1), rw card_sdiff (sub_part hj.1),
+  exact move_change hc (two_parts hvi.1  hj.1 hj.2.symm)},
 end
 
 lemma mp_deg_sum_move_help2{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i)  : 
 ∑ (x : ℕ) in ((range (M.t + 1)).erase j).erase i, ((move M hvi hj).P x).card * ((move M hvi hj).A \ (move M hvi hj).P x).card =
 ∑ (y : ℕ) in ((range (M.t + 1)).erase j).erase i, (M.P y).card*((M.A\(M.P y)).card):=
 begin
-  apply sum_congr rfl _, intros k hk, rw move_Pcard hvi hj, rw move_Pcard_sdiff hvi hj,split_ifs,refl,
-  exfalso, rw h_1 at hk,exact not_mem_erase i _ hk,exfalso,push_neg at h, simp only [*, ne.def, not_false_iff, mem_erase, eq_self_iff_true] at *,
-  exact mem_of_mem_erase (mem_of_mem_erase hk),   exact mem_of_mem_erase (mem_of_mem_erase hk),  
+  apply sum_congr rfl _, intros k hk, rw move_Pcard hvi hj, rw move_Pcard_sdiff hvi hj,split_ifs,{refl},
+  {exfalso, rw h_1 at hk,exact not_mem_erase i _ hk}, {exfalso,push_neg at h, simp only [*, ne.def, not_false_iff, mem_erase, eq_self_iff_true] at *},
+  {exact mem_of_mem_erase (mem_of_mem_erase hk)},   {exact mem_of_mem_erase (mem_of_mem_erase hk)},  
 end
 
 -- given a vertex v ∈ P i and a part P j such that card(P j)+1 < card(P i) then moving v from Pi to Pj will increase the sum of degrees
 lemma mp_deg_sum_move {M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 ∑ w in M.A,  (mp M).degree w < ∑ w in (move M hvi hj).A,  (mp (move M hvi hj)).degree w :=
 begin
-  rw mp_deg_sum M,rw mp_deg_sum (move M hvi hj), 
-  --rw (move_A hvi hj), 
-  rw (move_t hvi hj), 
+  rw [mp_deg_sum M,mp_deg_sum (move M hvi hj), (move_t hvi hj)], 
   rw [← sum_erase_add (range(M.t+1)) _ hj.1,← sum_erase_add (range(M.t+1)) _ hj.1],
   rw ← sum_erase_add ((range(M.t+1)).erase j) _ (mem_erase_of_ne_of_mem hj.2.symm hvi.1),
   rw ← sum_erase_add ((range(M.t+1)).erase j) _ (mem_erase_of_ne_of_mem hj.2.symm hvi.1),
@@ -251,17 +249,13 @@ begin
   obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:= not_immoveable_imp h1, 
   set O:=(move N ⟨hi,hv⟩ ⟨hj,ne⟩) with hO, have Ns:mp_dsum N < mp_dsum O:=mp_deg_sum_move ⟨hi,hv⟩ ⟨hj,ne⟩ hc,
   obtain ⟨Q,QA,Qt,Qim,Qs⟩:=moved O, have :=immoveable_deg_sum_eq M Q _ _ him Qim,rw this,
-  exact lt_of_lt_of_le Ns Qs, rw [hA,QA], have NOA:N.A=O.A:=move_A ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOA,
-   rw[ht,Qt],  have NOt:N.t=O.t:=move_t ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOt,
+  {exact lt_of_lt_of_le Ns Qs}, {rw [hA,QA], have NOA:N.A=O.A:=move_A ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOA},
+  {rw[ht,Qt],  have NOt:N.t=O.t:=move_t ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOt},
 end
 
 -- t_n t n is the maximum number of edges in a (t+2)-clique free graph of order n
 -- or equivalently the maximum numb of edges in a complete (t+1)-partite graph order n
--- or equivalently .... 
-
-
-
-
+-- or equivalently ....
 lemma turan_bound_M (M: multi_part α): mp_dsum M ≤ 2*tn M.t M.A.card:=
 begin
   obtain ⟨N,hA,ht,iN,sN⟩:=moved M,
@@ -280,7 +274,7 @@ begin
 end
 
 
--- just need to reformulate our bound to say any complete multipartite graph on α that attains turan bound is immoveable
+-- just need to reformulate our bound to say any complete multipartite graph on α that attains the turan bound is immoveable
 lemma turan_eq_imp (M: multi_part α) (hu: M.A=univ):  (mp M).edge_finset.card = tn M.t (fintype.card α) → immoveable M:=
 begin
   intros h, contrapose h, apply ne_of_lt, obtain ⟨N,NA,Nt,iN,le⟩:= moved M,
@@ -290,9 +284,11 @@ begin
   exact lt_of_lt_of_le lt le2,
 end
 
-
-
-
+lemma turan_imm_imp_eq (M: multi_part α) {t :ℕ} (hu: M.A=univ) (ht :M.t=t): immoveable M → (mp M).edge_finset.card = tn t (fintype.card α) :=
+begin
+  intros iM,
+  sorry,
+end
 end simple_graph
 
 

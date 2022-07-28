@@ -29,6 +29,13 @@ begin
   exact h,
 end
 
+lemma disj_of_disj_inter (C D :finset α){A B :finset α} (h: disjoint A B): disjoint (C∩A ) (D∩B):=
+begin
+  apply disjoint_of_subset_left (inter_subset_right C A), 
+  apply disjoint_of_subset_right (inter_subset_right D B),
+  exact h,
+end
+
 -- subgraph iff edge_finset is subset
 lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G ≤ H ↔ G.edge_finset ⊆ H.edge_finset:=
 begin
@@ -299,7 +306,7 @@ begin
     refine mp_imp_adj hi hj hx1 hy1 _,
     intro ne,rw ne at h3, exact h3 hy1,},{
     rintros ⟨hadj,h2⟩, refine ⟨hadj,_⟩, push_neg, intros hadj' i hi hx hy,
-    exact not_nhbr_same_part hi hx h2 hy },
+    exact not_nbhr_same_part hi hx h2 hy },
 end
 
 -- G is the join of the edges induced by the parts and those in the complete 
@@ -557,7 +564,7 @@ begin
   intros hv hw,   have vin:= insert_P' M h v hv,
   have win:= insert_P' M h w hw,
   have :=self_mem_range_succ (M.t+1), rw ← insert_t M h at this,
-  contrapose win,push_neg at win, exact not_nhbr_same_part this vin win,
+  contrapose win,push_neg at win, exact not_nbhr_same_part this vin win,
 end
 
 lemma mp_ind' (M : multi_part α) {C :finset α} (h: disjoint M.A C) : ∀v∈C,(mp (insert M h)).deg_res v C=0:=
@@ -591,10 +598,8 @@ end
 
 
 
-
 ---for any (t+2)-clique free set there is a partition into B, a (t+1)-clique free set and A\B 
 -- such that e(A)+e(A\B) ≤ e(B) + |B|(|A|-|B|) 
-
 lemma furedi_help : ∀A:finset α, G.clique_free_set A (t+2) → ∃B:finset α, B ⊆ A ∧ G.clique_free_set B (t+1) ∧ 
 ∑v in A, G.deg_res v A + ∑ v in (A\B), G.deg_res v (A\B) ≤ ∑ v in B, G.deg_res v B + 2*B.card * (A\B).card:=
 begin
@@ -717,9 +722,38 @@ begin
   exact ⟨M,ht,hu,hle⟩,
 end
 
---now deduce case of equality in Turan's theorem
-theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = tn t (fintype.card α) → ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ immoveable M ∧ G=mp M:=
+
+
+--- should probably prove that any complete (t+1)-partite graph is (t+2)-clique free..#check
+lemma mp_clique_free (M: multi_part α): M.t=t → M.A=univ →  (mp M).clique_free (t+2):=
 begin
+  intros ht hA, by_contra, unfold clique_free at h, push_neg at h,
+  obtain ⟨S,hs1,hs2⟩:=h, rw is_clique_iff at hs1, 
+  -- would now like to invoke the pigeonhole principle 
+  -- have t+2 pigeons in t+1 classes so two in some class which are then non-adjacent...
+  -- i did try to find this in mathlib but it was late so...
+  suffices : ∃ i∈range(M.t +1),1 < (S∩(M.P i)).card,{
+    obtain ⟨i,hi,hc⟩:=this,  rw [one_lt_card_iff] at hc,
+    obtain ⟨a,b,ha,hb,ne⟩:=hc, rw mem_inter at *,
+    have nadj:= not_nbhr_same_part' hi  ha.2 hb.2,
+    exact nadj  (hs1 ha.1 hb.1 ne),},  
+  by_contra, push_neg at h,
+  have ub:(range(M.t+1)).sum (λi, (S∩ (M.P i)).card)≤ M.t+1,{
+    nth_rewrite_rhs 0 ← card_range (M.t+1), nth_rewrite_rhs 0 card_eq_sum_ones,
+    apply sum_le_sum h,}, nth_rewrite_rhs 0 ht at ub,
+    have uni:=bUnion_parts M, rw hA at uni,
+    have sin:=inter_univ S, rw uni at sin, rw inter_bUnion at sin,
+    rw ← sin at hs2, rw card_bUnion at hs2, linarith,
+    intros x hx y hy ne,
+    apply disj_of_disj_inter S S (M.disj x hx y hy ne), 
+end
+
+
+--now deduce case of equality in Turan's theorem
+theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = tn t (fintype.card α)
+ ↔  ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ immoveable M ∧ G = mp M:=
+begin
+  split,{
   intro h,obtain ⟨M,ht,hu,hle⟩:=G.furedi_stability' h.1, rw h.2 at hle,
   refine ⟨M,ht,hu,_⟩, have tm:=turan_max_edges M hu, rw ht at tm, 
   have inz:(G.ind_int_mp M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
@@ -728,7 +762,17 @@ begin
   have ieq:(mp M).edge_finset.card= tn t (fintype.card α):=by linarith, rw ← ht at ieq,
   refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
 --- have G ≤ mp M just need to show equality of edge cards implies equality..
-  exact edge_eq_sub_imp_eq dec tm,
+  exact edge_eq_sub_imp_eq dec tm},
+  { intro h, obtain ⟨M,ht,hu,iM,hG⟩:=h, 
+    have hc:=G.mp_clique_free M ht hu,
+    have ieq:=turan_imm_imp_eq M hu ht iM,  rw ← hG at hc, 
+    refine ⟨hc,_⟩,
+    have h2:=eq_iff_edges_eq.mp hG,
+    have : G.edge_finset.card= (mp M).edge_finset.card,{simp only [*] at *},
+    rwa ieq at this,},
 end
+
+
+
 
 end simple_graph
