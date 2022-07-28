@@ -22,6 +22,13 @@ variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : fin
 lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
 disjoint_of_subset_right (inter_subset_left (A\B) C) ((disjoint_of_subset_left (inter_subset_left B C)) disjoint_sdiff)
 
+lemma disj_of_inter_disj (C D :finset α){A B :finset α} (h: disjoint A B): disjoint (A∩C) (B∩D):=
+begin
+  apply disjoint_of_subset_left (inter_subset_left A C), 
+  apply disjoint_of_subset_right (inter_subset_left B D),
+  exact h,
+end
+
 -- subgraph iff edge_finset is subset
 lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G ≤ H ↔ G.edge_finset ⊆ H.edge_finset:=
 begin
@@ -39,16 +46,14 @@ end
 
 -- a subgraph of the same size or larger is the same graph (yes.. everything is finite)
 lemma edge_eq_sub_imp_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj]
-(hs: G≤ H) (hc: H.edge_finset.card ≤ G.edge_finset.card): G = H:=
-begin
-  have :G.edge_finset=H.edge_finset:=finset.eq_of_subset_of_card_le (subgraph_edge_subset.mp hs) hc,
-  exact eq_iff_edges_eq.mpr  this,
-end
+(hs: G≤ H) (hc: H.edge_finset.card ≤ G.edge_finset.card): G = H
+:=eq_iff_edges_eq.mpr  (finset.eq_of_subset_of_card_le (subgraph_edge_subset.mp hs) hc)
 
-lemma empty_edge_iff_empty {G :simple_graph α} [decidable_rel G.adj] : G=⊥  ↔ G.edge_finset=∅:=
+
+lemma empty_edge_iff_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅:=
 begin
   split,{
-    intro h, simp only [set.to_finset_eq_empty_iff], rw h,ext1, induction x, work_on_goal 1 { refl }, refl,},
+    intro h, simp only [set.to_finset_eq_empty_iff], rw h,ext, induction x,{refl},{refl},},
     { intro h, simp only [set.to_finset_eq_empty_iff] at h, ext, rw bot_adj, rw ← mem_edge_set,rw h,refl,},
 end
 
@@ -66,10 +71,8 @@ begin
 end
 
 -- max deg res is zero if A is empty
-def max_deg_res (A :finset α) : ℕ :=
-begin
-  exact option.get_or_else (A.image (λ v, G.deg_res v A)).max 0
-end
+def max_deg_res (A :finset α) : ℕ :=option.get_or_else (A.image (λ v, G.deg_res v A)).max 0
+
 
 -- if A.nonempty then there is a vertex of max_deg_res A
 lemma exists_max_res_deg_vertex  {A :finset α} (hA: A.nonempty) :
@@ -94,7 +97,7 @@ begin
   rwa [max_deg_res,ht],  
 end
 
--- bound on sum of res_deg given max res deg
+-- bound on sum of deg_res given max deg_res (also a bound on e(C) for C ⊆ A)
 lemma max_deg_res_sum_le {A C : finset α} (hC: C ⊆ A) : ∑ v in C, G.deg_res v A ≤ (G.max_deg_res A)*(C.card):=
 begin
   rw [card_eq_sum_ones, mul_sum, mul_one],
@@ -113,10 +116,8 @@ begin
 end
 
 -- member of the restricted nhd iff in nbhd and in A
-lemma mem_res_nbhd (v w : α) (A : finset α) : w ∈ G.nbhd_res v A ↔ w ∈ A ∧ w ∈ G.neighbor_finset v:=
-begin
-  rw [nbhd_res,mem_inter], 
-end
+lemma mem_res_nbhd (v w : α) (A : finset α) : w ∈ G.nbhd_res v A ↔ w ∈ A ∧ w ∈ G.neighbor_finset v
+:=by rwa [nbhd_res,mem_inter]
 
 -- v is not a neighbor of itself
 lemma not_mem_nbhd (v : α)  : v ∉ G.neighbor_finset v :=
@@ -137,10 +138,8 @@ begin
 end
 
 -- restricted nbhd of member is stictly contained in A
-lemma ssub_res_nbhd_of_mem {v : α} {A : finset α} (h: v ∈ A) : G.nbhd_res v A ⊂ A:=
-begin
-  exact (ssubset_iff_of_subset (G.sub_res_nbhd_A v A)).mpr  ⟨v,h,G.not_mem_res_nbhd v A⟩,
-end
+lemma ssub_res_nbhd_of_mem {v : α} {A : finset α} (h: v ∈ A) : G.nbhd_res v A ⊂ A
+:=(ssubset_iff_of_subset (G.sub_res_nbhd_A v A)).mpr ⟨v,h,G.not_mem_res_nbhd v A⟩
 
 -- restricted nbhd contained in nbhd
 lemma sub_res_nbhd_N (v : α)(A : finset α) : G.nbhd_res v A ⊆ G.neighbor_finset v:=
@@ -157,7 +156,7 @@ def clique_free_set (A : finset α) (s : ℕ): Prop:= ∀ B ⊆ A, ¬G.is_n_cliq
 lemma clique_free_card_lt {A : finset α} {s: ℕ} (h: A.card <s): G.clique_free_set A s:=
 begin
   rw clique_free_set,intros B hB,rw is_n_clique_iff,push_neg,intro h1,
-  apply ne_of_lt (lt_of_le_of_lt (card_le_of_subset hB) h), 
+  exact ne_of_lt (lt_of_le_of_lt (card_le_of_subset hB) h), 
 end
 
 --clique-free of empty (unless s=0)
@@ -199,7 +198,7 @@ lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in
 :=sum_eq_zero (G.two_clique_free hA)
 
 
--- I found dealing with the mathlib "induced" subgraph too painful 
+-- I found dealing with the mathlib "induced" subgraph too painful (probably just too early in my experience of lean)
 -- Graph induced by A ⊆ α, defined to be a simple_graph α (so all vertices outside A have empty neighborhoods)
 @[ext,reducible]
 def ind (A : finset α) : simple_graph α :={
@@ -209,7 +208,6 @@ def ind (A : finset α) : simple_graph α :={
     intros x y hxy, rw adj_comm, tauto, 
   end,
   loopless:= by obviously}
-
 
 -- don't actually need these instances
 --instance ind_decidable_rel {A:finset α} :decidable_rel (G.ind A).adj:=
@@ -238,29 +236,27 @@ lemma ind_nbhd_mem {A : finset α} {v : α} : v∈ A → (G.ind A).neighbor_fins
 begin
   intros hv,unfold neighbor_finset nbhd_res, ext, 
   simp only [*, set.mem_to_finset, mem_neighbor_set, and_self] at *,  
-  split,intro ha, rw [mem_inter,set.mem_to_finset,mem_neighbor_set],exact ⟨ha.2.2,ha.1⟩,
-  rw [mem_inter, set.mem_to_finset, mem_neighbor_set], tauto,
+  split,{intro ha, rw [mem_inter,set.mem_to_finset,mem_neighbor_set],exact ⟨ha.2.2,ha.1⟩},
+  {rw [mem_inter, set.mem_to_finset, mem_neighbor_set], tauto},
 end
 
 -- if v∉A then v has no neighbors in the induced graph G.ind A
 lemma ind_nbhd_nmem {A : finset α} {v : α} : v∉A → ((G.ind A).neighbor_finset v) = ∅:=
 begin 
   contrapose,  push_neg,intros h, obtain ⟨w,hw⟩:=nonempty.bex (nonempty_of_ne_empty h),
-  rw mem_neighbor_finset at hw, cases hw,exact hw_right.1, 
+  rw mem_neighbor_finset at hw, exact hw.2.1, 
 end
 
 -- if v∉ A then (G.ind A).degree v is zero
 lemma ind_deg_nmem {A : finset α} {v : α} : v∉A → (G.ind A).degree v=0:=
-begin
-  intro h,exact card_eq_zero.mpr (G.ind_nbhd_nmem h),
-end
+λ h, card_eq_zero.mpr (G.ind_nbhd_nmem h)
 
 -- so degrees of v in the induced graph are deg_res v A or 0 depending on whether or not v ∈ A
 lemma ind_deg {A :finset α}{v:α} : (G.ind A).degree v = ite (v∈A) (G.deg_res v A) (0):=
 begin
   unfold degree,
-  split_ifs,unfold deg_res,congr, exact G.ind_nbhd_mem h,
-  rw G.ind_nbhd_nmem h, apply card_eq_zero.mpr rfl,
+  split_ifs,{unfold deg_res,congr, exact G.ind_nbhd_mem h},
+  {rw G.ind_nbhd_nmem h, apply card_eq_zero.mpr rfl},
 end
 
 -- so degree sum over α in the induced subgraph is same as sum of deg_res over A
@@ -271,18 +267,13 @@ begin
 end
 
 --induced subgraph is a subgraph
-lemma ind_sub {A : finset α} : (G.ind A)≤ G:=
-begin
-  dsimp, intros x y, exact G.ind_adj_imp ,
-end
+lemma ind_sub {A : finset α} : (G.ind A)≤ G:=  λ x y, G.ind_adj_imp 
 
-
-
-
--- internal edges induced by parts of a partition
--- would have defined this as G \(⋃ (G.ind M.P i)) if I 
+-- internal edges induced by parts of a partition M
+-- I should have defined this as G \(⋃ (G.ind M.P i)) if I 
 -- could have made it work.. defining the bUnion operator for simple_graphs
 -- was a step too far..
+
 @[ext,reducible]
 def ind_int_mp (M: multi_part α) : simple_graph α:={
 adj:= λ v w , (G.adj v w) ∧ (∃ i ∈ range(M.t+1), v∈(M.P i) ∧w∈ (M.P i)),
@@ -292,10 +283,7 @@ obtain⟨ha,i,hi,hx,hy⟩:=hxy, exact ⟨ha,i,hi,hy,hx⟩, end,
 loopless:= by obviously,}
 
 -- this is a subgraph of G
-lemma ind_int_mp_sub (M : multi_part α) : (G.ind_int_mp M)≤ G:=
-begin
-  dsimp, intros x y h,cases h,exact h_left,
-end
+lemma ind_int_mp_sub (M : multi_part α) : (G.ind_int_mp M)≤ G:=λ _ _ h, h.1
 
 -- G with the internal edges removed is G ∩ (mp M)
 lemma sdiff_with_int {M: multi_part α} (h: M.A =univ)  : G\(G.ind_int_mp M) = G⊓(mp M):=
@@ -322,19 +310,19 @@ begin
 end
 
 --Given M and v,w vertices with v ∈ M.P i and w∈ M.A then v,w are adjacent in the "internal induced subgraph"
-  -- iff they are in the graph induced on M.P i
-lemma int_edge_help {M :multi_part α} {v w:α}{i:ℕ}: i∈ range(M.t+1) → v ∈ (M.P i) →  w∈M.A →
+  -- iff they are adjacent in the graph induced on M.P i
+lemma int_edge_help {M :multi_part α} {v w : α} {i : ℕ}: i ∈ range(M.t+1) → v ∈ (M.P i) →  w ∈ M.A →
 ((G.ind_int_mp M).adj v w ↔ (G.ind (M.P i)).adj v w)
 :=
 begin
   intros hi hv hw, obtain ⟨j,hj,hw⟩:=inv_part hw,dsimp, 
   by_cases i=j,{
-      split, intros h1,rw ←h at hw,exact ⟨h1.1,hv,hw⟩,
-      intros h1, cases h1, exact ⟨h1_left,i,hi,h1_right⟩,}, 
-  { split,intros h1, cases h1 with h2 h3, exfalso, rcases h3 with ⟨k, hkr, hk⟩,
+      split, {intros h1,rw ←h at hw,exact ⟨h1.1,hv,hw⟩},
+      {intros h1, cases h1, exact ⟨h1_left,i,hi,h1_right⟩},}, 
+  { split,{intros h1, cases h1 with h2 h3, exfalso, rcases h3 with ⟨k, hkr, hk⟩,
   have ieqk:=uniq_part hi hkr hv hk.1,have jeqk:=uniq_part hj hkr hw hk.2,
-  rw ← jeqk at ieqk, exact h ieqk,
-  intros h1, exfalso, exact uniq_part' hi hj h h1.2.2 hw, },
+  rw ← jeqk at ieqk, exact h ieqk},
+  {intros h1, exfalso, exact uniq_part' hi hj h h1.2.2 hw}, },
 end
 
 --same as above but for degrees and assuming M covers all of α
@@ -369,7 +357,7 @@ begin
   simp only [← sum_degrees_eq_twice_card_edges], exact G.int_ind_deg_sum h,
 end
 
---so now can count edges in induced parts in place of summing restricted degrees...
+--counting edges in induced parts is (almost) the same as summing restricted degrees...
 lemma ind_edge_count {A : finset α}: ∑  v in A, G.deg_res v A = 2* ((G.ind A).edge_finset.card ) :=
 begin
   rw [← sum_degrees_eq_twice_card_edges,G.ind_deg_sum],
@@ -388,7 +376,7 @@ begin
   rw hC, apply union_subset (subset_trans hB (G.sub_res_nbhd_A v A)) _,
   simp only [hv, singleton_subset_iff],
   rw is_n_clique_iff at *,
-  refine ⟨_,_⟩,
+  refine ⟨_,_⟩,{
   rcases hA with ⟨cl,ca⟩, 
   rw [is_clique_iff, set.pairwise],
   intros x hx y hy hne,
@@ -399,19 +387,19 @@ begin
       cases hy,exfalso, exact hne hy.symm, 
       exact (mem_of_mem_inter_right (hB hy)),},
     rwa [h, ← mem_neighbor_finset G v],
-    by_cases h2:  y=v,
+    by_cases h2:  y=v,{
       rw h2, simp only [*, ne.def, not_false_iff, coe_union, coe_singleton, set.union_singleton,
       set.mem_insert_iff, eq_self_iff_true, mem_coe, true_or, false_or] at *,
       rw [adj_comm,  ← mem_neighbor_finset G v],
-      exact mem_of_mem_inter_right (hB hx),
+      exact mem_of_mem_inter_right (hB hx)},
     simp only [*, ne.def, coe_union, coe_singleton, set.union_singleton, set.mem_insert_iff, 
     mem_coe, false_or, eq_self_iff_true] at *,
-    exact cl hx hy hne,
+    exact cl hx hy hne},{
     have: 2=1+1:=by norm_num,
     rw [hC,this, ← add_assoc],
-    convert card_union_eq _,  exact hA.2.symm,
+    convert card_union_eq _,{exact hA.2.symm},
     rw disjoint_singleton_right, 
-    intros h, apply  (not_mem_res_nbhd G v A) (hB h),
+    intros h, apply  (not_mem_res_nbhd G v A) (hB h)},
 end
 
 
@@ -427,33 +415,28 @@ end
 lemma deg_res_add  {v : α} {A B : finset α} (hB: B ⊆ A): G.deg_res v A=  G.deg_res v B +  G.deg_res v (A\B):=
 begin
   simp [deg_res,nbhd_res], nth_rewrite 0 ← union_sdiff_of_subset hB, 
-  convert card_disjoint_union _,
-  exact inter_distrib_right B (A\B) _,
-  exact sdiff_inter_disj A B _,
+  rw inter_distrib_right B (A\B) _,
+  exact card_disjoint_union (sdiff_inter_disj A B _),
 end
 
 -- sum version of previous lemma
 lemma deg_res_add_sum {A B C : finset α} (hB: B ⊆ A) : ∑ v in C, G.deg_res v A=  ∑ v in C, G.deg_res v B+  ∑ v in C,G.deg_res v (A\B):=
 begin
-  rw ← sum_add_distrib, apply finset.sum_congr rfl _, intros x hx, exact G.deg_res_add hB ,--(hC hx),
+  rw ← sum_add_distrib, exact sum_congr rfl (λ _ _ , G.deg_res_add hB),
 end
 
 
--- if A and B are disjoint then for any vertex v the deg_res add 
+-- if A and B are disjoint then for any vertex v the deg_res add
 lemma deg_res_add'  {v : α} {A B : finset α} (h: disjoint A B): G.deg_res v (A∪B)=  G.deg_res v A +  G.deg_res v B:=
 begin
-  simp [deg_res,nbhd_res],  
-  convert card_disjoint_union _,
-  exact inter_distrib_right _ _ _,
-  have da:A∩G.neighbor_finset v⊆A:=inter_subset_left _ _,
-  have db:B∩G.neighbor_finset v⊆B:=inter_subset_left _ _,
-  apply disjoint_of_subset_left da, exact disjoint_of_subset_right db h,
+  simp [deg_res,nbhd_res],  rw inter_distrib_right,
+  exact card_disjoint_union (disj_of_inter_disj _ _ h),
 end
  
 -- sum version of previous lemma
 lemma deg_res_add_sum' {A B C: finset α} (h: disjoint A B) : ∑ v in C, G.deg_res v (A ∪ B) = ∑ v in C, G.deg_res v A +∑ v in C, G.deg_res v B:=
 begin
- rw ← sum_add_distrib, apply finset.sum_congr rfl _, intros x hx, exact G.deg_res_add' h ,
+ rw ← sum_add_distrib, exact sum_congr rfl (λ _ _ , G.deg_res_add' h),
 end
 
 
@@ -461,26 +444,26 @@ end
 lemma bip_count_help {A B : finset α} (hB: B ⊆ A) : ∑ v in B, G.deg_res v (A\B) = ∑ v in B, ∑ w in A\B, ite (G.adj v w) 1 0:=
 begin
   simp only [deg_res_ones], congr,ext x, simp only [sum_const, algebra.id.smul_eq_mul, mul_one, sum_boole, cast_id], 
-  congr, ext, rw [mem_res_nbhd,mem_filter,mem_neighbor_finset],
+  congr, ext, rwa [mem_res_nbhd,mem_filter,mem_neighbor_finset],
 end
 
 -- edges from B to A\B equals edges from A\B to B
 lemma bip_count {A B : finset α} (hB: B ⊆ A) : ∑ v in B, G.deg_res v (A\B) = ∑ v in A\B, G.deg_res v B:=
 begin
   rw G.bip_count_help hB,
-  have: A\(A\B)=B:=sdiff_sdiff_eq_self hB,
+  have:=sdiff_sdiff_eq_self hB,
   conv { to_rhs,congr, skip,rw ← this,},
   rw [G.bip_count_help (sdiff_subset A B),this,sum_comm],
   congr, ext y, congr,ext x, 
-  split_ifs,refl,exfalso, rw adj_comm at h, exact h_1 h, 
-  exfalso, rw adj_comm at h, exact h h_1,refl,
+  split_ifs,{refl},{exfalso, rw adj_comm at h, exact h_1 h}, 
+  {exfalso, rw adj_comm at h, exact h h_1},{refl},
 end
 
 -- same but between any pair of disjoint sets rather tha B⊆A and A\B
 lemma bip_count_help' {A B : finset α}  (hB: disjoint A B ) : ∑ v in B, G.deg_res v A = ∑ v in B, ∑ w in A, ite (G.adj v w) 1 0:=
 begin
   simp only [deg_res_ones], congr,ext x, simp only [sum_const, algebra.id.smul_eq_mul, mul_one, sum_boole, cast_id], 
-  congr, ext, rw [mem_res_nbhd,mem_filter,mem_neighbor_finset],
+  congr, ext, rwa [mem_res_nbhd,mem_filter,mem_neighbor_finset],
 end
 
 -- edges from A to B (disjoint) equals edges from B to A
@@ -488,8 +471,8 @@ lemma bip_count' {A B : finset α} (hB: disjoint A B ) : ∑ v in B, G.deg_res v
 begin
   rw G.bip_count_help' hB, rw G.bip_count_help' hB.symm,rw sum_comm, congr,
   ext y, congr,ext x, 
-  split_ifs,refl,exfalso, rw adj_comm at h, exact h_1 h, 
-  exfalso, rw adj_comm at h, exact h h_1,refl,
+  split_ifs,{refl},{exfalso, rw adj_comm at h, exact h_1 h}, 
+  {exfalso, rw adj_comm at h, exact h h_1},{refl},
 end
 
 -- sum of res_res_deg ≤ sum of res_deg 
@@ -502,65 +485,66 @@ begin
   exact ⟨hB hx.1, hx.2⟩,
 end
 
---START HERE
+
 -- vertices in new part are adjacent to all old vertices
 --- should have used lemmas from multipartite for this...
-lemma mp_com (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∀v∈C, (mp (insert M h)).deg_res v M.A=(M.A.card):=
+-- FINISHED CHECKING UP TO HERE
+-- this says that the degree of any vertex in the new part is simply the sum over
+lemma mp_com (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∀ v ∈ C, (mp (insert M h)).deg_res v M.A=(M.A.card):=
 begin
  intros v hv, rw deg_res, congr, ext,
  rw mem_res_nbhd,split,intro h, exact h.1,
  intros ha, refine ⟨ha,_⟩, rw mem_neighbor_finset, dsimp,
  obtain⟨j,hjr,hjm⟩ :=inv_part ha,
  use j,rw insert_t, 
- refine ⟨_,_,_⟩, rw mem_range at *,linarith [hjr], exact M.t+1, use self_mem_range_succ _,
- split, intro jc,rw jc at hjr, exact not_mem_range_self hjr,right, rw insert_P,
- split_ifs,exfalso, exact h_1 rfl,rw insert_P, refine ⟨hv,_⟩,split_ifs,exact hjm,
- push_neg at h_2,exfalso, rw h_2 at hjr,  exact not_mem_range_self hjr,
+ refine ⟨_,_,_⟩, {rw mem_range at *,linarith [hjr]}, {exact M.t+1},{use self_mem_range_succ _,
+ split, {intro jc,rw jc at hjr, exact not_mem_range_self hjr},{right, rw insert_P,
+ split_ifs,{exfalso, exact h_1 rfl},rw insert_P, refine ⟨hv,_⟩,split_ifs,{exact hjm},{
+ push_neg at h_2,exfalso, rw h_2 at hjr,  exact not_mem_range_self hjr},},},
 end
-
 
 
 
 lemma mp_old_adj (M :multi_part α) {C : finset α} {v w :α}(h: disjoint M.A C) : v∈ M.A → w ∈ M.A → ((mp M).adj v w ↔ (mp (insert M h)).adj v w):=
 begin
   intros hv hw,
-  split,intro hins,   obtain⟨k,hkr,l,hlr,lnek,lkc⟩:=hins,
-  use k, rw insert_t,rw mem_range at *, refine ⟨_,_,_,_,_⟩, linarith, exact l,
-  rw mem_range,linarith [hlr],exact lnek, simp [insert_P],
-  split_ifs,exfalso,rw ← h_1 at hkr, exact lt_irrefl k hkr,
-  exfalso,rw ← h_1 at hkr, exact lt_irrefl k hkr,
-  exfalso,rw ← h_2 at hlr, exact lt_irrefl l hlr,
-  exact lkc,
-  intro hins, obtain⟨k,hkr,l,hlr,lnek,lkc⟩:=hins,rw insert_t at hkr,rw insert_t at hlr,
-  refine ⟨k,_,l,_,lnek,_⟩, 
+  split,{intro hins, obtain⟨k,hkr,l,hlr,lnek,lkc⟩:=hins,
+  use k, rw insert_t,rw mem_range at *, refine ⟨(by linarith),l,_,lnek,_⟩,{ 
+  rw mem_range,linarith [hlr]},{simp [insert_P],
+  split_ifs,{exfalso,rw ← h_1 at hkr, exact lt_irrefl k hkr},
+  {exfalso,rw ← h_1 at hkr, exact lt_irrefl k hkr},
+  {exfalso,rw ← h_2 at hlr, exact lt_irrefl l hlr},
+  {exact lkc},},},
+  {intro hins, obtain⟨k,hkr,l,hlr,lnek,lkc⟩:=hins,rw insert_t at hkr,rw insert_t at hlr,
+  refine ⟨k,_,l,_,lnek,_⟩,{ 
   rw mem_range at *,
   by_contra h', have :k=M.t+1:=by linarith [hkr,h],
-  cases lkc, rw this at lkc, have vinb:=mem_inter.mpr ⟨hv,insert_C M h lkc.1⟩,
-  exact h vinb, rw this at lkc, have vinb:=mem_inter.mpr ⟨hw,insert_C M h lkc.2⟩,
-  exact h vinb,
+  cases lkc,{ rw this at lkc, have vinb:=mem_inter.mpr ⟨hv,insert_C M h lkc.1⟩,
+  exact h vinb}, {rw this at lkc, have vinb:=mem_inter.mpr ⟨hw,insert_C M h lkc.2⟩,
+  exact h vinb},},{
   rw mem_range at *,
   by_contra h', have :l=M.t+1:=by linarith [hlr,h],
-  cases lkc, rw this at lkc, have vinb:=mem_inter.mpr ⟨hw,insert_C M h lkc.2⟩,
-  exact h vinb, rw this at lkc, have vinb:=mem_inter.mpr ⟨hv,insert_C M h lkc.1⟩,
-  exact h vinb,
-  cases lkc, rw [insert_P,insert_P] at lkc, split_ifs at lkc,left, exact lkc,
-  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
-  exfalso, have vinb:=mem_inter.mpr ⟨hv,lkc.1⟩,exact h vinb,
-  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
-  rw [insert_P,insert_P] at lkc, split_ifs at lkc,right, exact lkc,
-  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
-  exfalso, have vinb:=mem_inter.mpr ⟨hv,lkc.1⟩,exact h vinb,
-  exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb,
+  cases lkc, {rw this at lkc, have vinb:=mem_inter.mpr ⟨hw,insert_C M h lkc.2⟩,
+  exact h vinb},{ rw this at lkc, have vinb:=mem_inter.mpr ⟨hv,insert_C M h lkc.1⟩,
+  exact h vinb},},{
+  cases lkc, {rw [insert_P,insert_P] at lkc, split_ifs at lkc,{left, exact lkc},
+  {exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb},
+  {exfalso, have vinb:=mem_inter.mpr ⟨hv,lkc.1⟩,exact h vinb},
+  {exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb},},{
+  rw [insert_P,insert_P] at lkc, split_ifs at lkc,{right, exact lkc},
+  {exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb},
+  {exfalso, have vinb:=mem_inter.mpr ⟨hv,lkc.1⟩,exact h vinb},
+  {exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb},},},},
 end
 
 
 lemma mp_old' (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).nbhd_res v M.A=(mp M).nbhd_res v M.A:=
 begin
   set H: simple_graph α:= (mp (insert M h)),
-  intros v hv,ext,split,intros ha, rw mem_res_nbhd at *,refine ⟨ha.1,_⟩,
-  rw mem_neighbor_finset,rw mem_neighbor_finset at ha, exact (H.mp_old_adj M h hv ha.1).mpr ha.2,
+  intros v hv,ext,split,{intros ha, rw mem_res_nbhd at *,refine ⟨ha.1,_⟩,
+  rw mem_neighbor_finset,rw mem_neighbor_finset at ha, exact (H.mp_old_adj M h hv ha.1).mpr ha.2},{
   intros ha, rw mem_res_nbhd at *,refine ⟨ha.1,_⟩,
-  rw mem_neighbor_finset,rw mem_neighbor_finset at ha, exact (H.mp_old_adj M h hv ha.1).mp ha.2,
+  rw mem_neighbor_finset,rw mem_neighbor_finset at ha, exact (H.mp_old_adj M h hv ha.1).mp ha.2},
 end
 
 lemma mp_old (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_res v M.A=(mp M).deg_res v M.A:=
@@ -580,7 +564,8 @@ end
 lemma mp_ind' (M : multi_part α) {C :finset α} (h: disjoint M.A C) : ∀v∈C,(mp (insert M h)).deg_res v C=0:=
 begin
   intros v hv, rw deg_res, rw card_eq_zero, by_contra h', 
-  obtain ⟨w,hw,adw⟩ :=(mp (insert M h)).exists_mem_nempty h',exact (((mp (insert M h))).mp_ind M h hv hw) adw, 
+  obtain ⟨w,hw,adw⟩ :=(mp (insert M h)).exists_mem_nempty h', 
+  exact (((mp (insert M h))).mp_ind M h hv hw) adw, 
 end
 
 lemma mp_ind_sum (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑ v in C, (mp (insert M h)).deg_res v C=0:=
@@ -588,10 +573,8 @@ begin
   simp only [sum_eq_zero_iff], intros x hx, exact (mp (insert M h)).mp_ind' M h x hx,
 end
 
-lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_res v M.A= ∑ v in M.A,(mp M).deg_res v M.A:=
-begin
-  set H: simple_graph α:= (mp (insert M h)), apply sum_congr rfl,exact (H.mp_old M h),
-end
+lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_res v M.A= ∑ v in M.A,(mp M).deg_res v M.A
+:=sum_congr rfl ((mp (insert M h)).mp_old M h)
 --- counting edges in multipartite graph  
 --- if we add in a new part C then the sum of degrees over new vertex set
 --  is sum over old + 2 edges in bipartite join
@@ -601,10 +584,9 @@ lemma mp_count (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑v in M
 begin
   set H: simple_graph α:= (mp (insert M h)),
   simp  [ insert_AB], rw sum_union h, rw [H.deg_res_add_sum' h,H.deg_res_add_sum' h],
-  rw add_assoc, rw H.mp_ind_sum M h, rw add_zero, rw H.bip_count' h.symm,
-  rw ← sum_add_distrib, rw card_eq_sum_ones C,rw mul_sum, rw H.mp_old_sum M h,
-  rw [add_right_inj],apply sum_congr rfl, 
-  rw (by norm_num: 2= 1+1),rw add_mul,  rw one_mul,rw mul_one, intros x hx, rwa (H.mp_com M h x hx),
+  rw [add_assoc ,H.mp_ind_sum M h,  add_zero,  H.bip_count' h.symm],
+  rw [← sum_add_distrib, card_eq_sum_ones C, mul_sum,  H.mp_old_sum M h ,add_right_inj],
+  apply sum_congr rfl, rw [(by norm_num: 2= 1+1),add_mul, one_mul, mul_one], intros x hx, rwa (H.mp_com M h x hx),
 end
 
 
@@ -652,8 +634,7 @@ end
 
 -- counting degrees sums over the parts of the larger partition is what you expect
 lemma internal_count {M: multi_part α} {C : finset α} (h: disjoint M.A C): ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i)+∑ v in C, G.deg_res v C=
-∑ i in range((insert M h).t+1), ∑ v in ((insert M h).P i), G.deg_res v ((insert M h).P i)
-:=
+∑ i in range((insert M h).t+1), ∑ v in ((insert M h).P i), G.deg_res v ((insert M h).P i):=
 begin
   simp [insert_t, insert_P,ite_not],
   have  ru:range((M.t+1)+1)=range(M.t+1) ∪ {M.t+1},{
@@ -664,8 +645,8 @@ begin
   apply (add_left_inj _).mpr, apply sum_congr rfl, intros k hk,
   have nm:(M.t+1)∉(range(M.t+1)):=not_mem_range_self,
   have kne: k≠M.t+1,{intro h',rw h' at hk, exact nm hk},
-  apply sum_congr, split_ifs,contradiction,refl,
-  intros v hv,split_ifs,contradiction,refl,
+  apply sum_congr, split_ifs,{contradiction},{refl},{
+  intros v hv,split_ifs,{contradiction},{refl}},
 end
 
 -- Furedi's stability theorem: (t+2)-clique-free set A implies there is a (t+1)-partition of A
@@ -675,25 +656,26 @@ end
 theorem furedi : ∀A:finset α, G.clique_free_set A (t+2) → ∃M:multi_part α, M.A=A ∧ M.t =t ∧ 
 ∑v in A, G.deg_res v A + ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i) ≤ ∑ v in A, (mp M).deg_res v A:=
 begin
-  induction t with t ht, rw zero_add,
+  induction t with t ht, {rw zero_add,
   intros A ha, use (default_M A 0), refine ⟨rfl,rfl,_⟩, rw G.two_clique_free_sum ha,
   rw zero_add, unfold default_M, dsimp,simp, apply sum_le_sum,
-  intros x hx, rw G.two_clique_free ha x hx,exact zero_le _,
+  intros x hx, rw G.two_clique_free ha x hx,exact zero_le _},
   --- t.succ case
-  intros A ha, obtain⟨B,hBa,hBc,hBs⟩:=G.furedi_help A ha,  
+  {intros A ha, obtain⟨B,hBa,hBc,hBs⟩:=G.furedi_help A ha,  
   have hAsd:=union_sdiff_of_subset hBa,
   obtain ⟨M,Ma,Mt,Ms⟩:=ht B hBc,
   have dAB:disjoint M.A (A\B), {rw Ma, exact disjoint_sdiff,},
   set H: simple_graph α:= (mp (insert M dAB)),
-  use (insert M dAB), refine ⟨_,_,_⟩,  
-  rw [insert_AB, Ma], exact union_sdiff_of_subset hBa, rw [insert_t, Mt],
+  use (insert M dAB), refine ⟨_,_,_⟩,{  
+  rw [insert_AB, Ma], exact union_sdiff_of_subset hBa}, {rwa [insert_t, Mt]},{
   --- so we now have the new partition and "just" need to check the degree sum bound..
   have mpc:=H.mp_count M dAB, rw [insert_AB, Ma , hAsd] at mpc,
   -- need to sort out the sum over parts in the larger graph
-  rw ←  mpc, rw ← G.internal_count dAB,
-  linarith,
+  rw ←  mpc, rw ← G.internal_count dAB, linarith},},
 end
 
+
+---START HERE
 -- Furedi stability result:
 -- if G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
 -- such that the e(G)+ ∑ i< t+1, e(G[M_i]) ≤ e(complete_multipartite M)
@@ -750,5 +732,5 @@ begin
 --- have G ≤ mp M just need to show equality of edge cards implies equality..
   exact edge_eq_sub_imp_eq dec tm,
 end
-#lint
+
 end simple_graph
