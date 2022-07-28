@@ -488,7 +488,6 @@ end
 
 -- vertices in new part are adjacent to all old vertices
 --- should have used lemmas from multipartite for this...
--- FINISHED CHECKING UP TO HERE
 -- this says that the degree of any vertex in the new part is simply the sum over
 lemma mp_com (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∀ v ∈ C, (mp (insert M h)).deg_res v M.A=(M.A.card):=
 begin
@@ -599,11 +598,11 @@ end
 lemma furedi_help : ∀A:finset α, G.clique_free_set A (t+2) → ∃B:finset α, B ⊆ A ∧ G.clique_free_set B (t+1) ∧ 
 ∑v in A, G.deg_res v A + ∑ v in (A\B), G.deg_res v (A\B) ≤ ∑ v in B, G.deg_res v B + 2*B.card * (A\B).card:=
 begin
-  cases nat.eq_zero_or_pos t with ht,
+  cases nat.eq_zero_or_pos t with ht,{
   intros A hA,rw ht at *, rw zero_add at *,
 ----- t = 0 need to check that ∅ is not a 1-clique. 
   refine ⟨∅,⟨empty_subset A,(G.clique_free_empty (by norm_num: 0 <1)),_⟩⟩,
-  rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,G.two_clique_free_sum hA],
+  rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,G.two_clique_free_sum hA]},{
 ----- 0 < t case
   intros A hA, by_cases hnem: A.nonempty,{
     obtain ⟨x,hxA,hxM⟩:=G.exists_max_res_deg_vertex hnem, -- get a vert x of max res deg in A
@@ -621,7 +620,7 @@ begin
     rw [hxM,deg_res],},
     {rw not_nonempty_iff_eq_empty at hnem, 
     refine ⟨∅,⟨empty_subset A,(G.clique_free_empty (by norm_num: 0 <t+1)),_⟩⟩,
-    rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,hnem,sum_empty],},
+    rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,hnem,sum_empty],}},
 end
 
 
@@ -659,7 +658,7 @@ begin
   induction t with t ht, {rw zero_add,
   intros A ha, use (default_M A 0), refine ⟨rfl,rfl,_⟩, rw G.two_clique_free_sum ha,
   rw zero_add, unfold default_M, dsimp,simp, apply sum_le_sum,
-  intros x hx, rw G.two_clique_free ha x hx,exact zero_le _},
+  intros x hx, rw G.two_clique_free ha x hx,exact zero_le _ },
   --- t.succ case
   {intros A ha, obtain⟨B,hBa,hBc,hBs⟩:=G.furedi_help A ha,  
   have hAsd:=union_sdiff_of_subset hBa,
@@ -675,7 +674,6 @@ begin
 end
 
 
----START HERE
 -- Furedi stability result:
 -- if G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
 -- such that the e(G)+ ∑ i< t+1, e(G[M_i]) ≤ e(complete_multipartite M)
@@ -687,7 +685,7 @@ theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t �
 G.edge_finset.card + ∑ i in range(t+1), (G.ind (M.P i)).edge_finset.card ≤ (mp M).edge_finset.card:=
 begin
   intro h, obtain ⟨M,hA,ht,hs⟩:=G.furedi univ (G.clique_free_graph_imp_set h),
-  refine ⟨M,ht,hA,_⟩,apply (mul_le_mul_left (by norm_num:0<2)).mp, rw mul_add,rw mul_sum, simp only [deg_res_univ] at hs,
+  refine ⟨M,ht,hA,_⟩,apply (mul_le_mul_left (by norm_num:0<2)).mp, rw [mul_add, mul_sum], simp only [deg_res_univ] at hs,
   rw  [← G.sum_degrees_eq_twice_card_edges,← (mp M).sum_degrees_eq_twice_card_edges],
   apply le_trans _ hs, apply add_le_add_left,  apply le_of_eq, apply sum_congr, rwa ht,
   intros i hi, rw ← ind_edge_count,

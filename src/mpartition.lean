@@ -42,15 +42,7 @@ begin
     set b:=a.pred,rw h,ring,},
 end
 
-lemma cd (c d:ℕ) :c+d-d=c:=
-begin
-exact tsub_eq_of_eq_add rfl,
-end
-
-lemma square (b c:ℕ) : (b+c)^2=b^2+2*b*c+c^2:=
-begin
-ring,
-end
+lemma square (b c:ℕ) : (b+c)^2=b^2+2*b*c+c^2:=by ring
 
 -- the actual mess is here
 -- need to rewrite n as n= ((t+1-b)*a + b *(a+1)) 
@@ -77,7 +69,7 @@ begin
   rw square ((t+1-b)*a) (b*(a+1)),
   rw mul_comm _ (a^2),
   set c:=(t+1-b) with hc,  have hc1:1≤ c:=by linarith,have hb1:1≤ b:=by linarith,
-  have hc2:(c-1+1=c):=by linarith,have hb2:(b-1+1=b):=by linarith,
+  have hc2:(c-1+1=c):=by linarith, have hb2:(b-1+1=b):=by linarith,
   ring_nf,rw hc2, rw hb2, nth_rewrite 3 ← mul_one 2,rw ← mul_add 2,rw hb2,
   ring_nf,},},
 end
@@ -91,7 +83,7 @@ def psum (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
 -- sum of squares of part sizes (basically 2*edges in complement)
 def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
 
--- inevitable and painful mod (t+1) calculation related to sizes of parts in balanced partition
+-- inevitable mod (t+1) calculation related to sizes of parts in balanced partition
 lemma mod_tplus1 {a b c d t: ℕ} (hc: c ≤ t) (hd:d ≤ t) (ht: (t+1)*a + c = (t+1)*b+d) : 
  (a = b) ∧ (c = d):=
 begin
@@ -133,9 +125,10 @@ lemma small_nonempty {t : ℕ} {P:ℕ → ℕ} (h: balanced t P) :(small_parts h
 begin
   rw small_parts, have nem: ((range(t+1)).image(λi , P i)).nonempty :=(nonempty.image_iff  _).mpr (nonempty_range_succ),
   set a:ℕ:=min' ((range(t+1)).image(λi , P i)) nem with ha,
-  have ain:= min'_mem ((range(t+1)).image(λi , P i)) nem, rw ← ha at ain,
-  rw mem_image at ain,
-  obtain ⟨k,hk1,hk2⟩:=ain, use k, rw mem_filter,refine ⟨hk1,_⟩,rw ha at hk2,exact hk2,
+  have ain:= min'_mem ((range(t+1)).image(λi , P i)) nem, 
+  rw [← ha, mem_image] at ain,
+  obtain ⟨k,hk1,hk2⟩:=ain, use k, rw mem_filter, 
+  refine ⟨hk1,_⟩,rw ha at hk2,exact hk2,
 end
 
 -- in a balanced partition all parts are small or large
@@ -161,9 +154,9 @@ end
 -- large parts are those that aren't small
 lemma large_parts' {t : ℕ} {P:ℕ → ℕ} (h: balanced t P): large_parts h = (range(t+1)).filter (λi, ¬ P i = min_p t P):=
 begin
-  have :=con_sum h, unfold large_parts, ext,rw [mem_filter,mem_filter],split,
-  intro h', refine ⟨h'.1,_⟩, intros h2, rw h2 at h', exact succ_ne_self (min_p t P) h'.2.symm,
-  intros h', refine ⟨h'.1,_⟩, specialize this a h'.1,  cases this, exfalso, exact h'.2 this, exact this,
+  have :=con_sum h, unfold large_parts, ext ,rw [mem_filter,mem_filter],split,{
+  intro h', refine ⟨h'.1,_⟩, intros h2, rw h2 at h', exact succ_ne_self (min_p t P) h'.2.symm},{
+  intros h', refine ⟨h'.1,_⟩, specialize this a h'.1,  cases this,{ exfalso, exact h'.2 this}, {exact this},},
 end
 
 -- parts cannot be both small and large
@@ -176,10 +169,10 @@ end
 -- all parts are either small or large
 lemma parts_union {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : (range(t+1)) = (small_parts h) ∪ (large_parts h):=
 begin
-  have :=con_sum h,
-  ext,unfold small_parts, unfold large_parts, rw mem_union, split,   intro ha,
-  rw [mem_filter,mem_filter],specialize this a ha, cases this, left ,exact ⟨ha,this⟩,right,exact ⟨ha,this⟩,
-  rw [mem_filter,mem_filter],intros h, cases h, exact h_1.1, exact h_1.1,
+  have := con_sum h,
+  ext,unfold small_parts, unfold large_parts, rw mem_union, split,{   intro ha,
+  rw [mem_filter,mem_filter],specialize this a ha, cases this, left ,exact ⟨ha,this⟩,right,exact ⟨ha,this⟩},{
+  rw [mem_filter,mem_filter],intros h, cases h, {exact h_1.1}, {exact h_1.1},},
 end
 
 -- so the number of small parts + large parts = t+1
@@ -206,8 +199,8 @@ lemma bal_sum_f {t : ℕ} {P: ℕ → ℕ} (h: balanced t P) (f: ℕ → ℕ):�
 (small_parts h).card * f(min_p t P) + (large_parts h).card * f(min_p t P+1) := 
 begin
   rw [parts_union h, sum_union (parts_disjoint h)], congr, 
-  rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl,rw small_parts,intros x, rw mem_filter,intro hx,rw hx.2,
-  rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl, rw large_parts,intros x, rw mem_filter,intro hx,rw hx.2,
+  {rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl,rw small_parts,intros x, rw mem_filter,intro hx,rw hx.2},
+  {rw [card_eq_sum_ones, sum_mul, one_mul], apply sum_congr,refl, rw large_parts,intros x, rw mem_filter,intro hx,rw hx.2},
 end
 
 -- simple equation for sum of parts 
@@ -263,6 +256,7 @@ lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in ran
 begin
   rw bal_turan_help hb hn, exact tn_tn' t n,
 end
+
 --- now actually introduce the partitions we use to build complete multipartite graphs
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 @[ext] 
@@ -274,8 +268,6 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 
 -- given M with M.t+1 parts and partition sets P we have P' M is the corresponding sizes of parts
 def P' (M: multi_part α) :ℕ → ℕ:= (λi, (M.P i).card)
-
-
 
 def sum_sq_c (M: multi_part α): ℕ:= ∑i in range(M.t+1), card(M.P i)^2
 
@@ -318,22 +310,23 @@ def default_M (B:finset α) (s:ℕ)  : multi_part α:={
 
 --
 
--- insert new disjoint set to the partition to increase number of parts
+-- insert new disjoint set to the partition to increase the number of parts
 --- we will need this to build the complete multipartite graph used fro Furedi's stabilty result
 def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
   t:=M.t+1,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
   A:=B ∪ M.A,
   uni:= begin
-    rw range_succ, rw [bUnion_insert],rw M.uni, split_ifs, contradiction,
+    rw range_succ, rw [bUnion_insert],rw M.uni, split_ifs, {contradiction},{
     ext,rw [mem_union,mem_union,mem_bUnion,mem_bUnion],
-    split,intro h, cases h with hb hP,left, exact hb,right, 
-    obtain ⟨a1, H, H2⟩:=hP, use [a1,H],split_ifs, exact H2,   
-    push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H,
-    intros h,cases h with hb hP,left, exact hb,right, 
-    obtain ⟨a1, H, H2⟩:=hP,split_ifs at H2, use [a1,H, H2],
-    push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H,
+    split, {intro h, cases h with hb hP, {left, exact hb},{right, 
+    obtain ⟨a1, H, H2⟩:=hP, use [a1,H],split_ifs, {exact H2},{   
+    push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H},},},{
+    intros h,cases h with hb hP,{left, exact hb},{right, 
+    obtain ⟨a1, H, H2⟩:=hP,split_ifs at H2, {use [a1,H, H2]},{
+    push_neg at h_2, exfalso, rw h_2 at H, exact not_mem_range_self H},},},},
   end,
+  ---START HERE with {}
   disj:= begin
     intros i hi j hj iltj, split_ifs, 
     refine M.disj i _ j _ iltj,
