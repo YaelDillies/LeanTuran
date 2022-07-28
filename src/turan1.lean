@@ -18,26 +18,26 @@ variables {t n : ℕ}
 variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : finset α}
 [decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
-
+--probably easier ways of doing this...
 lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
 disjoint_of_subset_right (inter_subset_left (A\B) C) ((disjoint_of_subset_left (inter_subset_left B C)) disjoint_sdiff)
 
---surely this should be much easier?
-lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G≤H ↔ G.edge_finset ⊆ H.edge_finset:=
+-- subgraph iff edge_finset is subset
+lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G ≤ H ↔ G.edge_finset ⊆ H.edge_finset:=
 begin
-  split,intro h, intro e,  rw [mem_edge_finset,mem_edge_finset], intro he, work_on_goal 1 
-  { induction e, work_on_goal 1 { cases e, solve_by_elim }, refl }, intros ᾰ v w ᾰ_1, dsimp at *, 
-  simp only [set.to_finset_mono] at *, rw adj_iff_exists_edge at *, obtain ⟨ne,e,w,h⟩:=ᾰ_1, exact ⟨ne,e,(ᾰ w),h⟩,
+  split,{ intro gh, intros e he, obtain ⟨x,y⟩:=e, simp only [mem_edge_finset] at *, exact gh he},
+  { intro gh,intros x y h, have :⟦(x,y)⟧∈ G.edge_set:=h, rw [← mem_edge_finset] at this, 
+  have:= gh this, rwa mem_edge_finset at this,},
 end
 
-
+-- graphs equal iff edge_finsets are equal
 lemma eq_iff_edges_eq  {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G=H ↔ G.edge_finset = H.edge_finset:= 
 begin
-  split, intro eq, exact subset_antisymm (subgraph_edge_subset.mp (le_of_eq eq)) (subgraph_edge_subset.mp (le_of_eq eq.symm)),
-  intro eq, exact le_antisymm (subgraph_edge_subset.mpr (subset_of_eq eq)) (subgraph_edge_subset.mpr (subset_of_eq eq.symm)),  
+  split, {intro eq, exact subset_antisymm (subgraph_edge_subset.mp (le_of_eq eq)) (subgraph_edge_subset.mp (le_of_eq eq.symm))},
+  {intro eq, exact le_antisymm (subgraph_edge_subset.mpr (subset_of_eq eq)) (subgraph_edge_subset.mpr (subset_of_eq eq.symm))},  
 end
 
--- a subgraph of the same size or larger is the same graph
+-- a subgraph of the same size or larger is the same graph (yes.. everything is finite)
 lemma edge_eq_sub_imp_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj]
 (hs: G≤ H) (hc: H.edge_finset.card ≤ G.edge_finset.card): G = H:=
 begin
@@ -45,8 +45,15 @@ begin
   exact eq_iff_edges_eq.mpr  this,
 end
 
+lemma empty_edge_iff_empty {G :simple_graph α} [decidable_rel G.adj] : G=⊥  ↔ G.edge_finset=∅:=
+begin
+  split, 
+sorry,
+sorry,
+end
+
 include G
--- res nbhd is part of nbhd in A
+-- restricted nbhd is the part of nbhd in A
 @[ext]def nbhd_res (v : α) (A : finset α) : finset α := A ∩ G.neighbor_finset v 
 
 -- restriction of degree to A
@@ -90,15 +97,12 @@ end
 -- bound on sum of res_deg given max res deg
 lemma max_deg_res_sum_le {A C : finset α} (hC: C ⊆ A) : ∑ v in C, G.deg_res v A ≤ (G.max_deg_res A)*(C.card):=
 begin
-  rw finset.card_eq_sum_ones, rw [mul_sum,mul_one],
+  rw [card_eq_sum_ones, mul_sum, mul_one],
   apply sum_le_sum _, intros i hi, exact G.deg_res_le_max_deg_res (hC hi),
 end
 
 -- restricted degree to A is sum of 1 over each neighbour of v in A
-lemma deg_res_ones (v : α) (A : finset α) : G.deg_res v A = ∑ x in G.nbhd_res v A, 1:=
-begin
-  rw deg_res, exact card_eq_sum_ones _,
-end
+lemma deg_res_ones (v : α) (A : finset α) : G.deg_res v A = ∑ x in G.nbhd_res v A, 1:=card_eq_sum_ones _
 
 --- if the restricted nbhd is non-empty then v has a neighbor in A
 lemma exists_mem_nempty {v :α} {A : finset α} (hA:  ¬(G.nbhd_res v A) = ∅ ): ∃ w∈A, G.adj v w :=
@@ -144,6 +148,8 @@ begin
   intro x, rw mem_res_nbhd, intro h, exact h.2,
 end
 
+
+-- we will need the concept of a clique-free set of vertices in a graph rather than just clique-free graphs
 -- A is a t-clique-free set of vertices in G
 def clique_free_set (A : finset α) (s : ℕ): Prop:= ∀ B ⊆ A, ¬G.is_n_clique s B
 
@@ -187,54 +193,51 @@ begin
   simp only [mem_insert, mem_singleton] at *,cases hx, rw hx,exact hv,rw hx, exact h1,
 end
 
--- sum of degrees over an independent set (2-clique-free set) is 0
+-- sum of deg_res over an independent set (2-clique-free set) is 0
 -- e (G.ind A)=0
-lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in A, G.deg_res v A = 0:=
-begin
-  rw sum_eq_zero_iff, exact G.two_clique_free hA,
-end
+lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in A, G.deg_res v A = 0
+:=sum_eq_zero (G.two_clique_free hA)
 
 
--- Graph induced by A ⊆ α, defined to be a simple_graph α (so all vertices outside A have all edges deleted)
+-- I found dealing with the mathlib "induced" subgraph too painful 
+-- Graph induced by A ⊆ α, defined to be a simple_graph α (so all vertices outside A have empty neighborhoods)
 @[ext,reducible]
 def ind (A : finset α) : simple_graph α :={
-  adj:= begin intros  x y,exact  G.adj x y ∧ x ∈ A ∧ y ∈ A, end, 
+  adj:= λ x y, G.adj x y ∧ x ∈ A ∧ y ∈ A, 
   symm:=
   begin
     intros x y hxy, rw adj_comm, tauto, 
   end,
   loopless:= by obviously}
 
-instance ind_decidable_rel {A:finset α} :decidable_rel (G.ind A).adj:=
-begin
-apply_instance,
-end
 
-instance induced_decidable_mem_edge_set {A:finset α} :
-  decidable_pred (∈ (G.ind A).edge_set) := 
-begin
-  apply_instance,
-end
+-- don't actually need these instances
+--instance ind_decidable_rel {A:finset α} :decidable_rel (G.ind A).adj:=
+--begin
+--apply_instance,
+--end
 
-instance induced_edges_fintype [decidable_eq α] [fintype α] [decidable_rel G.adj]{A:finset α} :
-  fintype (G.ind A).edge_set := subtype.fintype _
+--instance induced_decidable_mem_edge_set {A:finset α} :
+--  decidable_pred (∈ (G.ind A).edge_set) := 
+--begin
+ -- apply_instance,
+--end
 
-lemma ind_adj_imp {A :finset α} {v w :α} : (G.ind A).adj v w → G.adj v w:=
-begin
-  intro h, cases h, exact h_left,
-end
+--instance induced_edges_fintype [decidable_eq α] [fintype α] [decidable_rel G.adj]{A:finset α} :
+--  fintype (G.ind A).edge_set := subtype.fintype _
 
-lemma ind_adj_imp' {A :finset α} {v w :α} : (G.ind A).adj v w→ v∈A ∧ w ∈ A:=
-begin
-  intro h, cases h,exact h_right,
-end
 
+-- if v w are adjacent in induced graph then they are adjacent in G
+lemma ind_adj_imp {A :finset α} {v w :α} : (G.ind A).adj v w → G.adj v w:=λ h, h.1
+
+-- if v w are adjacent in induced graph on A then they are both in A
+lemma ind_adj_imp' {A :finset α} {v w :α} : (G.ind A).adj v w → v ∈ A ∧ w ∈ A:=λ h , h.2
 
 --nbhd of v ∈ A in the graph induced by A is exactly the nbhd of v restricted to A
 lemma ind_nbhd_mem {A : finset α} {v : α} : v∈ A → (G.ind A).neighbor_finset v =  G.nbhd_res v A:=
 begin
   intros hv,unfold neighbor_finset nbhd_res, ext, 
-  simp only [*, set.mem_to_finset, mem_neighbor_set, and_self] at *, 
+  simp only [*, set.mem_to_finset, mem_neighbor_set, and_self] at *,  
   split,intro ha, rw [mem_inter,set.mem_to_finset,mem_neighbor_set],exact ⟨ha.2.2,ha.1⟩,
   rw [mem_inter, set.mem_to_finset, mem_neighbor_set], tauto,
 end
@@ -740,9 +743,7 @@ begin
   intro h,obtain ⟨M,ht,hu,hle⟩:=G.furedi_stability' h.1, rw h.2 at hle,
   refine ⟨M,ht,hu,_⟩, have tm:=turan_max_edges M hu, rw ht at tm, 
   have inz:(G.ind_int_mp M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
-  have inem: (G.ind_int_mp M)=⊥,{
-    ext,split,intro he,exfalso, rw adj_iff_exists_edge at he, obtain ⟨_,e,e1,e2⟩:=he, rw ← mem_edge_finset at e1,
-    simp only [*, not_mem_empty] at *, simp only [bot_adj, forall_false_left],  },
+  have inem: (G.ind_int_mp M)=⊥:=empty_edge_iff_empty.mpr inz,
   have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
   have ieq:(mp M).edge_finset.card= tn t (fintype.card α):=by linarith, rw ← ht at ieq,
   refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
