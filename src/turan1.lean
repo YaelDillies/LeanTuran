@@ -47,9 +47,9 @@ end
 
 lemma empty_edge_iff_empty {G :simple_graph α} [decidable_rel G.adj] : G=⊥  ↔ G.edge_finset=∅:=
 begin
-  split, 
-sorry,
-sorry,
+  split,{
+    intro h, simp only [set.to_finset_eq_empty_iff], rw h,ext1, induction x, work_on_goal 1 { refl }, refl,},
+    { intro h, simp only [set.to_finset_eq_empty_iff] at h, ext, rw bot_adj, rw ← mem_edge_set,rw h,refl,},
 end
 
 include G
