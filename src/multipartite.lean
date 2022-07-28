@@ -16,8 +16,6 @@ namespace simple_graph
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 variables{M : multi_part α}
 include M
-
-
 -- given a t+1 partition on A form the complete multi-partite graph on α
 -- with all edges present between parts in M.A and no edges involving vertices outside A
 @[ext]
@@ -291,6 +289,9 @@ begin
   have le2:=turan_bound_M N, unfold mp_dsum at *, rw hu at *,rw NA at *,rw Nt at *,rw card_univ at *,
   exact lt_of_lt_of_le lt le2,
 end
+
+
+
 
 end simple_graph
 
