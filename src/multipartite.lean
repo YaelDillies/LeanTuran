@@ -242,8 +242,9 @@ begin
 end
 
 
--- given a turan_partition and a partition that is moveable the degree sum of the former is strictly larger
--- ie only Turan graphs maximize number of edges.
+-- given a turan_partition and any other partition on the same set and into same number of parts
+-- that is moveable the degree sum of the former is strictly larger
+-- ie only Turan graphs maximize number of edges
 lemma moved_max (M N:multi_part α): M.A =N.A → M.t =N.t → turan_partition M →  ¬turan_partition N → mp_dsum N < mp_dsum M:=
 begin
   intros hA ht him h1,

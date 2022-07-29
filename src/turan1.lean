@@ -19,16 +19,19 @@ variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : fin
 [decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
 --probably easier ways of doing this...
+--if A and B are disjoint then seo are A ∩ C and B ∩ D for any C,D
 lemma disj_of_inter_disj (C D :finset α){A B :finset α} (h: disjoint A B): disjoint (A∩C) (B∩D):=
 disjoint.mono (le_iff_subset.mpr (inter_subset_left A C)) (inter_subset_left B D) h
 
+--if A and B are disjoint then seo are C ∩ A and D ∩ B for any C,D
 lemma disj_of_disj_inter (C D :finset α){A B :finset α} (h: disjoint A B): disjoint (C∩A ) (D∩B):=
 disjoint.mono (le_iff_subset.mpr (inter_subset_right C A)) (inter_subset_right D B) h
 
+-- in particular (B ∩ C) and (A\B ∩ C) are disjoint
 lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
 disj_of_inter_disj C C disjoint_sdiff
 
--- subgraph iff edge_finset is subset
+-- G is a subgraph of H iff G.edge_finset is subset of H.edge_finset
 lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G ≤ H ↔ G.edge_finset ⊆ H.edge_finset:=
 begin
   split,{ intro gh, intros e he, obtain ⟨x,y⟩:=e, simp only [mem_edge_finset] at *, exact gh he},
@@ -36,14 +39,14 @@ begin
   have:= gh this, rwa mem_edge_finset at this,},
 end
 
--- graphs equal iff edge_finsets are equal
+-- graphs (on same vertex set) are equal iff edge_finsets are equal
 lemma eq_iff_edges_eq  {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G=H ↔ G.edge_finset = H.edge_finset:= 
 begin
   split, {intro eq, exact subset_antisymm (subgraph_edge_subset.mp (le_of_eq eq)) (subgraph_edge_subset.mp (le_of_eq eq.symm))},
   {intro eq, exact le_antisymm (subgraph_edge_subset.mpr (subset_of_eq eq)) (subgraph_edge_subset.mpr (subset_of_eq eq.symm))},  
 end
 
--- a subgraph of the same size or larger is the same graph (yes.. everything is finite)
+-- a subgraph of the same size or larger is the same graph (... everything is finite)
 lemma edge_eq_sub_imp_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj]
 (hs: G≤ H) (hc: H.edge_finset.card ≤ G.edge_finset.card): G = H
 :=eq_iff_edges_eq.mpr  (finset.eq_of_subset_of_card_le (subgraph_edge_subset.mp hs) hc)
@@ -56,11 +59,12 @@ begin
   intro h, assumption,
 end
 
-
+-- a graph is the empty graph iff it has no edges
 lemma empty_iff_edge_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅
 := by rwa [eq_iff_edges_eq, empty_has_no_edges]
 
 include G
+-- 
 -- restricted nbhd is the part of nbhd in A
 @[ext]def nbhd_res (v : α) (A : finset α) : finset α := A ∩ G.neighbor_finset v 
 
@@ -193,7 +197,7 @@ begin
     exact ⟨λh,h2,c2⟩,exact G.symm,},
   rw clique_free_set, push_neg,
   refine ⟨{v,w},_,this⟩, intros x hx,
-  simp only [mem_insert, mem_singleton] at *,cases hx, rw hx,exact hv,rw hx, exact h1,
+  simp only [mem_insert, mem_singleton] at *,cases hx,{ rw hx,exact hv},{rw hx, exact h1},
 end
 
 -- sum of deg_res over an independent set (2-clique-free set) is 0
@@ -212,21 +216,6 @@ def ind (A : finset α) : simple_graph α :={
     intros x y hxy, rw adj_comm, tauto, 
   end,
   loopless:= by obviously}
-
--- don't actually need these instances
---instance ind_decidable_rel {A:finset α} :decidable_rel (G.ind A).adj:=
---begin
---apply_instance,
---end
-
---instance induced_decidable_mem_edge_set {A:finset α} :
---  decidable_pred (∈ (G.ind A).edge_set) := 
---begin
- -- apply_instance,
---end
-
---instance induced_edges_fintype [decidable_eq α] [fintype α] [decidable_rel G.adj]{A:finset α} :
---  fintype (G.ind A).edge_set := subtype.fintype _
 
 
 -- if v w are adjacent in induced graph then they are adjacent in G
@@ -273,11 +262,11 @@ end
 --induced subgraph is a subgraph
 lemma ind_sub {A : finset α} : (G.ind A)≤ G:=  λ x y, G.ind_adj_imp 
 
+
 -- internal edges induced by parts of a partition M
 -- I should have defined this as G \(⋃ (G.ind M.P i)) if I 
 -- could have made it work.. defining the bUnion operator for simple_graphs
 -- was a step too far..
-
 @[ext,reducible]
 def ind_int_mp (M: multi_part α) : simple_graph α:={
 adj:= λ v w , (G.adj v w) ∧ (∃ i ∈ range(M.t+1), v∈(M.P i) ∧w∈ (M.P i)),
@@ -313,11 +302,10 @@ begin
   rw ← G.sdiff_with_int h,simp only [sup_sdiff_self_right, right_eq_sup], exact G.ind_int_mp_sub M,
 end
 
---Given M and v,w vertices with v ∈ M.P i and w∈ M.A then v,w are adjacent in the "internal induced subgraph"
-  -- iff they are adjacent in the graph induced on M.P i
+-- Given M and v,w vertices with v ∈ M.P i and w ∈ M.A then v,w are adjacent in 
+-- the "internal induced subgraph"  iff they are adjacent in the graph induced on M.P i
 lemma int_edge_help {M :multi_part α} {v w : α} {i : ℕ}: i ∈ range(M.t+1) → v ∈ (M.P i) →  w ∈ M.A →
-((G.ind_int_mp M).adj v w ↔ (G.ind (M.P i)).adj v w)
-:=
+((G.ind_int_mp M).adj v w ↔ (G.ind (M.P i)).adj v w):=
 begin
   intros hi hv hw, obtain ⟨j,hj,hw⟩:=inv_part hw,dsimp, 
   by_cases i=j,{
@@ -353,7 +341,7 @@ have :=bUnion_parts M, rw ← h,nth_rewrite 0 this,
 end
 
 
--- number of edges in the subgraph induced inside all the is the sum of those induced in each part
+-- number of edges in the subgraph induced inside all parts is the sum of those induced in each part
 lemma int_ind_edge_sum {M :multi_part α} (h: M.A=univ) :
 (G.ind_int_mp M).edge_finset.card =  ∑  i in range(M.t+1), (G.ind (M.P i)).edge_finset.card:=
 begin
@@ -406,14 +394,12 @@ begin
     intros h, apply  (not_mem_res_nbhd G v A) (hB h)},
 end
 
-
 -- restricted degree additive over partition of A into B ∪ A\B
 lemma sum_sdf {A B C: finset α} (hB: B ⊆ A) (hC: C ⊆ A):
  ∑ v in A, G.deg_res v C = ∑v in B, G.deg_res v C + ∑ v in A\B, G.deg_res v C:=
 begin
   nth_rewrite 0 ← union_sdiff_of_subset hB, exact sum_union (disjoint_sdiff),
 end
-
 
 -- restricted deg over A = restricted deg over B + restricted deg over A\B
 lemma deg_res_add  {v : α} {A B : finset α} (hB: B ⊆ A): G.deg_res v A=  G.deg_res v B +  G.deg_res v (A\B):=
@@ -429,7 +415,6 @@ begin
   rw ← sum_add_distrib, exact sum_congr rfl (λ _ _ , G.deg_res_add hB),
 end
 
-
 -- if A and B are disjoint then for any vertex v the deg_res add
 lemma deg_res_add'  {v : α} {A B : finset α} (h: disjoint A B): G.deg_res v (A∪B)=  G.deg_res v A +  G.deg_res v B:=
 begin
@@ -440,9 +425,8 @@ end
 -- sum version of previous lemma
 lemma deg_res_add_sum' {A B C: finset α} (h: disjoint A B) : ∑ v in C, G.deg_res v (A ∪ B) = ∑ v in C, G.deg_res v A +∑ v in C, G.deg_res v B:=
 begin
- rw ← sum_add_distrib, exact sum_congr rfl (λ _ _ , G.deg_res_add' h),
+  rw ← sum_add_distrib, exact sum_congr rfl (λ _ _ , G.deg_res_add' h),
 end
-
 
 -- counting edges exiting B via ite helper, really just counting edges in e(B,A\B)
 lemma bip_count_help {A B : finset α} (hB: B ⊆ A) : ∑ v in B, G.deg_res v (A\B) = ∑ v in B, ∑ w in A\B, ite (G.adj v w) 1 0:=
@@ -507,8 +491,8 @@ begin
 end
 
 
--- given two vertices in the old partition they are adjacent in the partition with C inserted iff
--- they were already adjacent
+-- given two vertices in the old partition they are adjacent in the partition with 
+-- C inserted iff they were already adjacent
 lemma mp_old_adj (M :multi_part α) {C : finset α} {v w :α}(h: disjoint M.A C) : v∈ M.A → w ∈ M.A → ((mp M).adj v w ↔ (mp (insert M h)).adj v w):=
 begin
   intros hv hw,
@@ -600,8 +584,6 @@ begin
   rw [← sum_add_distrib, card_eq_sum_ones C, mul_sum,  H.mp_old_sum M h ,add_right_inj],
   apply sum_congr rfl, rw [(by norm_num: 2= 1+1),add_mul, one_mul, mul_one], intros x hx, rwa (H.mp_com M h x hx),
 end
-
-
 
 
 ---for any (t+2)-clique free set there is a partition into B, a (t+1)-clique free set and A\B 
@@ -778,8 +760,11 @@ begin
     have : G.edge_finset.card= (mp M).edge_finset.card,{simp only [*] at *},
     rwa ieq at this,},
 end
-
-
-
+---TO DO finish below
+theorem furedi_stability_c {s:ℕ}: G.clique_free (t+2) → G.edge_finset.card= tn t (fintype.card α)-s → 
+∃ M: multi_part α, M.t=t ∧ M.A=univ ∧ turan_partition M ∧ ∃ S⊆G.edge_finset, G.delete_edges(S)≤ (mp M):=
+begin
+sorry,
+end
 
 end simple_graph
