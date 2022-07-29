@@ -63,6 +63,25 @@ end
 lemma empty_iff_edge_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅
 := by rwa [eq_iff_edges_eq, empty_has_no_edges]
 
+
+-- the subgraph formed by deleting edges (from edge_finset)
+def del_fedges (G:simple_graph α) (S: finset (sym2 α))[decidable_rel G.adj]  :simple_graph α :={
+adj:= G.adj \ sym2.to_rel S,
+symm := λ a b, by simp [adj_comm, sym2.eq_swap] }
+
+
+lemma del_fedges_is_sdiff  (G H:simple_graph α) (S: finset (sym2 α))[decidable_rel G.adj][decidable_rel H.adj] :
+ G\H= G.del_fedges H.edge_finset :=
+ begin
+
+   sorry,
+ end
+
+-- G.is_far s H iff there exist a finset of at most s edges such that G-S is a subgraph of H
+def is_far (G H :simple_graph α) (s : ℕ) [decidable_rel G.adj][decidable_rel H.adj] 
+:= ∃S:finset (sym2 α), ((G.del_fedges S) ≤ H) ∧ (S.card ≤ s)
+
+
 include G
 -- 
 -- restricted nbhd is the part of nbhd in A
@@ -294,6 +313,8 @@ begin
     rintros ⟨hadj,h2⟩, refine ⟨hadj,_⟩, push_neg, intros hadj' i hi hx hy,
     exact not_nbhr_same_part hi hx h2 hy },
 end
+
+
 
 -- G is the join of the edges induced by the parts and those in the complete 
 -- multipartite graph M on α
@@ -760,11 +781,23 @@ begin
     have : G.edge_finset.card= (mp M).edge_finset.card,{simp only [*] at *},
     rwa ieq at this,},
 end
----TO DO finish below
-theorem furedi_stability_c {s:ℕ}: G.clique_free (t+2) → G.edge_finset.card= tn t (fintype.card α)-s → 
-∃ M: multi_part α, M.t=t ∧ M.A=univ ∧ turan_partition M ∧ ∃ S⊆G.edge_finset, G.delete_edges(S)≤ (mp M):=
+
+-- the usual version of Furedi's stability theorem says:
+-- if G is (K_t+2)-free and has (turan numb - s) edges
+-- then we can make G (t+1)-partite by deleting at most s edges 
+-- (we assume s ≤ turan numb to avoid the trivial case)
+theorem furedi_stability_count {s:ℕ} (hs: s ≤ tn t (fintype.card α)): G.clique_free (t+2) → G.edge_finset.card = tn t (fintype.card α)-s → 
+∃ M: multi_part α, M.t=t ∧ M.A=univ  ∧ G.is_far (mp M) s:=
 begin
-sorry,
+intros h1 h2, obtain ⟨M,ht,hA,hle⟩:=G.furedi_stability' h1,
+refine ⟨M,ht,hA,_⟩, rw h2 at hle,
+have tm:=turan_max_edges M hA, rw  ht at tm,
+have ic:(G.ind_int_mp M).edge_finset.card ≤ s:= by linarith,
+have id:=G.self_eq_int_ext_mp hA,
+refine ⟨(G.ind_int_mp M).edge_finset,_,ic⟩, 
+rw ← G.del_fedges_is_sdiff (G.ind_int_mp M),{ rw G.sdiff_with_int hA,
+  by { intro, simp { contextual := tt } },},
+  {exact (G.ind_int_mp M).edge_finset},
 end
 
 end simple_graph
