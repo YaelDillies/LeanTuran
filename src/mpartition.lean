@@ -6,10 +6,7 @@ import algebra.big_operators
 open finset nat
 
 open_locale big_operators 
--- basic structure for a complete (t+1)-partite graph on α
--- not actually a partition in the sense of mathlib since that would
--- require at most one empty part, while here we're happy to allow any number of
--- empty parts so this is more like a colouring 
+
 namespace mpartition
 
 --classical Turan numbers 
@@ -21,8 +18,7 @@ begin
   exact (a^2)*nat.choose(t+1-b)(2)+a*(a+1)*b*(t+1-b)+((a+1)^2)*nat.choose(b)(2),
 end
 
-
---complement is easier to deal with and also multiply by 2
+--complement is easier to deal with and also multiply by 2 to convert edges to degree sum
 -- so 2*(tn t n) = n^2 - (tn' t n) 
 def tn' : ℕ → ℕ → ℕ:=
 begin
@@ -32,20 +28,17 @@ begin
   exact (t+1-b)*a^2 + b*(a+1)^2,
 end
 
-
-lemma two (a :ℕ) :2*nat.choose a 2= a*(a-1):=
+-- 
+lemma two (a :ℕ) : 2*nat.choose a 2 = a*(a-1):=
 begin
-  induction a with a ha,{ dsimp,
-      rw [zero_mul, mul_zero],},{
-    rw [nat.choose, choose_one_right, succ_sub_succ_eq_sub, tsub_zero, mul_add], norm_num, rw  ha,
-    cases (eq_zero_or_eq_succ_pred a),{rw h, ring,},
-    set b:=a.pred,rw h,ring,},
+  induction a with a ha,{ dsimp,rwa [zero_mul, mul_zero],},
+  {rw [nat.choose, choose_one_right, succ_sub_succ_eq_sub, tsub_zero, mul_add], norm_num, rw  ha, 
+  cases (eq_zero_or_eq_succ_pred a);{rw h, ring,},},
 end
 
 lemma square (b c:ℕ) : (b+c)^2=b^2+2*b*c+c^2:=by ring
 
--- the actual mess is here
--- need to rewrite n as n= ((t+1-b)*a + b *(a+1)) 
+-- this is a mess but it works
 lemma tn_tn' (t n : ℕ) : (tn' t n) + 2*(tn t n) = n^2:=
 begin
   unfold tn tn', dsimp,
@@ -54,26 +47,22 @@ begin
   have n2:=(mod_lt n (succ_pos t)), rw succ_eq_add_one at n2,
   have n3: (t+1)-n%(t+1)+n%(t+1)=(t+1):= tsub_add_cancel_of_le (le_of_lt n2),
   set a:= n/(t+1) with ha, set b:= n%(t+1) with hb,
-  cases nat.eq_zero_or_pos n with hn,{ rw hn at *, simp only [*, nat.zero_div, zero_pow', ne.def, bit0_eq_zero, nat.one_ne_zero, not_false_iff, mul_zero, zero_add, zero_mul,
+  cases nat.eq_zero_or_pos n with hn,{ rw hn at *, 
+  simp only [*, nat.zero_div, zero_pow', ne.def, bit0_eq_zero, nat.one_ne_zero, not_false_iff, mul_zero, zero_add, zero_mul,
   choose_zero_succ] at *,},{
   cases nat.eq_zero_or_pos b with hb',{
-    rw hb' at *,ring_nf, rw two, rw tsub_zero, rw add_zero at n1,
-    rw nat.choose,
-    rw [mul_zero,mul_zero,add_zero,add_zero,add_zero,← n1,t1],ring_nf,  
-  },{
-  rw ← n3 at n1, rw add_mul at n1,nth_rewrite 2 ← mul_one b at n1, rw add_assoc at n1, rw ← mul_add  b at n1,
-  nth_rewrite_rhs 0 ← n1,
-  rw mul_add,rw mul_add,rw ← mul_assoc 2 ,rw ← mul_assoc 2 ((a+1)^2),
+    rw hb' at *,ring_nf, rw two, rw tsub_zero, rw add_zero at n1,rw nat.choose,
+    rw [mul_zero,mul_zero,add_zero,add_zero,add_zero,← n1,t1],ring_nf,},
+  {rw [← n3 , add_mul] at n1, nth_rewrite 2 ← mul_one b at n1, rw [add_assoc ,← mul_add  b] at n1,
+  nth_rewrite_rhs 0 ← n1,  rw [mul_add, mul_add, ← mul_assoc 2 , ← mul_assoc 2 ((a+1)^2)],
   nth_rewrite 0 mul_comm 2 _, nth_rewrite 1 mul_comm 2 _,
-  rw mul_assoc,rw mul_assoc _ 2, rw [two,two], 
-  rw square ((t+1-b)*a) (b*(a+1)),
-  rw mul_comm _ (a^2),
-  set c:=(t+1-b) with hc,  have hc1:1≤ c:=by linarith,have hb1:1≤ b:=by linarith,
+  rw [mul_assoc, mul_assoc _ 2,two,two, square ((t+1-b)*a) (b*(a+1)),mul_comm _ (a^2)],
+  set c:=(t+1-b) with hc, have hc1:1≤ c:=by linarith, have hb1:1≤ b:=by linarith,
   have hc2:(c-1+1=c):=by linarith, have hb2:(b-1+1=b):=by linarith,
-  ring_nf,rw hc2, rw hb2, nth_rewrite 3 ← mul_one 2,rw ← mul_add 2,rw hb2,
-  ring_nf,},},
+  ring_nf,rw [hc2, hb2], nth_rewrite 3 ← mul_one 2,rw [← mul_add 2, hb2],ring_nf,},},
 end
 
+--sum of degrees in a turan graph
 lemma tn_tn'_2 (t n : ℕ) : 2*(tn t n) = n^2 - (tn' t n):=
 begin
   rw ← tn_tn' t n, exact (add_tsub_cancel_left _ _).symm,
@@ -108,7 +97,7 @@ begin
   exact div_add_mod n (t+1),
 end
 
--- now lots of useful results about balanced partitions
+-- now lots of  results about balanced partitions
 
 -- a balanced (t+1) partition is one with almost equal parts
 def balanced (t : ℕ) (P : ℕ → ℕ): Prop:= ∀ i ∈ range(t+1),∀ j∈ range(t+1), P i ≤ (P j) + 1
@@ -235,16 +224,6 @@ begin
   specialize hf f,  rwa [mn, small_parts_card, ln] at hf, 
 end
 
--- balanced partitions have same part sizes and number of each type of part -- no longer needed?
---lemma bal_eq {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: psum t P = psum t Q): 
---(min_p t P = min_p t Q) ∧ (large_parts hbp).card = (large_parts hbq).card ∧ (small_parts hbp).card = (small_parts hbq).card:=
---begin
---  rw [bal_sum' hbp, bal_sum' hbq] at hs,
---  have hc:=large_parts_card hbp,have hd:=large_parts_card hbq,
---  have:=mod_tplus1 hc hd hs, have addP:=parts_card_add hbp,
--- have addQ:=parts_card_add hbq, rw this.2 at addP, refine ⟨this.1,this.2,_⟩, linarith,
---end
-
 -- sum of squares of balanced partition is tn'
 lemma bal_turan_help {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
 begin
@@ -308,7 +287,7 @@ begin
   refine ⟨v,hv,_,hc⟩, intro eq,rw eq at cne, exact cne rfl,
 end
 
--- there is always partition
+-- there is a partition
 instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
 {default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
 disj:=λ i hi j hj ne, disjoint_empty_left ∅,
@@ -323,9 +302,10 @@ def default_M (B:finset α) (s:ℕ)  : multi_part α:={
     {exact disjoint_empty_right _},{exact disjoint_empty_left _},{exact disjoint_empty_left _},end,}
 
 
-
--- insert new disjoint set to the partition to increase the number of parts
---- we will need this to build the complete multipartite graph used for Furedi's stabilty result
+-- we want to build a complete (t+1)-partite graph one part at a time
+-- given a current partition into t+1 parts we can insert a new
+-- disjoint set to the partition, increasing the number of parts by 1.
+--- (We will need this to build the complete multipartite graph used for Furedi's stabilty result)
 def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
   t:=M.t+1,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
@@ -384,15 +364,13 @@ end
 ---M.disj is the same as "pairwise_disjoint" but without any coercion to set for range(t+1) 
 lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
 
-
-
 -- member of a part implies member of union
 lemma mem_part{M:multi_part α} {v :α} {i :ℕ}: i∈range(M.t+1) → v ∈ M.P i → v ∈ M.A :=
-  begin
-    intros hi hv,rw M.uni,rw mem_bUnion, exact ⟨i,hi,hv⟩,
-  end
+begin
+  intros hi hv,rw M.uni,rw mem_bUnion, exact ⟨i,hi,hv⟩,
+end
 
--- every vertex in A belongs to a part
+-- every vertex in M.A belongs to a part
 lemma inv_part {M:multi_part α} {v :α} (hA: v∈M.A): ∃ i∈ range(M.t+1), v ∈ M.P i:=
 begin
   rw [M.uni,mem_bUnion] at hA, exact hA,
@@ -458,11 +436,14 @@ begin
   apply card_disjoint_union sdiff_disjoint,
 end
 
---  Create a new partition by moving v from P i to P j,
-
---  Any non-Turan partition contains a vertex that can be moved to increase the number of edges in corresponding graph
--- "(M.P j).insert v" invalid field notation, but it didn't complain about "(M.P i).erase v"
---- Error message :'insert' is not a valid "field" because environment does not contain 'finset.insert' M.P j which has type finset α
+--  We can create a new partition by moving v ∈ M.P i from P i to P j.
+-- We only want to do this if this increases the number of edges in the complete multipartite graph.
+--  Any non-Turan partition contains a vertex that can be moved to increase 
+--  the number of edges in corresponding graph
+-- TODO: figure out why "(M.P j).insert v" caused an error (so used (M.P j)∪ {v} instead)
+--  but it didn't complain about "(M.P i).erase v"
+--- Error message :'insert' is not a valid "field" because environment does not contain 
+-- 'finset.insert' M.P j which has type finset α
 def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
   t:=M.t,
   P:= begin intros k, exact ite (k ≠ i ∧ k ≠ j) (M.P k) (ite (k = i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
