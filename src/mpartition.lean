@@ -74,6 +74,11 @@ begin
   ring_nf,},},
 end
 
+lemma tn_tn'_2 (t n : ℕ) : 2*(tn t n) = n^2 - (tn' t n):=
+begin
+  rw ← tn_tn' t n, exact (add_tsub_cancel_left _ _).symm,
+end
+
 -- start with some helper functions that don't need partitions to be defined.
 -- here P : ℕ → ℕ plays the role of sizes of parts in a (t+1)-partition 
 
@@ -411,6 +416,11 @@ lemma bUnion_parts (M:multi_part α) :M.A=finset.bUnion (range(M.t+1)) (λi,(M.P
 begin
   ext,rw mem_bUnion, split,{intros hA, use inv_part hA},
   {intro hA, obtain ⟨i,hi,hi2⟩:=hA,exact mem_part hi hi2},
+end
+
+lemma bUnion_parts_card (M:multi_part α) :(M.A).card = ∑ i in range(M.t+1), (M.P i).card:=
+begin
+  rw bUnion_parts M, rw card_bUnion, intros x hx y hy ne, exact M.disj x hx y hy ne,
 end
 
 -- if there are two different parts then the sum of their sizes is at most the size of the whole

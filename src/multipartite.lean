@@ -284,10 +284,14 @@ begin
   exact lt_of_lt_of_le lt le2,
 end
 
+
 lemma turan_imm_imp_eq (M: multi_part α) {t :ℕ} (hu: M.A=univ) (ht :M.t=t): immoveable M → (mp M).edge_finset.card = tn t (fintype.card α) :=
 begin
-  intros iM,
-  sorry,
+  rw immoveable_iff_not_moveable, unfold moveable, rw not_not,
+  intros iM,  apply (nat.mul_right_inj (by norm_num:0<2)).mp, rw [←sum_degrees_eq_twice_card_edges, ←hu, ←ht], 
+  rw [mp_deg_sum_sq,  ← card_univ, ← hu], 
+  have cA:= bUnion_parts_card M,  
+  rwa [← bal_turan_bd iM cA.symm,  sum_sq, P', add_tsub_cancel_left],
 end
 end simple_graph
 
