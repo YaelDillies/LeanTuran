@@ -262,7 +262,7 @@ begin
   rw bal_turan_help hb hn, exact tn_tn' t n,
 end
 
---- now actually introduce the partitions we use to build complete multipartite graphs
+--- introduce the partitions we use to build complete multipartite graphs
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 @[ext] 
 structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α]:=

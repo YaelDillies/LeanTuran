@@ -19,22 +19,14 @@ variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : fin
 [decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
 --probably easier ways of doing this...
-lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
-disjoint_of_subset_right (inter_subset_left (A\B) C) ((disjoint_of_subset_left (inter_subset_left B C)) disjoint_sdiff)
-
 lemma disj_of_inter_disj (C D :finset α){A B :finset α} (h: disjoint A B): disjoint (A∩C) (B∩D):=
-begin
-  apply disjoint_of_subset_left (inter_subset_left A C), 
-  apply disjoint_of_subset_right (inter_subset_left B D),
-  exact h,
-end
+disjoint.mono (le_iff_subset.mpr (inter_subset_left A C)) (inter_subset_left B D) h
 
 lemma disj_of_disj_inter (C D :finset α){A B :finset α} (h: disjoint A B): disjoint (C∩A ) (D∩B):=
-begin
-  apply disjoint_of_subset_left (inter_subset_right C A), 
-  apply disjoint_of_subset_right (inter_subset_right D B),
-  exact h,
-end
+disjoint.mono (le_iff_subset.mpr (inter_subset_right C A)) (inter_subset_right D B) h
+
+lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
+disj_of_inter_disj C C disjoint_sdiff
 
 -- subgraph iff edge_finset is subset
 lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G ≤ H ↔ G.edge_finset ⊆ H.edge_finset:=
@@ -57,12 +49,16 @@ lemma edge_eq_sub_imp_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_
 :=eq_iff_edges_eq.mpr  (finset.eq_of_subset_of_card_le (subgraph_edge_subset.mp hs) hc)
 
 
-lemma empty_edge_iff_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅:=
+-- the empty graph has no edges
+lemma empty_has_no_edges :(⊥ : simple_graph α).edge_finset =∅:=
 begin
-  split,{
-    intro h, simp only [set.to_finset_eq_empty_iff], rw h,ext, induction x,{refl},{refl},},
-    { intro h, simp only [set.to_finset_eq_empty_iff] at h, ext, rw bot_adj, rw ← mem_edge_set,rw h,refl,},
+  ext, obtain ⟨x,y⟩:=a, rw mem_edge_finset, simp only [not_mem_empty, iff_false],
+  intro h, assumption,
 end
+
+
+lemma empty_iff_edge_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅
+:= by rwa [eq_iff_edges_eq, empty_has_no_edges]
 
 include G
 -- restricted nbhd is the part of nbhd in A
@@ -118,7 +114,8 @@ lemma deg_res_ones (v : α) (A : finset α) : G.deg_res v A = ∑ x in G.nbhd_re
 lemma exists_mem_nempty {v :α} {A : finset α} (hA:  ¬(G.nbhd_res v A) = ∅ ): ∃ w∈A, G.adj v w :=
 begin
   rw nbhd_res at hA, contrapose! hA,
-  rw eq_empty_iff_forall_not_mem,intros x hx, rw [mem_inter, mem_neighbor_finset] at hx, 
+  rw eq_empty_iff_forall_not_mem,
+  intros x hx, rw [mem_inter, mem_neighbor_finset] at hx, 
   exact hA x hx.1 hx.2, 
 end
 
@@ -151,7 +148,7 @@ lemma ssub_res_nbhd_of_mem {v : α} {A : finset α} (h: v ∈ A) : G.nbhd_res v 
 -- restricted nbhd contained in nbhd
 lemma sub_res_nbhd_N (v : α)(A : finset α) : G.nbhd_res v A ⊆ G.neighbor_finset v:=
 begin
-  intro x, rw mem_res_nbhd, intro h, exact h.2,
+  intro _, rw mem_res_nbhd, intro h, exact h.2,
 end
 
 
@@ -757,7 +754,7 @@ begin
   intro h,obtain ⟨M,ht,hu,hle⟩:=G.furedi_stability' h.1, rw h.2 at hle,
   refine ⟨M,ht,hu,_⟩, have tm:=turan_max_edges M hu, rw ht at tm, 
   have inz:(G.ind_int_mp M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
-  have inem: (G.ind_int_mp M)=⊥:=empty_edge_iff_empty.mpr inz,
+  have inem: (G.ind_int_mp M)=⊥:=empty_iff_edge_empty.mpr inz,
   have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
   have ieq:(mp M).edge_finset.card= tn t (fintype.card α):=by linarith, rw ← ht at ieq,
   refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
