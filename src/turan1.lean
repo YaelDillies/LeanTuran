@@ -349,7 +349,7 @@ have :=bUnion_parts M, rw ← h,nth_rewrite 0 this,
  intros i hi, rw (sdiff_part hi), rw sum_union (sdiff_disjoint), 
  have :∑x in M.A\(M.P i),(G.ind (M.P i)).degree x =0,{
   apply sum_eq_zero,intros x hx, rw mem_sdiff at hx, exact G.ind_deg_nmem hx.2,},
-  rw this,rw zero_add, apply sum_congr rfl, intros x hx, apply (G.int_edge_help' h) hi hx, exact x,
+  rw this,rw zero_add, apply sum_congr rfl _, intros x hx, apply (G.int_edge_help' h) hi hx, exact x,
 end
 
 
@@ -492,7 +492,7 @@ end
 
 -- vertices in new part are adjacent to all old vertices
 --- should have used lemmas from multipartite for this...
--- this says that the degree of any vertex in the new part is simply the sum over
+-- this says that the degree of any vertex in the new part equals the sum over the old parts
 lemma mp_com (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∀ v ∈ C, (mp (insert M h)).deg_res v M.A=(M.A.card):=
 begin
  intros v hv, rw deg_res, congr, ext,
@@ -507,7 +507,8 @@ begin
 end
 
 
-
+-- given two vertices in the old partition they are adjacent in the partition with C inserted iff
+-- they were already adjacent
 lemma mp_old_adj (M :multi_part α) {C : finset α} {v w :α}(h: disjoint M.A C) : v∈ M.A → w ∈ M.A → ((mp M).adj v w ↔ (mp (insert M h)).adj v w):=
 begin
   intros hv hw,
@@ -540,7 +541,7 @@ begin
   {exfalso, have winb:=mem_inter.mpr ⟨hw,lkc.2⟩,exact h winb},},},},
 end
 
-
+-- previous lemma interpreted in terms of res nbhds 
 lemma mp_old' (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).nbhd_res v M.A=(mp M).nbhd_res v M.A:=
 begin
   set H: simple_graph α:= (mp (insert M h)),
@@ -550,12 +551,19 @@ begin
   rw mem_neighbor_finset,rw mem_neighbor_finset at ha, exact (H.mp_old_adj M h hv ha.1).mp ha.2},
 end
 
+-- .. and in terms of deg res
 lemma mp_old (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_res v M.A=(mp M).deg_res v M.A:=
 begin
   set H: simple_graph α:= (mp (insert M h)),
   intros v hv, rw deg_res,rw deg_res,  rw H.mp_old' M h v hv,
 end
 
+-- so sum of deg res to old partition over old partition is unchanged
+lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_res v M.A= ∑ v in M.A,(mp M).deg_res v M.A
+:=sum_congr rfl ((mp (insert M h)).mp_old M h)
+
+
+-- vertices in the new part are not adjacent
 lemma mp_ind (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
 begin
   intros hv hw,   have vin:= insert_P' M h v hv,
@@ -564,6 +572,8 @@ begin
   contrapose win,push_neg at win, exact not_nbhr_same_part this vin win,
 end
 
+
+-- so their deg res to the new part is zero
 lemma mp_ind' (M : multi_part α) {C :finset α} (h: disjoint M.A C) : ∀v∈C,(mp (insert M h)).deg_res v C=0:=
 begin
   intros v hv, rw deg_res, rw card_eq_zero, by_contra h', 
@@ -571,17 +581,16 @@ begin
   exact (((mp (insert M h))).mp_ind M h hv hw) adw, 
 end
 
+-- so the sum of their deg res to new part is also zero i.e. e(C)=0
 lemma mp_ind_sum (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑ v in C, (mp (insert M h)).deg_res v C=0:=
 begin
   simp only [sum_eq_zero_iff], intros x hx, exact (mp (insert M h)).mp_ind' M h x hx,
 end
 
-lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_res v M.A= ∑ v in M.A,(mp M).deg_res v M.A
-:=sum_congr rfl ((mp (insert M h)).mp_old M h)
 --- counting edges in multipartite graph  
 --- if we add in a new part C then the sum of degrees over new vertex set
 --  is sum over old + 2 edges in bipartite join
-
+-- ie 2*e(M')=2*e(M)+2*e(M,C)
 lemma mp_count (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑v in M.A, (mp M).deg_res v M.A +2*(M.A.card)*C.card =
 ∑ v in (insert M h).A, (mp (insert M h)).deg_res v (insert M h).A:=
 begin
@@ -634,7 +643,9 @@ end
 -- removing at most s edges)
 
 -- counting degrees sums over the parts of the larger partition is what you expect
-lemma internal_count {M: multi_part α} {C : finset α} (h: disjoint M.A C): ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i)+∑ v in C, G.deg_res v C=
+-- ie e(G[M_0])+ .. +e(G[M_t])+e(G[C]) = e(G[M'_0])+...+e(G[M'_{t+1}])
+lemma internal_count {M: multi_part α} {C : finset α} (h: disjoint M.A C):
+ ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i) + ∑ v in C, G.deg_res v C  =
 ∑ i in range((insert M h).t+1), ∑ v in ((insert M h).P i), G.deg_res v ((insert M h).P i):=
 begin
   simp [insert_t, insert_P,ite_not],
@@ -703,11 +714,11 @@ end
 
 -- uniqueness? 
 --- there are three places where G can fail to achieve equality in Furedi's stability theorem
--- 1) there are "internal" edges, ie edges inside a part of the (t+1)-partition these are counted in the LHS
--- 2) the partition can fail to be balanced (and hence #edges < turan_numb)
---3)  The multipartite induced graph G ⊓ (mp M) may not be complete (we don't currently track this)
+-- 1) there are "internal" edges, ie edges inside a part of the (t+1)-partition  (counted in the LHS)
+-- 2) the partition can fail to be balanced (and hence #edgesof mp M < turan_numb)
+-- 3) the multipartite induced graph G ⊓ (mp M) may not be complete 
 -- Clearly for equality in Furedi-Turan hybrid ie LHS of Furedi with RHS of Turan
--- need M is a Turan partition and G is multipartite (ie no internal edges)
+-- need M is a balanced partition and G is multipartite (ie no internal edges)
 -- could then prove in this case G ≤ (mp M) = T and hence G = T for equality.   
 
 
@@ -721,7 +732,7 @@ end
 
 
 
---- should probably prove that any complete (t+1)-partite graph is (t+2)-clique free..#check
+--- should probably prove that any complete (t+1)-partite graph is (t+2)-clique free.
 lemma mp_clique_free (M: multi_part α): M.t=t → M.A=univ →  (mp M).clique_free (t+2):=
 begin
   intros ht hA, by_contra, unfold clique_free at h, push_neg at h,
@@ -739,8 +750,8 @@ begin
     nth_rewrite_rhs 0 ← card_range (M.t+1), nth_rewrite_rhs 0 card_eq_sum_ones,
     apply sum_le_sum h,}, nth_rewrite_rhs 0 ht at ub,
     have uni:=bUnion_parts M, rw hA at uni,
-    have sin:=inter_univ S, rw uni at sin, rw inter_bUnion at sin,
-    rw ← sin at hs2, rw card_bUnion at hs2, linarith,
+    have sin:=inter_univ S, rw [uni ,inter_bUnion] at sin,
+    rw [← sin, card_bUnion] at hs2, linarith,
     intros x hx y hy ne,
     apply disj_of_disj_inter S S (M.disj x hx y hy ne), 
 end
@@ -748,7 +759,7 @@ end
 
 --now deduce case of equality in Turan's theorem
 theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = tn t (fintype.card α)
- ↔  ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ immoveable M ∧ G = mp M:=
+ ↔  ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ turan_partition M ∧ G = mp M:=
 begin
   split,{
   intro h,obtain ⟨M,ht,hu,hle⟩:=G.furedi_stability' h.1, rw h.2 at hle,
@@ -758,7 +769,6 @@ begin
   have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
   have ieq:(mp M).edge_finset.card= tn t (fintype.card α):=by linarith, rw ← ht at ieq,
   refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
---- have G ≤ mp M just need to show equality of edge cards implies equality..
   exact edge_eq_sub_imp_eq dec tm},
   { intro h, obtain ⟨M,ht,hu,iM,hG⟩:=h, 
     have hc:=G.mp_clique_free M ht hu,

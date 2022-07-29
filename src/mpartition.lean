@@ -8,8 +8,8 @@ open finset nat
 open_locale big_operators 
 -- basic structure for a complete (t+1)-partite graph on α
 -- not actually a partition in the sense of mathlib since that would
--- require at most one empty part, while I'm happy to allow any number of
--- empty parts 
+-- require at most one empty part, while here we're happy to allow any number of
+-- empty parts so this is more like a colouring 
 namespace mpartition
 
 --classical Turan numbers 
@@ -37,7 +37,7 @@ lemma two (a :ℕ) :2*nat.choose a 2= a*(a-1):=
 begin
   induction a with a ha,{ dsimp,
       rw [zero_mul, mul_zero],},{
-    rw nat.choose, simp,rw mul_add, norm_num,rw  ha,
+    rw [nat.choose, choose_one_right, succ_sub_succ_eq_sub, tsub_zero, mul_add], norm_num, rw  ha,
     cases (eq_zero_or_eq_succ_pred a),{rw h, ring,},
     set b:=a.pred,rw h,ring,},
 end
@@ -85,7 +85,7 @@ end
 -- sum of part sizes i.e number of vertices 
 def psum (t : ℕ) (P : ℕ → ℕ): ℕ:= ∑i in range(t+1), P i
 
--- sum of squares of part sizes (basically 2*edges in complement)
+-- sum of squares of part sizes (basically 2*edges in complement of corresponding complete multipartite graph)
 def sum_sq (t : ℕ) (P: ℕ → ℕ): ℕ := ∑i in range(t+1),(P i)^2
 
 -- inevitable mod (t+1) calculation related to sizes of parts in balanced partition
@@ -199,7 +199,7 @@ begin
   rw ← parts_card_add h, rwa [add_tsub_cancel_right],
 end
 
--- any sum of a function over P is determined by the sizes and parts
+-- any sum of a function over a balanced partition is easy to compute
 lemma bal_sum_f {t : ℕ} {P: ℕ → ℕ} (h: balanced t P) (f: ℕ → ℕ):∑ i in range(t+1), f (P i) = 
 (small_parts h).card * f(min_p t P) + (large_parts h).card * f(min_p t P+1) := 
 begin
@@ -212,11 +212,14 @@ end
 lemma bal_sum {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (small_parts h).card * (min_p t P) + 
   (large_parts h).card * (min_p t P+1) := bal_sum_f h (λi,i)
 
--- nicer version of previous
+-- alternative version of previous lemma
 lemma bal_sum' {t : ℕ} {P : ℕ → ℕ} (h: balanced t P) : psum t P = (t+1)* (min_p t P) + (large_parts h).card :=
 begin
   rw [bal_sum h, mul_add,mul_one,← add_assoc,← add_mul,parts_card_add h],
 end
+
+
+--now thinking about balanced (t+1)-partitions whose parts sum to n
 
 -- given a balanced partition of n into (t+1)-parts the small part is n/(t+1) and there are n%(t+1) lare parts
 lemma bal_sum_n {t n :ℕ} {P :ℕ→ ℕ} (hp: balanced t P) (hn: psum t P = n): min_p t P = n/(t+1) ∧ (large_parts hp).card = n%(t+1):=
@@ -232,15 +235,15 @@ begin
   specialize hf f,  rwa [mn, small_parts_card, ln] at hf, 
 end
 
--- balanced partitions have same part sizes and number of each type of part
-lemma bal_eq {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: psum t P = psum t Q): 
-(min_p t P = min_p t Q) ∧ (large_parts hbp).card = (large_parts hbq).card ∧ (small_parts hbp).card = (small_parts hbq).card:=
-begin
-  rw [bal_sum' hbp, bal_sum' hbq] at hs,
-  have hc:=large_parts_card hbp,have hd:=large_parts_card hbq,
-  have:=mod_tplus1 hc hd hs, have addP:=parts_card_add hbp,
-  have addQ:=parts_card_add hbq, rw this.2 at addP, refine ⟨this.1,this.2,_⟩, linarith,
-end
+-- balanced partitions have same part sizes and number of each type of part -- no longer needed?
+--lemma bal_eq {t : ℕ} {P Q :ℕ→ ℕ} (hbp : balanced t P) (hbq: balanced t Q) (hs: psum t P = psum t Q): 
+--(min_p t P = min_p t Q) ∧ (large_parts hbp).card = (large_parts hbq).card ∧ (small_parts hbp).card = (small_parts hbq).card:=
+--begin
+--  rw [bal_sum' hbp, bal_sum' hbq] at hs,
+--  have hc:=large_parts_card hbp,have hd:=large_parts_card hbq,
+--  have:=mod_tplus1 hc hd hs, have addP:=parts_card_add hbp,
+-- have addQ:=parts_card_add hbq, rw this.2 at addP, refine ⟨this.1,this.2,_⟩, linarith,
+--end
 
 -- sum of squares of balanced partition is tn'
 lemma bal_turan_help {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
@@ -248,6 +251,7 @@ begin
   rw tn', rw sum_sq, rw bal_sum_n_f hb hn (λi, i^2),
 end
 
+--so given two balanced (t+1) partitions summing to n their sum_sq  agree
 lemma bal_turan_help' {n t :ℕ} {P Q:ℕ→ ℕ} (hp: balanced t P) (hq: balanced t Q) (hn: (∑i in range(t+1), P i)=(∑i in range(t+1), Q i)): 
  sum_sq t P = sum_sq t Q:=
 begin
@@ -256,13 +260,14 @@ begin
 end
 
 
---converted for use in bounding size of complete (t+1)-partite graph
+--hence sum_sq + 2* turan number is n^2
 lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : sum_sq t P + 2*tn t n = n^2:=
 begin
   rw bal_turan_help hb hn, exact tn_tn' t n,
 end
 
 --- introduce the partitions we use to build complete multipartite graphs
+-- this is a partition of A:finset α into t+1 parts each of which is a finset α
 variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
 @[ext] 
 structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α]:=
@@ -271,27 +276,31 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][dec
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 
 
+
+
 -- given M with M.t+1 parts and partition sets P we have P' M is the corresponding sizes of parts
 def P' (M: multi_part α) :ℕ → ℕ:= (λi, (M.P i).card)
 
+--sum of squares of part sizes useful for counting edges in complete multitpartite graph on M
 def sum_sq_c (M: multi_part α): ℕ:= ∑i in range(M.t+1), card(M.P i)^2
 
--- a partition is moveable if the part sizes are unbalanced
+-- a partition is moveable if the part sizes are unbalanced 
 def moveable (M : multi_part α)  :Prop := ¬ balanced M.t (P' M)
 
---- ie. immoveable means the sizes of parts is such that it is balanced
-def immoveable (M : multi_part α) :Prop :=∀i∈ range(M.t+1),∀j∈ range(M.t+1), (M.P i).card ≤ (M.P j).card +1
+--- ie. turan_partition means the sizes of parts is such that it is balanced
+def turan_partition (M : multi_part α) :Prop :=∀i∈ range(M.t+1),∀j∈ range(M.t+1), (M.P i).card ≤ (M.P j).card +1
 
--- obviously
-lemma immoveable_iff_not_moveable (M : multi_part α) :immoveable M ↔ ¬moveable M:=
+-- no vertex can be moved between parts of a turan_partition to increase the number of edges in the complete 
+-- (t+1)-partite graph defined by M
+lemma turan_partition_iff_not_moveable (M : multi_part α) :turan_partition M ↔ ¬moveable M:=
 begin
-  unfold immoveable, unfold moveable,push_neg,refl,
+  unfold turan_partition, unfold moveable,push_neg,refl,
 end
 
--- if a partition is not immoveable then we can find two parts and a vertex to move from one to the other
-lemma not_immoveable_imp {M: multi_part α} (h: ¬immoveable M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
+-- if a partition is not a turan_partition then we can find two parts and a vertex to move from one to the other
+lemma not_turan_partition_imp {M: multi_part α} (h: ¬turan_partition M): ∃i∈ range(M.t+1),∃j∈ range(M.t+1),∃v∈M.P i, j≠i ∧ (M.P j).card +1< (M.P i).card:=
 begin
-  rw [immoveable_iff_not_moveable, not_not,  moveable,balanced,  P'] at h, push_neg at h,
+  rw [turan_partition_iff_not_moveable, not_not,  moveable,balanced,  P'] at h, push_neg at h,
   obtain ⟨i,hi,j,hj,hc⟩:=h, use [i, hi, j, hj], 
   have ic: 0<(M.P i).card:= by linarith,
   rw card_pos at ic, obtain ⟨v,hv⟩:=ic,
@@ -299,24 +308,24 @@ begin
   refine ⟨v,hv,_,hc⟩, intro eq,rw eq at cne, exact cne rfl,
 end
 
--- there is a partition
+-- there is always partition
 instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
 {default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
 disj:=λ i hi j hj ne, disjoint_empty_left ∅,
  }}
 
--- default mpartition of B into s+1 parts 1 x B and s x ∅
+-- given any B:finset α and s:nat there is an mpartition of B into s+1 parts 1 x B and s x ∅
 def default_M (B:finset α) (s:ℕ)  : multi_part α:={
   t:=s, P:= begin intro i, exact ite (i=0) (B) (∅), end, A:=B,
-  uni:= begin ext, split,intro ha,rw mem_bUnion,use 0, rw mem_range, exact ⟨zero_lt_succ s,ha⟩, 
-   rw mem_bUnion,intro h, cases h with i h2,cases h2,split_ifs at h2_h,exact h2_h,exfalso, exact h2_h,end,
-  disj:= begin intros i hi j hj ne,split_ifs,exfalso,rw h at ne,rw h_1 at ne, exact ne rfl, 
-    exact disjoint_empty_right _,exact disjoint_empty_left _,exact disjoint_empty_left _,end,}
+  uni:= begin ext, split,{intro ha,rw mem_bUnion,use 0, rw mem_range, exact ⟨zero_lt_succ s,ha⟩}, 
+   {rw mem_bUnion,intro h, cases h with i h2,cases h2,split_ifs at h2_h,{exact h2_h},{exfalso, exact h2_h},},end,
+  disj:= begin intros i hi j hj ne,split_ifs,{exfalso,rw h at ne,rw h_1 at ne, exact ne rfl}, 
+    {exact disjoint_empty_right _},{exact disjoint_empty_left _},{exact disjoint_empty_left _},end,}
 
---
+
 
 -- insert new disjoint set to the partition to increase the number of parts
---- we will need this to build the complete multipartite graph used fro Furedi's stabilty result
+--- we will need this to build the complete multipartite graph used for Furedi's stabilty result
 def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part α :={
   t:=M.t+1,
   P:=begin intro i, exact ite (i≠M.t+1) (M.P i) (B), end,
@@ -343,11 +352,11 @@ def insert (M : multi_part α)  {B : finset α} (h: disjoint M.A B): multi_part 
   end,}
 --
 
---- after insert the vertex set is the union of new and old
+--- after inserting B the vertex set is the union of new and old
 lemma insert_AB (M: multi_part α) {B :finset α} (h: disjoint M.A B):
 (insert M h).A = M.A ∪ B:=union_comm _ _
 
--- t becomes t+1 (so now have (t+2) parts rather than (t+1))
+-- number of parts has increased by 1 (so now have (t+2) parts rather than (t+1))
 lemma insert_t (M: multi_part α) {B :finset α} (h: disjoint M.A B):(insert M h).t =M.t+1:=rfl
 
 --the parts are the same except the last which is the new set.
@@ -360,26 +369,22 @@ begin
   intros v hv, rw insert_P,split_ifs,{exfalso, exact h_1 rfl}, {exact hv},
 end
 
---conversely if v is in the last part of the new partition then it is from the added part.
+--conversely if v is in the last part of the new partition then it is from the inserted part.
 lemma insert_C (M: multi_part α) {B :finset α} (h: disjoint M.A B){v:α} : v∈ (insert M h).P (M.t+1) → v∈ B:=
 begin
   intro h1, rw insert_P at h1,split_ifs at h1,{exfalso, exact h_1 rfl}, {exact h1},
 end
 
--- there is always a (s+1)-partition of B for any finset α B and nat s
+-- there is always a (s+1)-partition of B for any B:finset α and s:ℕ
 lemma exists_mpartition (B: finset α) (s:ℕ): ∃ M:multi_part α, M.A=B ∧ M.t=s:=
 begin
   use default_M B s, exact ⟨rfl,rfl⟩,
 end
 
----M.disj is the same as pairwise_disjoint but without any coercion to set for range(t+1) 
+---M.disj is the same as "pairwise_disjoint" but without any coercion to set for range(t+1) 
 lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
 
--- size of A is sum of size of part
-lemma card_uni  (M : multi_part α) : M.A.card = ∑i in range(M.t+1),(M.P i).card:= begin
-  rw [M.uni, finset.card_eq_sum_ones, sum_bUnion (pair_disjoint M)],
-  apply finset.sum_congr rfl _, intros x hx, rwa ← finset.card_eq_sum_ones,
-end
+
 
 -- member of a part implies member of union
 lemma mem_part{M:multi_part α} {v :α} {i :ℕ}: i∈range(M.t+1) → v ∈ M.P i → v ∈ M.A :=
@@ -393,14 +398,28 @@ begin
   rw [M.uni,mem_bUnion] at hA, exact hA,
 end
 
+-- M.A is the union of its parts
+lemma bUnion_parts (M:multi_part α) :M.A=finset.bUnion (range(M.t+1)) (λi,(M.P i)):=
+begin
+  ext,rw mem_bUnion, split,{intros hA, use inv_part hA},
+  {intro hA, obtain ⟨i,hi,hi2⟩:=hA,exact mem_part hi hi2},
+end
+
+-- so (by disj) card of M.A is the sum of sizes of parts
+lemma card_uni (M:multi_part α) :(M.A).card = ∑ i in range(M.t+1), (M.P i).card:=
+begin
+  rw bUnion_parts M, rw card_bUnion, intros x hx y hy ne, exact M.disj x hx y hy ne,
+end
+
+
 -- if v belongs to P i and P j then i = j.
-lemma uniq_part {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → v∈M.P i → v∈ M.P j → i = j:=
+lemma uniq_part {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → v ∈ M.P i → v ∈ M.P j → i = j:=
 begin
   intros hi hj hiv hjv, by_contra, have:=M.disj i hi j hj h, exact this (mem_inter.mpr ⟨hiv,hjv⟩),
 end
 
--- if v belongs to P i and j≠ i and is in range then v ∉ part j
-lemma uniq_part' {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → i≠ j→ v∈M.P i → v∉ M.P j:=
+-- if v belongs to P i and i ≠ j and is in range then v ∉ P j
+lemma uniq_part' {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → i ≠ j→ v ∈ M.P i → v ∉ M.P j:=
 begin
   intros hi hj hiv ne, contrapose hiv,push_neg at hiv,rw not_ne_iff, exact uniq_part hi hj ne hiv,
 end
@@ -411,17 +430,6 @@ begin
   rw M.uni, intros x hx,  rw  mem_bUnion,  exact ⟨i,hi,hx⟩,
 end
 
--- M.A is the union of its parts
-lemma bUnion_parts (M:multi_part α) :M.A=finset.bUnion (range(M.t+1)) (λi,(M.P i)):=
-begin
-  ext,rw mem_bUnion, split,{intros hA, use inv_part hA},
-  {intro hA, obtain ⟨i,hi,hi2⟩:=hA,exact mem_part hi hi2},
-end
-
-lemma bUnion_parts_card (M:multi_part α) :(M.A).card = ∑ i in range(M.t+1), (M.P i).card:=
-begin
-  rw bUnion_parts M, rw card_bUnion, intros x hx y hy ne, exact M.disj x hx y hy ne,
-end
 
 -- if there are two different parts then the sum of their sizes is at most the size of the whole
 -- could make a version for any number of parts but don't really need it
@@ -450,7 +458,9 @@ begin
   apply card_disjoint_union sdiff_disjoint,
 end
 
--- create a new partition by moving v from P i to P j,
+--  Create a new partition by moving v from P i to P j,
+
+--  Any non-Turan partition contains a vertex that can be moved to increase the number of edges in corresponding graph
 -- "(M.P j).insert v" invalid field notation, but it didn't complain about "(M.P i).erase v"
 --- Error message :'insert' is not a valid "field" because environment does not contain 'finset.insert' M.P j which has type finset α
 def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
@@ -526,7 +536,7 @@ begin
   have h2:=h' ha, exact h2.1 this},},
 end
 
---size of complement of erased part has increased
+--..hence its size  has increased
 lemma card_sdiff_erase {v : α} {A B :finset α} (hB: B⊆A) (hv: v ∈ B) : (A\(B.erase v)).card=(A\B).card+1 :=
 begin
   have hv2: v∉A\B, {rw mem_sdiff,push_neg,intro i, exact hv,},
@@ -542,7 +552,7 @@ begin
   {intro h,rw mem_erase at h, rw mem_sdiff, rw mem_union, push_neg,rw mem_singleton, rw mem_sdiff at h, exact ⟨h.2.1,h.2.2,h.1⟩},
 end
 
----size of complement decreased
+--- .. hence its size has decreased
 lemma card_sdiff_insert {v : α} {A B :finset α} (hB: B⊆A) (hvB: v ∉ B) (hvA: v ∈ A) : (A\(B ∪ {v})).card=(A\B).card -1:= 
 begin
   have : v∈A\B:=mem_sdiff.mpr ⟨hvA,hvB⟩,
@@ -550,6 +560,7 @@ begin
 end
 
 -- how have the sizes of the complements of parts changed by moving v
+-- for parts other than i and j nothing has changed, for i and j we have calculated the changes above
 lemma move_Pcard_sdiff {M : multi_part α} {v : α} {i j k: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) :
  k∈ range(M.t+1) → (((move M hvi hj).A)\((move M hvi hj).P k)).card = ite (k≠i ∧k≠j) ((M.A)\(M.P k)).card (ite (k=i) (((M.A)\(M.P i)).card +1) (((M.A)\(M.P j)).card-1)):=
 begin
@@ -559,6 +570,7 @@ begin
 end
 
 -- key increment inequality we need to show moving a vertex in a moveable partition is increases deg sum
+-- (TODO: rewrite this now I'm not a complete novice..)
 lemma move_change {a b n:ℕ} (hb: b+1<a) (hn: a+b ≤ n):  a*(n-a) +b*(n-b) < (a-1)*(n-a+1)+ (b+1)*(n-b-1):=
 begin
   rw mul_add, rw add_mul,rw mul_one, rw one_mul,

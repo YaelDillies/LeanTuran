@@ -172,11 +172,11 @@ begin
 end
 
 
--- immoveable partition corresponds to balanced partition sizes so if we have two immoveable partitions of same set A into
+-- turan_partition partition corresponds to balanced partition sizes so if we have two turan_partition partitions of same set A into
 -- the same number of parts then their degree sums are the the same
-lemma immoveable_deg_sum_eq (M N : multi_part α): M.A= N.A → M.t=N.t → immoveable M → immoveable N → mp_dsum M = mp_dsum N:=
+lemma turan_partition_deg_sum_eq (M N : multi_part α): M.A= N.A → M.t=N.t → turan_partition M → turan_partition N → mp_dsum M = mp_dsum N:=
 begin
-   intros hA ht iM iN, unfold mp_dsum,  rw [mp_deg_sum_sq,mp_deg_sum_sq,hA], rw [immoveable_iff_not_moveable, moveable,not_not] at *,
+   intros hA ht iM iN, unfold mp_dsum,  rw [mp_deg_sum_sq,mp_deg_sum_sq,hA], rw [turan_partition_iff_not_moveable, moveable,not_not] at *,
    apply congr_arg _, unfold P' at *, rw ← ht at iN,  
    have:= bal_turan_help' iM iN _,{ 
    unfold sum_sq at this,  rwa  ← ht}, 
@@ -227,13 +227,13 @@ begin
   rw ← h2 at h1, rw move_t, linarith,
 end
 
--- so given any partition M we can find an immoveable one on the same set with the same number of parts.
-lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A= M.A ∧ N.t=M.t ∧ immoveable N ∧ mp_dsum M≤ mp_dsum N:=
+-- so given any partition M we can find an turan_partition one on the same set with the same number of parts.
+lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A= M.A ∧ N.t=M.t ∧ turan_partition N ∧ mp_dsum M≤ mp_dsum N:=
 begin
   apply well_founded.recursion (measure_wf sum_sq_c) M,
   intros X h,
-  by_cases h': immoveable X,{exact ⟨X,rfl,rfl,h', le_rfl⟩,},{
-    obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:=not_immoveable_imp h',
+  by_cases h': turan_partition X,{exact ⟨X,rfl,rfl,h', le_rfl⟩,},{
+    obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:=not_turan_partition_imp h',
     set Y:=(move X ⟨hi,hv⟩ ⟨hj,ne⟩) with hY,
     specialize h Y (sum_sq_c_dec X ⟨hi,hv⟩ ⟨hj,ne⟩ hc), 
     rw [move_t,move_A] at h, have :=mp_deg_sum_move  ⟨hi,hv⟩ ⟨hj,ne⟩ hc, rw [←mp_dsum,←mp_dsum,← hY] at this,
@@ -241,14 +241,14 @@ begin
 end
 
 
--- given any partition that is immoveable and one that is moveable the degree sum of the former is strictly larger
+-- given any partition that is turan_partition and one that is moveable the degree sum of the former is strictly larger
 -- ie only Turan graphs maximize number of edges.
-lemma moved_max (M N:multi_part α): M.A =N.A → M.t =N.t → immoveable M →  ¬immoveable N → mp_dsum N < mp_dsum M:=
+lemma moved_max (M N:multi_part α): M.A =N.A → M.t =N.t → turan_partition M →  ¬turan_partition N → mp_dsum N < mp_dsum M:=
 begin
   intros hA ht him h1,
-  obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:= not_immoveable_imp h1, 
+  obtain ⟨i,hi,j,hj,v,hv,ne,hc⟩:= not_turan_partition_imp h1, 
   set O:=(move N ⟨hi,hv⟩ ⟨hj,ne⟩) with hO, have Ns:mp_dsum N < mp_dsum O:=mp_deg_sum_move ⟨hi,hv⟩ ⟨hj,ne⟩ hc,
-  obtain ⟨Q,QA,Qt,Qim,Qs⟩:=moved O, have :=immoveable_deg_sum_eq M Q _ _ him Qim,rw this,
+  obtain ⟨Q,QA,Qt,Qim,Qs⟩:=moved O, have :=turan_partition_deg_sum_eq M Q _ _ him Qim,rw this,
   {exact lt_of_lt_of_le Ns Qs}, {rw [hA,QA], have NOA:N.A=O.A:=move_A ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOA},
   {rw[ht,Qt],  have NOt:N.t=O.t:=move_t ⟨hi,hv⟩ ⟨hj,ne⟩,exact NOt},
 end
@@ -260,7 +260,7 @@ lemma turan_bound_M (M: multi_part α): mp_dsum M ≤ 2*tn M.t M.A.card:=
 begin
   obtain ⟨N,hA,ht,iN,sN⟩:=moved M,
   apply le_trans sN _, apply le_of_eq,
-  rw immoveable_iff_not_moveable at iN,rw moveable at iN, rw not_not at iN,rw P' at iN, rw ← hA,rw ←ht, 
+  rw turan_partition_iff_not_moveable at iN,rw moveable at iN, rw not_not at iN,rw P' at iN, rw ← hA,rw ←ht, 
   set n:=N.A.card with hn, rw card_uni at hn,
   have:= bal_turan_bd iN hn.symm, rw ← card_uni at hn,rw sum_sq at this, rw  mp_dsum,rw mp_deg_sum_sq,-- rw← this,  
   rw hn at this,  rw hn, rw ← this, rw add_comm, simp only [add_tsub_cancel_right],
@@ -274,8 +274,8 @@ begin
 end
 
 
--- just need to reformulate our bound to say any complete multipartite graph on α that attains the turan bound is immoveable
-lemma turan_eq_imp (M: multi_part α) (hu: M.A=univ):  (mp M).edge_finset.card = tn M.t (fintype.card α) → immoveable M:=
+-- just need to reformulate our bound to say any complete multipartite graph on α that attains the turan bound is turan_partition
+lemma turan_eq_imp (M: multi_part α) (hu: M.A=univ):  (mp M).edge_finset.card = tn M.t (fintype.card α) → turan_partition M:=
 begin
   intros h, contrapose h, apply ne_of_lt, obtain ⟨N,NA,Nt,iN,le⟩:= moved M,
   apply (mul_lt_mul_left (by norm_num:0<2)).mp, rw ←sum_degrees_eq_twice_card_edges, 
@@ -285,12 +285,12 @@ begin
 end
 
 
-lemma turan_imm_imp_eq (M: multi_part α) {t :ℕ} (hu: M.A=univ) (ht :M.t=t): immoveable M → (mp M).edge_finset.card = tn t (fintype.card α) :=
+lemma turan_imm_imp_eq (M: multi_part α) {t :ℕ} (hu: M.A=univ) (ht :M.t=t): turan_partition M → (mp M).edge_finset.card = tn t (fintype.card α) :=
 begin
-  rw immoveable_iff_not_moveable, unfold moveable, rw not_not,
+  rw turan_partition_iff_not_moveable, unfold moveable, rw not_not,
   intros iM,  apply (nat.mul_right_inj (by norm_num:0<2)).mp, rw [←sum_degrees_eq_twice_card_edges, ←hu, ←ht], 
   rw [mp_deg_sum_sq,  ← card_univ, ← hu], 
-  have cA:= bUnion_parts_card M,  
+  have cA:= card_uni M,  
   rwa [← bal_turan_bd iM cA.symm,  sum_sq, P', add_tsub_cancel_left],
 end
 end simple_graph
