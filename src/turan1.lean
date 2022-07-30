@@ -31,6 +31,8 @@ disjoint.mono (le_iff_subset.mpr (inter_subset_right C A)) (inter_subset_right D
 lemma sdiff_inter_disj (A B C:finset α) : disjoint (B ∩ C)  (A\B ∩ C):=
 disj_of_inter_disj C C disjoint_sdiff
 
+
+
 -- G is a subgraph of H iff G.edge_finset is subset of H.edge_finset
 lemma subgraph_edge_subset {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G ≤ H ↔ G.edge_finset ⊆ H.edge_finset:=
 begin
@@ -240,6 +242,8 @@ lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in
 
 -- I found dealing with the mathlib "induced" subgraph too painful (probably just too early in my experience of lean)
 -- Graph induced by A ⊆ α, defined to be a simple_graph α (so all vertices outside A have empty neighborhoods)
+-- this is basically the same as spanning_coe (induce A G) 
+
 @[ext,reducible]
 def ind (A : finset α) : simple_graph α :={
   adj:= λ x y, G.adj x y ∧ x ∈ A ∧ y ∈ A, 
@@ -248,6 +252,43 @@ def ind (A : finset α) : simple_graph α :={
     intros x y hxy, rw adj_comm, tauto, 
   end,
   loopless:= by obviously}
+@[ext,reducible]
+
+def bipart (A :finset α) :simple_graph α :=
+{ adj:= λ v w, (G.adj v w) ∧ ((v∈ A ∧ w ∉ A) ∨ (v∉ A ∧ w ∈ A)),
+  symm :=begin intros x y hxy, rw adj_comm, tauto, end,
+  loopless :=by obviously,
+}
+
+
+-- why is this so messy to prove? (presumably it isn't..)
+lemma ind_eq_coe_induced (A : finset α) : spanning_coe (induce (A:set α) G) = (G.ind A):=
+begin
+  ext, simp only [map_adj, comap_adj, function.embedding.coe_subtype, set_coe.exists, mem_coe, subtype.coe_mk, exists_prop],
+  split, {rintros ⟨a,h1,b,h2,h3,h4,h5⟩,rw [←h4,←h5], exact ⟨h3,h1,h2⟩},
+  {rintros ⟨h,h1,h2⟩, exact ⟨x,h1,x_1,h2,h,rfl,rfl⟩,},
+end
+
+-- Given a A:finset α and G :simple_graph α we can partition G into G[A] G[Aᶜ] and G[A,Aᶜ]  
+lemma split (A : finset α): G = G.ind A ⊔ G.ind Aᶜ ⊔  G.bipart A:=
+begin
+  ext, simp only [sup_adj, mem_compl], tauto,
+end
+
+-- induced subgraphs on disjoint sets meet in the empty graph
+lemma bot_of_disjoint_ind {A B: finset α} (h : disjoint A B): G.ind A ⊓ G.ind B = ⊥ :=
+begin
+ext , simp only [inf_adj, bot_adj], split, {rintro ⟨⟨_,h1,_⟩,⟨_,h2,_⟩⟩, exact h (mem_inter.mpr ⟨h1,h2⟩)},
+{tauto},
+end
+
+--induced subgraph on A meets bipartite induced subgraph e(A,Aᶜ) in empty graph
+lemma bot_of_bipart_ind {A: finset α} : G.ind A ⊓ G.bipart A = ⊥ :=
+begin
+  ext, simp only [inf_adj, bot_adj], tauto,
+end
+
+
 
 
 -- if v w are adjacent in induced graph then they are adjacent in G
@@ -326,8 +367,11 @@ begin
     rintros ⟨hadj,h2⟩, refine ⟨hadj,_⟩, push_neg, intros hadj' i hi hx hy,
     exact not_nbhr_same_part hi hx h2 hy },
 end
-
-
+-- see bUnion def in finset for better version of this...
+--lemma ind_int_mp_sub_eq_bJoin (M : multi_part α) : G.ind_int_mp M = ⋃ i in range(M.t+1), (G.ind (M.P i)):=
+--begin
+--sorry,
+--end
 
 -- G is the join of the edges induced by the parts and those in the complete 
 -- multipartite graph M on α
