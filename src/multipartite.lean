@@ -19,15 +19,15 @@ include M
 
 -- given a t+1 partition on A form the complete multi-partite graph on α
 -- with all edges present between parts in M.A and no edges involving vertices outside A
-@[ext]
+@[ext,reducible]
 def mp (M: multi_part α) : simple_graph α:={
   adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
   symm:=
   begin
     intros x y hxy,
     obtain ⟨i,hi,j,hj,ne,⟨hx,hy⟩⟩:=hxy,
-    refine ⟨j ,hj, i, hi, ne.symm,_ ⟩, left ,exact ⟨hy,hx⟩,
-    refine ⟨i ,hi, j, hj, ne,_ ⟩, left, rwa and_comm, 
+    {refine ⟨j ,hj, i, hi, ne.symm,_ ⟩, left ,exact ⟨hy,hx⟩},
+    {refine ⟨i ,hi, j, hj, ne,_ ⟩, left, rwa and_comm}, 
   end,
   loopless:=begin
     intro x, push_neg, intros i hi j hj ne, 
@@ -51,12 +51,6 @@ begin
   exact (sub_part hj) hA_h_h_h_h_right.1,
 end
 
--- so degrees are zero outside A (not used?)
---lemma mp_nbhd_compl (M : multi_part α) {v : α} (hA: v∉M.A) : (mp M).degree v = 0:= 
---begin
---  rw degree, rw finset.card_eq_zero,
---  rw eq_empty_iff_forall_not_mem, intros x hx,rw mem_neighbor_finset at hx, exact no_nbhrs hA hx,
---end
 
 -- having any neighbour implies the vertex is in A
 lemma nbhrs_imp {M: multi_part α} {v w: α} : (mp M).adj v w → v ∈ M.A:=
@@ -77,15 +71,6 @@ begin
   exact abne.symm,
 end
 
--- if v ∈ P i and vw is an edge then w ∈ P j for some j ∈ range(t+1) with i≠j (not used?)
---lemma mp_adj_imp' {M : multi_part α} {v w: α} {i : ℕ}(hi: i∈ range(M.t+1))(hvi: v∈M.P i) :(mp M).adj v w → ∃j ∈ range(M.t+1), w∈ M.P j ∧ i≠j:=
---begin
---  intros h,
---  obtain ⟨j,hj,k,hk,ne,h1⟩:= h, cases h1, have :=uniq_part hi hj hvi h1.1, rw ← this at ne,
---  use [k,hk,⟨h1.2,ne⟩],
---  have :=uniq_part hi hk hvi h1.1, rw ← this at ne,
---  use [j,hj,⟨h1.2,ne.symm⟩],
---end
 
 --if v and w are in distinct parts then they are adjacent
 lemma mp_imp_adj {M : multi_part α} {v w: α} {i j : ℕ}(hi: i∈ range(M.t+1))(hj: j∈ range(M.t+1))(hvi: v∈M.P i) (hwj: w∈M.P j): i≠ j → (mp M).adj v w :=
@@ -93,9 +78,6 @@ begin
   intros h, refine ⟨i,hi,j,hj,h,_⟩,left ,exact ⟨hvi,hwj⟩,
 end
 
--- if v ∈ P i and w ∈ P.j with i,j ∈ range(t+1) then vw is an edge iff i≠j
---lemma mp_adj_iff {M : multi_part α} {v w: α} {i j : ℕ}(hi: i∈ range(M.t+1))(hj: j∈ range(M.t+1))(hvi: v∈M.P i) (hwj: w∈M.P j): 
---(mp M).adj v w ↔  i≠j := ⟨mp_adj_imp hi hj hvi hwj, mp_imp_adj hi hj hvi hwj⟩
 
 --if v in P i and vw is an edge then w ∉ P i
 lemma not_nbhr_same_part {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) : (mp M).adj v w → w ∉ M.P i:=
@@ -103,6 +85,7 @@ begin
   intros h1, by_contra, apply mp_adj_imp hi hi hv h h1,refl, 
 end
 
+-- given two vertices in the same part they are not adjacent
 lemma not_nbhr_same_part' {M : multi_part α} {v w: α} {i : ℕ} (hi : i∈ range(M.t+1)) (hv: v∈ M.P i) (hw: w∈ M.P i): ¬(mp M).adj v w :=
 begin
   intros h1, contrapose hw, exact not_nbhr_same_part hi hv h1, 
@@ -164,13 +147,6 @@ end
 lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq (mp_deg_sum_sq' M)
 
-
--- upper bound on deg sum of any complete multipartite graph on A to show that it can't be improved more than |A|^2 times.
--- unused
---lemma mp_dsum_le (M: multi_part α) : mp_dsum M ≤ M.A.card^2:=
---begin
---  rw [mp_dsum, mp_deg_sum_sq], exact tsub_le_self,
---end
 
 
 -- turan_partition partition corresponds to balanced partition sizes so if we have two turan_partition partitions
