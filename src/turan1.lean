@@ -66,6 +66,17 @@ lemma empty_iff_edge_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥ 
 := by rwa [eq_iff_edges_eq, empty_has_no_edges]
 
 
+lemma meet_edges_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : (G⊓H).edge_set =G.edge_set ∩ H.edge_set:=
+begin
+  ext,simp only [set.mem_inter_eq], induction x, work_on_goal 1 { refl }, refl,
+end
+
+lemma disjoint_edges_iff_meet_empty {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : disjoint G.edge_finset H.edge_finset ↔  G ⊓ H = ⊥:= 
+begin
+  rw empty_iff_edge_empty, simp only [set.to_finset_disjoint_iff, set.to_finset_eq_empty_iff],
+  rw meet_edges_eq, exact disjoint_iff,
+end
+
 -- the subgraph formed by deleting edges (from edge_finset)
 @[ext]
 def del_fedges (G:simple_graph α) (S: finset (sym2 α))[decidable_rel G.adj]  :simple_graph α :={
@@ -241,9 +252,8 @@ lemma two_clique_free_sum {A: finset α} (hA : G.clique_free_set A 2) : ∑ v in
 
 
 -- I found dealing with the mathlib "induced" subgraph too painful (probably just too early in my experience of lean)
--- Graph induced by A ⊆ α, defined to be a simple_graph α (so all vertices outside A have empty neighborhoods)
--- this is basically the same as spanning_coe (induce A G) 
-
+-- Graph induced by A:finset α, defined to be a simple_graph α (so all vertices outside A have empty neighborhoods)
+-- this is basically the same as spanning_coe (induce (A:set α) G) 
 @[ext,reducible]
 def ind (A : finset α) : simple_graph α :={
   adj:= λ x y, G.adj x y ∧ x ∈ A ∧ y ∈ A, 
@@ -269,27 +279,40 @@ begin
   {rintros ⟨h,h1,h2⟩, exact ⟨x,h1,x_1,h2,h,rfl,rfl⟩,},
 end
 
--- Given a A:finset α and G :simple_graph α we can partition G into G[A] G[Aᶜ] and G[A,Aᶜ]  
+-- Given A:finset α and G :simple_graph α we can partition G into G[A] G[Aᶜ] and G[A,Aᶜ]  
 lemma split (A : finset α): G = G.ind A ⊔ G.ind Aᶜ ⊔  G.bipart A:=
 begin
   ext, simp only [sup_adj, mem_compl], tauto,
 end
 
 -- induced subgraphs on disjoint sets meet in the empty graph
-lemma bot_of_disjoint_ind {A B: finset α} (h : disjoint A B): G.ind A ⊓ G.ind B = ⊥ :=
+lemma empty_of_disjoint_ind {A B: finset α} (h : disjoint A B): G.ind A ⊓ G.ind B = ⊥ :=
 begin
 ext , simp only [inf_adj, bot_adj], split, {rintro ⟨⟨_,h1,_⟩,⟨_,h2,_⟩⟩, exact h (mem_inter.mpr ⟨h1,h2⟩)},
 {tauto},
 end
 
+
+-- different parts of a multi_part induce graphs that meet in the empty graph
+lemma empty_of_diff_parts {M : multi_part α} {i j : ℕ}(hi: i∈range(M.t+1)) (hj: j∈range(M.t+1)) (hne:i≠j): G.ind (M.P i) ⊓ G.ind (M.P j)=⊥
+:=G.empty_of_disjoint_ind (M.disj i hi j hj hne)
+
+
 --induced subgraph on A meets bipartite induced subgraph e(A,Aᶜ) in empty graph
-lemma bot_of_bipart_ind {A: finset α} : G.ind A ⊓ G.bipart A = ⊥ :=
+lemma empty_of_bipart_ind {A: finset α} : G.ind A ⊓ G.bipart A = ⊥ :=
 begin
   ext, simp only [inf_adj, bot_adj], tauto,
 end
 
+-- would like to just define the bUnion of the induced graphs directly but can't figure out how to do this.
+def edges_inside (M : multi_part α) : finset(sym2 α):=(range(M.t+1)).bUnion (λi, (G.ind (M.P i)).edge_finset)
 
 
+--so counting edges inside M is same as summing of edges in induced parts
+lemma edge_mp_count {M : multi_part α} : (G.edges_inside M).card = ∑ i in range(M.t+1),(G.ind (M.P i)).edge_finset.card:=
+begin
+ apply card_bUnion, intros i hi j hj hne, rw disjoint_edges_iff_meet_empty,exact G.empty_of_diff_parts hi hj hne,
+end
 
 -- if v w are adjacent in induced graph then they are adjacent in G
 lemma ind_adj_imp {A :finset α} {v w :α} : (G.ind A).adj v w → G.adj v w:=λ h, h.1
@@ -340,16 +363,33 @@ lemma ind_sub {A : finset α} : (G.ind A)≤ G:=  λ x y, G.ind_adj_imp
 -- I should have defined this as G \(⋃ (G.ind M.P i)) if I 
 -- could have made it work.. defining the bUnion operator for simple_graphs
 -- was a step too far..
+
+@[ext,reducible]
+def disJoin (M: multi_part α) : simple_graph α := {
+adj:= λ v w, ∃i ∈ range(M.t+1), (G.ind (M.P i)).adj v w,
+symm:= by obviously,
+loopless:= by obviously,}
+
 @[ext,reducible]
 def ind_int_mp (M: multi_part α) : simple_graph α:={
 adj:= λ v w , (G.adj v w) ∧ (∃ i ∈ range(M.t+1), v∈(M.P i) ∧w∈ (M.P i)),
-symm:= begin
-intros x y hxy, rw adj_comm at hxy,
-obtain⟨ha,i,hi,hx,hy⟩:=hxy, exact ⟨ha,i,hi,hy,hx⟩, end,
+symm:= by obviously, 
 loopless:= by obviously,}
+--symm:=
+--begin
+--intros x y hxy, rw adj_comm at hxy,
+--obtain⟨ha,i,hi,hx,hy⟩:=hxy, exact ⟨ha,i,hi,hy,hx⟩, end,
+
+-- the two versions of "union of induced disjoint parts" are the sa,e
+lemma disJoin_eq_ind_int_mp_sum (M : multi_part α) : G.disJoin M= G.ind_int_mp M:=
+begin
+  ext,simp only [mem_range, exists_prop],split,
+  {rintros ⟨i,hi,ad,hx,hy⟩,exact ⟨ad,i,hi,hx,hy⟩},{rintros ⟨ad,i,hi,hx,hy⟩,exact ⟨i,hi,ad,hx,hy⟩},
+end
 
 -- this is a subgraph of G
 lemma ind_int_mp_sub (M : multi_part α) : (G.ind_int_mp M)≤ G:=λ _ _ h, h.1
+
 
 -- G with the internal edges removed is G ∩ (mp M)
 lemma sdiff_with_int {M: multi_part α} (h: M.A =univ)  : G\(G.ind_int_mp M) = G⊓(mp M):=
@@ -367,14 +407,9 @@ begin
     rintros ⟨hadj,h2⟩, refine ⟨hadj,_⟩, push_neg, intros hadj' i hi hx hy,
     exact not_nbhr_same_part hi hx h2 hy },
 end
--- see bUnion def in finset for better version of this...
---lemma ind_int_mp_sub_eq_bJoin (M : multi_part α) : G.ind_int_mp M = ⋃ i in range(M.t+1), (G.ind (M.P i)):=
---begin
---sorry,
---end
-
 -- G is the join of the edges induced by the parts and those in the complete 
 -- multipartite graph M on α
+
 lemma self_eq_int_ext_mp {M :multi_part α} (h: M.A=univ) : G = (G.ind_int_mp M) ⊔ (G⊓(mp M)):=
 begin
   rw ← G.sdiff_with_int h,simp only [sup_sdiff_self_right, right_eq_sup], exact G.ind_int_mp_sub M,
