@@ -115,6 +115,8 @@ include G
 @[ext]def nbhd_res (v : α) (A : finset α) : finset α := A ∩ G.neighbor_finset v 
 
 -- restriction of degree to A
+
+
 def deg_res (v : α) (A : finset α) : ℕ:= (G.nbhd_res v A).card
 
 -- restricting to univ is no restriction at all
@@ -123,7 +125,9 @@ begin
   rw [deg_res,degree], congr, rw [nbhd_res,univ_inter],
 end
 
+-- we only define this over A restricted to A (could be broader)
 -- max deg res is zero if A is empty
+-- could replace this with (G.ind A).max_degree
 def max_deg_res (A :finset α) : ℕ :=option.get_or_else (A.image (λ v, G.deg_res v A)).max 0
 
 
@@ -141,6 +145,8 @@ begin
   exact ⟨ha1,ha2.symm⟩,
 end
 
+
+
 -- The max_deg_res over A is at least the deg_res of any particular vertex in A. 
 lemma deg_res_le_max_deg_res  {v : α} {A : finset α} (hvA: v ∈ A) : G.deg_res v A ≤ G.max_deg_res A :=
 begin
@@ -150,6 +156,8 @@ begin
   rwa [max_deg_res,ht],  
 end
 
+
+-- or equiv if C ⊆ A then 2*e(G[C])+e(G[C,A\C])≤ (G.ind A).max_degree * |C|
 -- bound on sum of deg_res given max deg_res (also a bound on e(C) for C ⊆ A)
 lemma max_deg_res_sum_le {A C : finset α} (hC: C ⊆ A) : ∑ v in C, G.deg_res v A ≤ (G.max_deg_res A)*(C.card):=
 begin
@@ -332,6 +340,7 @@ begin
   {rw [mem_inter, set.mem_to_finset, mem_neighbor_set], tauto},
 end
 
+-- if G is not the empty graph it contains an edge
 lemma ne_bot_imp_edge : ¬G = ⊥ →  ∃e, e ∈ G.edge_set :=
 begin
   rw empty_iff_edge_empty,rw eq_empty_iff_forall_not_mem ,push_neg, 
@@ -360,6 +369,7 @@ begin
 end
 
 -- so degree sum over α in the induced subgraph is same as sum of deg_res over A
+-- both count 2*e(G[A])
 lemma ind_deg_sum {A :finset α}: ∑v, (G.ind A).degree v = ∑v in A,(G.deg_res v A):=
 begin
   simp only [ind_deg], rw sum_ite,rw sum_const, rw smul_zero,rw add_zero, congr,
@@ -387,7 +397,7 @@ adj:= λ v w , (G.adj v w) ∧ (∃ i ∈ range(M.t+1), v∈(M.P i) ∧w∈ (M.P
 symm:= by obviously, 
 loopless:= by obviously,}
 
--- the two versions of "union of induced disjoint parts" are the sa,e
+-- the two versions of "union of induced disjoint parts" are the same
 lemma bUnion_eq_ind_int_mp_sum (M : multi_part α) : G.bUnion M = G.ind_int_mp M:=
 begin
   ext,simp only [mem_range, exists_prop],split,
@@ -485,15 +495,17 @@ end
 
 -- if A set is (t+2)-clique-free then any member vertex 
 -- has restricted nbhd that is (t+1)-clique-free 
+-- (just prove for any simple_graph α if  G is (t+2)-clique free then so is any nbhd of a vertex in G
+-- then can apply it to G.ind A etc...
 lemma t_clique_free {A: finset α} {v :α}(hA : G.clique_free_set A (t + 2)) (hv : v ∈ A) :
 G.clique_free_set (G.nbhd_res v A) (t + 1):=
 begin
-  rw clique_free_set at *,
+  rw clique_free_set at *, 
   intros B hB, contrapose! hA,
   set C:= B ∪ {v} with hC,
-  refine ⟨C,_,_⟩,
+  refine ⟨C,_,_⟩,{
   rw hC, apply union_subset (subset_trans hB (G.sub_res_nbhd_A v A)) _,
-  simp only [hv, singleton_subset_iff],
+  simp only [hv, singleton_subset_iff]},
   rw is_n_clique_iff at *,
   refine ⟨_,_⟩,{
   rcases hA with ⟨cl,ca⟩, 
@@ -522,6 +534,7 @@ begin
 end
 
 -- restricted degree additive over partition of A into B ∪ A\B
+-- this is daft, it would work for any function defined on A 
 lemma sum_sdf {A B C: finset α} (hB: B ⊆ A) (hC: C ⊆ A):
  ∑ v in A, G.deg_res v C = ∑v in B, G.deg_res v C + ∑ v in A\B, G.deg_res v C:=
 begin
@@ -892,21 +905,5 @@ end
 -- if G is (K_t+2)-free and has (turan numb - s) edges
 -- then we can make G (t+1)-partite by deleting at most s edges 
 --
-theorem furedi_stability_count {s:ℕ} (hs: s ≤ tn t (fintype.card α)): G.clique_free (t+2) → G.edge_finset.card = tn t (fintype.card α)-s → 
-∃ M: multi_part α, M.t=t ∧ M.A=univ  ∧ G.is_far (mp M) s:=
-begin
-intros h1 h2, obtain ⟨M,ht,hA,hle⟩:=G.furedi_stability' h1,
-refine ⟨M,ht,hA,_⟩, rw h2 at hle,
-have tm:=turan_max_edges M hA, rw  ht at tm,
-by_cases hs: s≤ tn t (fintype.card α),{
-have ic:(G.ind_int_mp M).edge_finset.card ≤ s:= by linarith,
-have id:=G.self_eq_int_ext_mp hA,
-refine ⟨(G.ind_int_mp M).edge_finset,_,ic⟩, 
-rw G.del_fedges_is_sdiff (G.ind_int_mp M),{ rw G.sdiff_with_int hA,
-  by { intro, simp { contextual := tt } },},
-  {exact (G.ind_int_mp M).edge_finset},},
-  {have :G.edge_finset.card ≤s:=by linarith, 
-    exact G.is_far_trivial (mp M) s (this)},
-end
 
 end simple_graph
