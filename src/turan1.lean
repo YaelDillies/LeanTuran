@@ -307,6 +307,7 @@ begin
 end
 
 -- would like to just define the bUnion of the induced graphs directly but can't figure out how to do this.
+@[ext]
 def edges_inside (M : multi_part α) : finset(sym2 α):=(range(M.t+1)).bUnion (λi, (G.ind (M.P i)).edge_finset)
 
 
@@ -375,7 +376,7 @@ lemma ind_sub {A : finset α} : (G.ind A)≤ G:=  λ x y, G.ind_adj_imp
 -- was a step too far..
 
 @[ext,reducible]
-def disJoin (M: multi_part α) : simple_graph α := {
+def bUnion (M: multi_part α) : simple_graph α := {
 adj:= λ v w, ∃i ∈ range(M.t+1), (G.ind (M.P i)).adj v w,
 symm:= by obviously,
 loopless:= by obviously,}
@@ -385,23 +386,26 @@ def ind_int_mp (M: multi_part α) : simple_graph α:={
 adj:= λ v w , (G.adj v w) ∧ (∃ i ∈ range(M.t+1), v∈(M.P i) ∧w∈ (M.P i)),
 symm:= by obviously, 
 loopless:= by obviously,}
---symm:=
---begin
---intros x y hxy, rw adj_comm at hxy,
---obtain⟨ha,i,hi,hx,hy⟩:=hxy, exact ⟨ha,i,hi,hy,hx⟩, end,
 
 -- the two versions of "union of induced disjoint parts" are the sa,e
-lemma disJoin_eq_ind_int_mp_sum (M : multi_part α) : G.disJoin M= G.ind_int_mp M:=
+lemma bUnion_eq_ind_int_mp_sum (M : multi_part α) : G.bUnion M = G.ind_int_mp M:=
 begin
   ext,simp only [mem_range, exists_prop],split,
   {rintros ⟨i,hi,ad,hx,hy⟩,exact ⟨ad,i,hi,hx,hy⟩},{rintros ⟨ad,i,hi,hx,hy⟩,exact ⟨i,hi,ad,hx,hy⟩},
+end
+
+-- edges inside M are the same as the edge_finset of bUnion M
+lemma edges_inside_eq (M : multi_part α) : (G.bUnion M).edge_finset = (G.edges_inside M):=
+begin
+  unfold edges_inside, ext, simp only [mem_edge_finset, mem_bUnion, mem_range, exists_prop],
+  unfold bUnion, induction a, work_on_goal 1 { cases a, dsimp at *, simp only [mem_range, exists_prop] at *, refl }, refl,
 end
 
 -- this is a subgraph of G
 lemma ind_int_mp_sub (M : multi_part α) : (G.ind_int_mp M)≤ G:=λ _ _ h, h.1
 
 
--- G with the internal edges removed is G ∩ (mp M)
+-- G with the internal edges removed is G ⊓ (mp M)
 lemma sdiff_with_int {M: multi_part α} (h: M.A =univ)  : G\(G.ind_int_mp M) = G⊓(mp M):=
 begin
   ext x y,dsimp, 
