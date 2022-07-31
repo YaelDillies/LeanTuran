@@ -41,6 +41,7 @@ begin
   have:= gh this, rwa mem_edge_finset at this,},
 end
 
+
 -- graphs (on same vertex set) are equal iff edge_finsets are equal
 lemma eq_iff_edges_eq  {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G=H ↔ G.edge_finset = H.edge_finset:= 
 begin
@@ -65,16 +66,16 @@ end
 lemma empty_iff_edge_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅
 := by rwa [eq_iff_edges_eq, empty_has_no_edges]
 
-
-lemma meet_edges_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : (G⊓H).edge_set =G.edge_set ∩ H.edge_set:=
+-- meet of two graphs has edges given by intersection
+lemma meet_edges_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : (G⊓H).edge_finset =G.edge_finset ∩ H.edge_finset:=
 begin
-  ext,simp only [set.mem_inter_eq], induction x, work_on_goal 1 { refl }, refl,
+  ext,simp only [mem_edge_finset, mem_inter], induction a,{refl},{refl},
 end
 
+-- edge sets are disjoint iff meet is empty graph
 lemma disjoint_edges_iff_meet_empty {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : disjoint G.edge_finset H.edge_finset ↔  G ⊓ H = ⊥:= 
 begin
-  rw empty_iff_edge_empty, simp only [set.to_finset_disjoint_iff, set.to_finset_eq_empty_iff],
-  rw meet_edges_eq, exact disjoint_iff,
+  rw [empty_iff_edge_empty, meet_edges_eq], exact disjoint_iff,
 end
 
 -- the subgraph formed by deleting edges (from edge_finset)
@@ -83,7 +84,7 @@ def del_fedges (G:simple_graph α) (S: finset (sym2 α))[decidable_rel G.adj]  :
 adj:= G.adj \ sym2.to_rel S,
 symm := λ a b, by simp [adj_comm, sym2.eq_swap] }
 
---
+--deleting all the edges in H from G is G\H
 lemma del_fedges_is_sdiff  (G H:simple_graph α) (S: finset (sym2 α))[decidable_rel G.adj][decidable_rel H.adj] :
  G.del_fedges H.edge_finset =G\H:=
 begin
@@ -91,7 +92,7 @@ begin
   refl,
 end
 
--- G.is_far s H iff there exist a finset of at most s edges such that G-S is a subgraph of H
+-- G.is_far s H iff there exists a finset of at most s edges such that G-S is a subgraph of H
 def is_far (G H :simple_graph α) (s : ℕ) [decidable_rel G.adj][decidable_rel H.adj] 
 := ∃S:finset (sym2 α), ((G.del_fedges S) ≤ H) ∧ (S.card ≤ s)
 
@@ -229,6 +230,7 @@ end
 -- base case for Erdos/Furedi proof:
 -- if A has no 2-clique then restricted degrees are all zero 
 -- i.e. A is an independent set
+
 lemma two_clique_free {A: finset α} (hA : G.clique_free_set A 2) :  ∀v∈A, G.deg_res v A =0 :=
 begin
   intros v hv, rw [deg_res,card_eq_zero], 
@@ -308,7 +310,7 @@ end
 def edges_inside (M : multi_part α) : finset(sym2 α):=(range(M.t+1)).bUnion (λi, (G.ind (M.P i)).edge_finset)
 
 
---so counting edges inside M is same as summing of edges in induced parts
+--so counting edges inside M is same as summing of edges in induced parts (since parts are disjoint..)
 lemma edge_mp_count {M : multi_part α} : (G.edges_inside M).card = ∑ i in range(M.t+1),(G.ind (M.P i)).edge_finset.card:=
 begin
  apply card_bUnion, intros i hi j hj hne, rw disjoint_edges_iff_meet_empty,exact G.empty_of_diff_parts hi hj hne,
@@ -328,6 +330,14 @@ begin
   split,{intro ha, rw [mem_inter,set.mem_to_finset,mem_neighbor_set],exact ⟨ha.2.2,ha.1⟩},
   {rw [mem_inter, set.mem_to_finset, mem_neighbor_set], tauto},
 end
+
+lemma ne_bot_imp_edge : ¬G = ⊥ →  ∃e, e ∈ G.edge_set :=
+begin
+  rw empty_iff_edge_empty,rw eq_empty_iff_forall_not_mem ,push_neg, 
+  simp only [mem_edge_finset, forall_exists_index], tauto,
+end
+
+
 
 -- if v∉A then v has no neighbors in the induced graph G.ind A
 lemma ind_nbhd_nmem {A : finset α} {v : α} : v∉A → ((G.ind A).neighbor_finset v) = ∅:=
