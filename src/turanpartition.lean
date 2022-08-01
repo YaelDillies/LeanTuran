@@ -271,12 +271,13 @@ end
 -- this is a partition of A:finset α into t+1 parts each of which is a finset α
 variables {α : Type*}[fintype α][nonempty α][decidable_eq α]
 @[ext] 
-structure multi_part (α : Type*)[decidable_eq α][fintype α][nonempty α][decidable_eq α]:=
+structure multi_part (α : Type*)[decidable_eq α][fintype α][nonempty α]:=
 (t :ℕ) (P: ℕ → finset α) (A :finset α) 
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 
 
+def parts_t_A (t : ℕ) (A : finset α) (M : multi_part α) : Prop:= M.t=t ∧ M.A=A
 
 
 -- given M with M.t+1 parts and partition sets P we have P' M is the corresponding sizes of parts
@@ -376,10 +377,7 @@ begin
 end
 
 -- there is always a (s+1)-partition of B for any B:finset α and s:ℕ
-lemma exists_mpartition (B: finset α) (s:ℕ): ∃ M:multi_part α, M.A=B ∧ M.t=s:=
-begin
-  use default_M B s, exact ⟨rfl,rfl⟩
-end
+lemma exists_mpartition (B: finset α) (s:ℕ): ∃ M:multi_part α, M.A=B ∧ M.t=s:=⟨default_M B s,rfl,rfl⟩
 
 ---M.disj is the same as "pairwise_disjoint" but without any coercion to set for range(t+1) 
 lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
@@ -423,7 +421,7 @@ begin
 end
 
 -- if v belongs to P i and i ≠ j and is in range then v ∉ P j
-lemma uniq_part' {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → i ≠ j→ v ∈ M.P i → v ∉ M.P j:=
+lemma uniq_part' {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → i ≠ j → v ∈ M.P i → v ∉ M.P j:=
 begin
   intros hi hj hiv ne, contrapose hiv,push_neg at hiv,rw not_ne_iff, exact uniq_part hi hj ne hiv
 end
@@ -436,7 +434,7 @@ end
 
 
 -- if there are two different parts then the sum of their sizes is at most the size of the whole
--- could make a version for any number of parts but don't really need it
+-- could make a version for any number of parts ≥ 2 but don't need it, 
 lemma two_parts {M: multi_part α} {i j : ℕ} (hi: i ∈ range(M.t+1))  (hj: j ∈ range(M.t+1)) (hne: i≠ j) : (M.P i).card + (M.P j).card ≤ M.A.card:=
 begin
   rw card_uni, rw ← sum_erase_add (range(M.t+1)) _ hj, apply nat.add_le_add_right,
@@ -599,5 +597,5 @@ begin
       rwa tsub_add_eq_tsub_tsub_swap at nba',},
   exact nat.add_lt_add ab nba
 end
-#lint
+
 end turanpartition

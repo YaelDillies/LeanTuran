@@ -29,8 +29,7 @@ variables{M : multi_part α}
 include M
 
 -- given a t+1 partition on A form the complete multi-partite graph on α
--- with all edges present between parts in M.A and no edges involving vertices outside A
--- perhaps this should be (⊤.bUnion M)?
+-- with all edges present between parts in M.A and no edges involving vertices outside A on inside any part of A
 @[ext,reducible]
 def mp (M: multi_part α) : simple_graph α:={
   adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x ∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
@@ -59,8 +58,8 @@ instance multi_partite_fintype  : fintype (mp M).edge_set :=by apply_instance
 lemma no_nbhrs {M: multi_part α} {v w: α} (hA: v∉M.A) : ¬(mp M).adj v w:=
 begin
   contrapose! hA, 
-  obtain ⟨i,hi,j,hj,a,b,c⟩:=hA, exact (sub_part hi) b, 
-  exact (sub_part hj) hA_h_h_h_h_right.1,
+  obtain ⟨i,hi,j,hj,ne,hv⟩:=hA, cases hv, {exact (sub_part hi) hv.1}, 
+  {exact (sub_part hj) hv.1},
 end
 
 
@@ -155,7 +154,7 @@ begin
   intros x hx,rw pow_two,rw ← mul_add, rw card_part_uni hx,
 end
 
--- standard expression  as |A|^2- ∑ degrees squared
+-- expressed  as |A|^2- ∑ degrees squared
 lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t+1), (M.P i).card^2
 :=eq_tsub_of_add_eq (mp_deg_sum_sq' M)
 
@@ -175,7 +174,7 @@ end
 lemma mp_deg_sum_move_help{M : multi_part α} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 (M.P i).card * ((M.A)\(M.P i)).card + (M.P j).card * ((M.A)\(M.P j)).card <((move M hvi hj).P i).card * (((move M hvi hj).A)\((move M hvi hj).P i)).card + ((move M hvi hj).P j).card * (((move M hvi hj).A)\((move M hvi hj).P j)).card:=
 begin
-  rw move_Pcard hvi hj hvi.1, rw move_Pcard hvi hj hj.1,rw move_Pcard_sdiff hvi hj hvi.1, rw move_Pcard_sdiff hvi hj hj.1,
+  rw [move_Pcard hvi hj hvi.1,  move_Pcard hvi hj hj.1, move_Pcard_sdiff hvi hj hvi.1,  move_Pcard_sdiff hvi hj hj.1],
   split_ifs,{exfalso, exact h.1 rfl},{exfalso, exact h.1 rfl},{exfalso, exact h.1 rfl},{exfalso, exact h_1.2 rfl},{exfalso, exact hj.2 h_2},
   {rw card_sdiff (sub_part hvi.1), rw card_sdiff (sub_part hj.1),
   exact move_change hc (two_parts hvi.1  hj.1 hj.2.symm)},
@@ -261,7 +260,7 @@ begin
 end
 
 
--- Now just need to reformulate our bound to say that any complete multipartite graph on α that attains the turan bound is a turan_partition
+-- Now reformulate our bound to say that any complete multipartite graph on α that attains the turan bound is a turan_partition
 lemma turan_eq_imp (M: multi_part α) (hu: M.A=univ):  (mp M).edge_finset.card = turan_numb M.t (fintype.card α) → turan_partition M:=
 begin
   intros h, contrapose h, apply ne_of_lt, obtain ⟨N,NA,Nt,iN,le⟩:= moved M,
@@ -281,6 +280,7 @@ begin
   rwa [← bal_turan_bd (turan_bal iM),  sum_sq, P', add_tsub_cancel_left],
 end
 
+--- next few results are just to help count degrees in mp once a new part has been inserted.
 
 -- vertices in new part are adjacent to all old vertices
 --- should have used lemmas from multipartite for this...
@@ -356,7 +356,7 @@ lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v i
 
 
 
--- vertices in the new part are not adjacent 
+-- vertices in the new part are not adjacent to each other
 lemma mp_ind (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
 begin
   intros hv hw,   have vin:= insert_P' M h v hv,
@@ -423,7 +423,7 @@ end
 
 
 end multipartite
-#lint
+
 end simple_graph
 
 

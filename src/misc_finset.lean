@@ -7,7 +7,7 @@ open finset
 
 -- just some lemmas that I couldn't quite find in finset.basic
 
-variables {α : Type*} [fintype α][nonempty α][decidable_eq α]
+variables {α : Type*} [decidable_eq α]
 --probably easier ways of doing this...
 --if A and B are disjoint then seo are A ∩ C and B ∩ D for any C,D
 lemma disj_of_inter_disj (C D :finset α){A B :finset α} (h: disjoint A B): disjoint (A∩C) (B∩D):=

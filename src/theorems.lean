@@ -20,6 +20,20 @@ If G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
  Furedi's result easily implies Turan with equality iff G is a complete multipartite graph on a 
  turan partition (ie. a Turan graph)
 
+  def turan_numb : ℕ → ℕ → ℕ:=
+  begin
+    intros t n,
+    set a:= n/(t+1),--- size of a small part
+    set b:= n%(t+1),-- number of large parts
+    exact (a^2)*nat.choose(t+1-b)(2)+a*(a+1)*b*(t+1-b)+((a+1)^2)*nat.choose(b)(2)
+  end
+  
+#eval turan_numb 1 11  -- = 5*6 = 30 K_3-free bipartite
+#eval turan_numb 2 12  -- = 3*(4*4) = 48 -- K_4-free tri-partite
+#eval turan_numb 5 23 --  = 5*(4*3) +(5 choose 2)*(4*4) = 60+160 = 220 -- K_7-free 6-partite 
+
+
+
 # Furedi with counting: 
 If G is K_{t+2}-free and is close to extremal in size then G is close to (t+1)-partite. 
 
