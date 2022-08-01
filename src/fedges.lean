@@ -14,7 +14,7 @@ namespace simple_graph
 
 section fedges
 variables {t n : ℕ} 
-variables {α : Type*} [fintype α][inhabited α][decidable_eq α]
+variables {α : Type*} [fintype α][nonempty α][decidable_eq α]
 {G H : simple_graph α}[decidable_rel G.adj][decidable_rel H.adj]
 --include G H
 
@@ -98,14 +98,9 @@ end
 
 
 
--- if G is not the empty graph it contains an edge
-lemma ne_bot_imp_edge : ¬G = ⊥ →  ∃e, e ∈ G.edge_set :=
-begin
-  rw empty_iff_edge_empty,rw eq_empty_iff_forall_not_mem ,push_neg, 
-  simp only [mem_edge_finset, forall_exists_index], tauto,
-end
 
 end fedges
 
 
+#lint
 end simple_graph

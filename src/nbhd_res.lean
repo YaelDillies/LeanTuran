@@ -21,7 +21,7 @@ namespace simple_graph
 -- the restricted nbhd of a set of vertices
 section nbhd_res
 variables {t n : ℕ} 
-variables {α : Type*} (G : simple_graph α) [fintype α][inhabited α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
+variables {α : Type*} (G : simple_graph α) [fintype α][nonempty α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
 
 
 -- restricted nbhd is the part of nbhd in A
@@ -206,5 +206,5 @@ end
 
 
 end nbhd_res
-
+#lint
 end simple_graph

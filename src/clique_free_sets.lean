@@ -15,7 +15,7 @@ namespace simple_graph
 
 section clique_free_sets
 variables {t n : ℕ} 
-variables {α : Type*} (G : simple_graph α) [fintype α][inhabited α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
+variables {α : Type*} (G : simple_graph α) [fintype α][nonempty α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
 
 
 -- restricted nbhd is the part of nbhd in A

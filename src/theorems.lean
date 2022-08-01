@@ -5,7 +5,7 @@ open_locale big_operators
 
 namespace simple_graph
 variables {t n : ℕ} 
-variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : finset α}
+variables {α : Type*} (G H : simple_graph α)[fintype α][nonempty α]{s : finset α}
 [decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
 
@@ -25,7 +25,7 @@ If G is K_{t+2}-free and is close to extremal in size then G is close to (t+1)-p
 
 -/
 
-theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
+theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t = t ∧ M.A = univ ∧
 G.edge_finset.card + ∑ i in range(t+1), (G.ind (M.P i)).edge_finset.card ≤ (mp M).edge_finset.card:=
 begin
   intro h, obtain ⟨M,hA,ht,hs⟩:=G.furedi univ (G.clique_free_graph_imp_set h),
@@ -106,7 +106,6 @@ rw G.del_fedges_is_sdiff (G.disJoin M),{ rw G.sdiff_with_int hA,
   {have :G.edge_finset.card ≤s:=by linarith, 
     exact G.is_far_trivial (mp M) s (this)},
 end
-
-
+#lint
 
 end simple_graph

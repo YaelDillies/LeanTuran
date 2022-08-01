@@ -269,9 +269,9 @@ end
 
 --- introduce the partitions we use to build complete multipartite graphs
 -- this is a partition of A:finset α into t+1 parts each of which is a finset α
-variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
+variables {α : Type*}[fintype α][nonempty α][decidable_eq α]
 @[ext] 
-structure multi_part (α : Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α]:=
+structure multi_part (α : Type*)[decidable_eq α][fintype α][nonempty α][decidable_eq α]:=
 (t :ℕ) (P: ℕ → finset α) (A :finset α) 
 (uni: A = (range(t+1)).bUnion (λi , P i))
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
@@ -308,11 +308,10 @@ begin
   refine ⟨v,hv,_,hc⟩, intro eq,rw eq at cne, exact cne rfl
 end
 
--- there is a partition
-instance (α :Type*)[decidable_eq α][fintype α][inhabited α][decidable_eq α] : inhabited (multi_part α):=
+---there is a partition
+instance (α :Type*)[decidable_eq α][fintype α][nonempty α][decidable_eq α] : inhabited (multi_part α):=
 {default:={ t:=0, P:= λ i , ∅, A:=∅, uni:=rfl, 
-disj:=λ i hi j hj ne, disjoint_empty_left ∅,
- }}
+disj:=λ i hi j hj ne, disjoint_empty_left ∅,}}
 
 -- given any B:finset α and s:nat there is an partition of B into s+1 parts 1 x B and s x ∅
 def default_M (B:finset α) (s:ℕ)  : multi_part α:={
@@ -408,13 +407,6 @@ end
 lemma card_uni (M:multi_part α) :(M.A).card = ∑ i in range(M.t+1), (M.P i).card:=
 begin
   rw bUnion_parts M, rw card_bUnion, intros x hx y hy ne, exact M.disj x hx y hy ne
-end
-
--- if M and N are both partitions of the same set then the sum of sizes of parts are equal
-lemma eq_uni_imp_eq_sum (M N: multi_part α) : M.A= N.A → M.t=N.t → psum M.t (P' M)= psum N.t (P' N):=
-begin
-  intros hA ht, unfold psum P', rw [← card_uni,← card_uni],
-  congr, exact hA
 end
 
 -- Any turan partition with M.t and M.A is bal M.t |M.A| ((M.P i).card)
@@ -607,5 +599,5 @@ begin
       rwa tsub_add_eq_tsub_tsub_swap at nba',},
   exact nat.add_lt_add ab nba
 end
-
+#lint
 end turanpartition

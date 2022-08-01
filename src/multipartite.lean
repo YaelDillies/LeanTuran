@@ -20,9 +20,11 @@ open_locale big_operators
 
 namespace simple_graph 
 
+
 section multipartite
+
 variable {t : ℕ}
-variables {α : Type*}[fintype α][inhabited α][decidable_eq α]
+variables {α : Type*}[fintype α][nonempty α][decidable_eq α]
 variables{M : multi_part α}
 include M
 
@@ -421,7 +423,7 @@ end
 
 
 end multipartite
-
+#lint
 end simple_graph
 
 

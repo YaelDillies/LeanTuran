@@ -21,7 +21,7 @@ open_locale big_operators
 namespace simple_graph
 
 variables {t n : ℕ} 
-variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α][decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
+variables {α : Type*} (G H : simple_graph α)[fintype α][nonempty α][decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 include G
 
 
