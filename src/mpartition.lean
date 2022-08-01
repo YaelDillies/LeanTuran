@@ -28,7 +28,7 @@ begin
   exact (t+1-b)*a^2 + b*(a+1)^2,
 end
 
--- 
+-- choose two simplification
 lemma two (a :ℕ) : 2*nat.choose a 2 = a*(a-1):=
 begin
   induction a with a ha,{ dsimp,rwa [zero_mul, mul_zero],},
@@ -36,6 +36,7 @@ begin
   cases (eq_zero_or_eq_succ_pred a);{rw h, ring,},},
 end
 
+-- 
 lemma square (b c:ℕ) : (b+c)^2=b^2+2*b*c+c^2:=by ring
 
 -- this is a mess but it works
@@ -51,7 +52,7 @@ begin
   simp only [*, nat.zero_div, zero_pow', ne.def, bit0_eq_zero, nat.one_ne_zero, not_false_iff, mul_zero, zero_add, zero_mul,
   choose_zero_succ] at *,},{
   cases nat.eq_zero_or_pos b with hb',{
-    rw hb' at *,ring_nf, rw two, rw tsub_zero, rw add_zero at n1,rw nat.choose,
+    rw hb' at *,ring_nf, rw [two, tsub_zero, nat.choose], rw add_zero at n1,
     rw [mul_zero,mul_zero,add_zero,add_zero,add_zero,← n1,t1],ring_nf,},
   {rw [← n3 , add_mul] at n1, nth_rewrite 2 ← mul_one b at n1, rw [add_assoc ,← mul_add  b] at n1,
   nth_rewrite_rhs 0 ← n1,  rw [mul_add, mul_add, ← mul_assoc 2 , ← mul_assoc 2 ((a+1)^2)],
@@ -102,6 +103,8 @@ end
 
 -- a balanced (t+1) partition is one with almost equal parts
 def balanced (t : ℕ) (P : ℕ → ℕ): Prop:= ∀ i ∈ range(t+1),∀ j∈ range(t+1), P i ≤ (P j) + 1
+
+def bal (t n : ℕ) (P:ℕ → ℕ) : Prop:= balanced t P ∧ psum t P = n
 
 -- smallest part is well-defined
 def min_p (t : ℕ) (P : ℕ → ℕ) : ℕ:= begin
@@ -165,7 +168,7 @@ end
 lemma parts_union {t : ℕ}  {P :ℕ → ℕ} (h: balanced t P) : (range(t+1)) = (small_parts h) ∪ (large_parts h):=
 begin
   have := con_sum h,
-  ext,unfold small_parts, unfold large_parts, rw mem_union, split,{   intro ha,
+  ext,unfold small_parts, unfold large_parts, rw mem_union, split,{intro ha,
   rw [mem_filter,mem_filter],specialize this a ha, cases this, left ,exact ⟨ha,this⟩,right,exact ⟨ha,this⟩},{
   rw [mem_filter,mem_filter],intros h, cases h, {exact h_1.1}, {exact h_1.1},},
 end
