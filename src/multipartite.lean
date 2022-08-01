@@ -4,14 +4,15 @@ import data.finset.basic
 import data.list.basic
 import data.nat.basic
 import tactic.core
-import mpartition
+
 import algebra.big_operators
+
 
 -- local
 import nbhd_res
+import turanpartition
 
-
-open finset nat mpartition
+open finset nat turanpartition
 
 open_locale big_operators 
 
@@ -29,7 +30,7 @@ include M
 -- with all edges present between parts in M.A and no edges involving vertices outside A
 @[ext,reducible]
 def mp (M: multi_part α) : simple_graph α:={
-  adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
+  adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x ∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
   symm:=
   begin
     intros x y hxy,
