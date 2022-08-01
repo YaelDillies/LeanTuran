@@ -97,6 +97,15 @@ begin
 end
 
 
+
+-- if G is not the empty graph it contains an edge
+lemma ne_bot_imp_edge : ¬G = ⊥ →  ∃e, e ∈ G.edge_set :=
+begin
+  rw empty_iff_edge_empty,rw eq_empty_iff_forall_not_mem ,push_neg, 
+  simp only [mem_edge_finset, forall_exists_index], tauto,
+end
+
 end fedges
+
 
 end simple_graph
