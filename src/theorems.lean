@@ -1,5 +1,5 @@
 import counting
-open finset nat mpartition
+open finset nat turanpartition
 
 open_locale big_operators 
 
@@ -9,14 +9,21 @@ variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : fin
 [decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
 
+/-
+# Furedi stability result (no counting):
+If G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
+ such that the e(G)+ ∑ i< t+1, e(G[M_i]) ≤ e(complete_multipartite M)
 
--- Furedi stability result (no counting):
--- if G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
--- such that the e(G)+ ∑ i< t+1, e(G[M_i]) ≤ e(complete_multipartite M)
--- together with our bound on the number of edges in any complete multipartite graph 
----this easily implies Turan with equality iff G is a complete multipartite graph on a 
---- balanced partition (ie. a Turan graph)
+# Turan's theorem 
 
+ Together with an upper bound on the number of edges in any complete multipartite graph 
+ Furedi's result easily implies Turan with equality iff G is a complete multipartite graph on a 
+ turan partition (ie. a Turan graph)
+
+# Furedi with counting: 
+If G is K_{t+2}-free and is close to extremal in size then G is close to (t+1)-partite. 
+
+-/
 
 theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
 G.edge_finset.card + ∑ i in range(t+1), (G.ind (M.P i)).edge_finset.card ≤ (mp M).edge_finset.card:=
@@ -28,23 +35,6 @@ begin
   intros i hi, rw ← ind_edge_count,
 end 
 
---Now deduce Turan's theorem without worring about case of equality yet
-theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (fintype.card α):=
-begin
-  intro h, obtain ⟨M,ht,hA,hc⟩:=G.furedi_stability h,
-  have :=turan_max_edges M hA,rw ht at this,
-  apply le_trans (le_of_add_le_left hc) this,
-end
-
--- uniqueness? 
---- there are three places where G can fail to achieve equality in Furedi's stability theorem
--- 1) there are "internal" edges, ie edges inside a part of the (t+1)-partition  (counted in the LHS)
--- 2) the partition can fail to be balanced (and hence #edgesof mp M < turan_numb)
--- 3) the multipartite induced graph G ⊓ (mp M) may not be complete 
--- Clearly for equality in Furedi-Turan hybrid ie LHS of Furedi with RHS of Turan
--- need M is a balanced partition and G is multipartite (ie no internal edges)
--- could then prove in this case G ≤ (mp M) = T and hence G = T for equality.   
-
 
 -- So we have e(G)+edges internal to the partiton ≤ edges of complete (t+1)-partite M
 theorem furedi_stability' : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
@@ -53,6 +43,25 @@ begin
   intro h, obtain⟨M,ht,hu,hle⟩:=G.furedi_stability h, rw ← ht at hle,rw ← G.int_ind_edge_sum hu at hle,
   exact ⟨M,ht,hu,hle⟩,
 end
+
+
+--Now deduce Turan's theorem without worring about case of equality yet
+theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (fintype.card α):=
+begin
+  intro h, obtain ⟨M,ht,hA,hc⟩:=G.furedi_stability h,
+  have :=turan_max_edges M hA,rw ht at this,
+  apply le_trans (le_of_add_le_left hc) this,
+end
+
+-- Uniqueness? 
+---There are three places where G can fail to achieve equality in Furedi's stability theorem
+-- 1) there are "internal" edges, ie edges inside a part of the (t+1)-partition  (counted in the LHS)
+-- 2) the partition can fail to be balanced (and hence #edgesof mp M < turan_numb)
+-- 3) the multipartite induced graph G ⊓ (mp M) may not be complete 
+-- Clearly for equality in Furedi-Turan hybrid ie LHS of Furedi with RHS of Turan
+-- need M is a balanced partition and G is multipartite (ie no internal edges)
+-- could then prove in this case G ≤ (mp M) = T and hence G = T for equality.   
+
 
 --now deduce case of equality in Turan's theorem
 theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = turan_numb t (fintype.card α)
@@ -76,7 +85,7 @@ begin
     rwa ieq at this,},
 end
 
--- the usual version of Furedi's stability theorem says:
+-- The usual version of Furedi's stability theorem says:
 -- if G is (K_t+2)-free and has (turan numb - s) edges
 -- then we can make G (t+1)-partite by deleting at most s edges 
 

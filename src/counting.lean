@@ -11,10 +11,10 @@ import nbhd_res
 import clique_free_sets
 import misc_finset
 import multipartite
-import mpartition
+import turanpartition
 import induced
 
-open finset nat mpartition
+open finset nat turanpartition
 
 open_locale big_operators 
 

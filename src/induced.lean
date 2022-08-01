@@ -6,12 +6,12 @@ import tactic.core
 import algebra.big_operators
 
 --local
-import mpartition
+import turanpartition
 import multipartite
 import nbhd_res
 import fedges
 
-open finset nat mpartition
+open finset nat turanpartition
 open_locale big_operators 
 namespace simple_graph
 section ind
