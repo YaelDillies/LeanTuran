@@ -276,7 +276,6 @@ def moveable (M : multi_part α)  :Prop := ¬ balanced M.t (P' M)
 
 --- ie. turan_partition means the sizes of parts is such that it is balanced
 def turan_partition (M : multi_part α) :Prop :=∀i∈ range(M.t+1),∀j∈ range(M.t+1), (M.P i).card ≤ (M.P j).card +1
-
 -- no vertex can be moved between parts of a turan_partition to increase the number of edges in the complete 
 -- (t+1)-partite graph defined by M
 lemma turan_partition_iff_not_moveable (M : multi_part α) :turan_partition M ↔ ¬moveable M:=
@@ -397,6 +396,19 @@ begin
   rw bUnion_parts M, rw card_bUnion, intros x hx y hy ne, exact M.disj x hx y hy ne
 end
 
+-- if M and N are both partitions of the same set then the sum of sizes of parts are equal
+lemma eq_uni_imp_eq_sum (M N: multi_part α) : M.A= N.A → M.t=N.t → psum M.t (P' M)= psum N.t (P' N):=
+begin
+  intros hA ht, unfold psum P', rw [← card_uni,← card_uni],
+  congr, exact hA
+end
+
+-- Any turan partition with M.t and M.A is bal M.t |M.A| ((M.P i).card)
+lemma turan_bal {M : multi_part α} (hM: turan_partition M) : bal M.t (M.A.card) (P' M):=
+begin
+  rw turan_partition_iff_not_moveable at hM,unfold moveable at hM,  
+  rw not_not at hM, rw card_uni, exact ⟨hM,rfl⟩,
+end
 
 -- if v belongs to P i and P j then i = j.
 lemma uniq_part {M : multi_part α}{v :α} {i j : ℕ} : i ∈ range(M.t+1)→ j ∈ range(M.t+1) → v ∈ M.P i → v ∈ M.P j → i = j:=

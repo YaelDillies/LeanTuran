@@ -162,11 +162,9 @@ lemma mp_deg_sum_sq (M : multi_part α) : ∑ v in M.A, (mp M).degree v = M.A.ca
 lemma turan_partition_deg_sum_eq (M N : multi_part α): M.A= N.A → M.t=N.t → turan_partition M → turan_partition N → mp_dsum M = mp_dsum N:=
 begin
    intros hA ht iM iN, unfold mp_dsum,  rw [mp_deg_sum_sq,mp_deg_sum_sq,hA], rw [turan_partition_iff_not_moveable, moveable,not_not] at *,
-   apply congr_arg _, unfold P' at *, rw ← ht at iN,  
-   have:= bal_turan_help' iM iN _,{ 
-   unfold sum_sq at this,  rwa  ← ht}, 
-   {let n:=∑i in range(M.t+1), (M.P i).card, exact n},
-   {rw ← card_uni,rw ht,rw ← card_uni,congr, exact hA},
+   apply congr_arg _,
+   have hM:= turan_bal iM, have hN:= turan_bal iN, rw [← ht , ← hA] at hN,
+   have:= bal_turan_help' hM hN, rwa ← ht,
 end
 
 -- this is the part of the degree sum that has changed by moving a vertex
@@ -245,9 +243,9 @@ begin
   obtain ⟨N,hA,ht,iN,sN⟩:=moved M,
   apply le_trans sN _, apply le_of_eq,
   rw turan_partition_iff_not_moveable at iN,rw moveable at iN, rw not_not at iN,rw P' at iN, rw ← hA,rw ←ht, 
-  set n:=N.A.card with hn, rw card_uni at hn,
-  have:= bal_turan_bd iN hn.symm, rw ← card_uni at hn,rw sum_sq at this, rw  mp_dsum,rw mp_deg_sum_sq,-- rw← this,  
-  rw hn at this,  rw hn, rw ← this, rw add_comm, simp only [add_tsub_cancel_right],
+  have:= bal_turan_bd (turan_bal iN),
+  rw sum_sq at this, rw  mp_dsum,rw mp_deg_sum_sq, unfold P' at this,
+  rw [← this,  add_comm], simp only [add_tsub_cancel_right],
 end
 
 -- so if we have a partition of α then the number of edges is at most the turan number
@@ -276,7 +274,7 @@ begin
   intros iM,  apply (nat.mul_right_inj (by norm_num:0<2)).mp, rw [←sum_degrees_eq_twice_card_edges, ←hu, ←ht], 
   rw [mp_deg_sum_sq,  ← card_univ, ← hu], 
   have cA:= card_uni M,  
-  rwa [← bal_turan_bd iM cA.symm,  sum_sq, P', add_tsub_cancel_left],
+  rwa [← bal_turan_bd (turan_bal iM),  sum_sq, P', add_tsub_cancel_left],
 end
 
 
