@@ -10,7 +10,7 @@ open_locale big_operators
 namespace mpartition
 
 --classical Turan numbers 
-def tn : ℕ → ℕ → ℕ:=
+def turan_numb : ℕ → ℕ → ℕ:=
 begin
   intros t n,
   set a:= n/(t+1),--- size of a small part
@@ -19,8 +19,8 @@ begin
 end
 
 --complement is easier to deal with and also multiply by 2 to convert edges to degree sum
--- so 2*(tn t n) = n^2 - (tn' t n) 
-def tn' : ℕ → ℕ → ℕ:=
+-- so 2*(turan_numb t n) = n^2 - (turan_numb'  t n) 
+def turan_numb'  : ℕ → ℕ → ℕ:=
 begin
   intros t n,
   set a:= n/(t+1),--- size of a small part
@@ -39,9 +39,9 @@ end
 lemma square (b c:ℕ) : (b+c)^2=b^2+2*b*c+c^2:=by ring
 
 -- this is a mess but it works
-lemma tn_tn' (t n : ℕ) : (tn' t n) + 2*(tn t n) = n^2:=
+lemma tn_turan_numb'  (t n : ℕ) : (turan_numb'  t n) + 2*(turan_numb t n) = n^2:=
 begin
-  unfold tn tn', dsimp,
+  unfold turan_numb turan_numb' , dsimp,
   have t1:t+1-1=t:=tsub_eq_of_eq_add rfl,
   have n1:=div_add_mod n (t+1),
   have n2:=(mod_lt n (succ_pos t)), rw succ_eq_add_one at n2,
@@ -63,9 +63,9 @@ begin
 end
 
 --sum of degrees in a turan graph
-lemma tn_tn'_2 (t n : ℕ) : 2*(tn t n) = n^2 - (tn' t n):=
+lemma tn_turan_numb'_2 (t n : ℕ) : 2*(turan_numb t n) = n^2 - (turan_numb'  t n):=
 begin
-  rw ← tn_tn' t n, exact (add_tsub_cancel_left _ _).symm,
+  rw ← tn_turan_numb' t n, exact (add_tsub_cancel_left _ _).symm,
 end
 
 -- start with some helper functions that don't need partitions to be defined.
@@ -90,6 +90,7 @@ begin
   refine ⟨_,hmtr⟩, rw hmtr at ht,simp only [add_right_inj, mul_eq_mul_left_iff, succ_ne_zero, or_false] at *,
   exact ht,
 end
+
 
 ---can this be used to simplify the previous lemma ?
 lemma mod_tplus1' {t n:ℕ} : (t+1)*(n/(t+1))+n%(t+1)=n:=
@@ -224,10 +225,10 @@ begin
   specialize hf f,  rwa [mn, small_parts_card, ln] at hf, 
 end
 
--- sum of squares of balanced partition is tn'
-lemma bal_turan_help {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = tn' t n:=
+-- sum of squares of balanced partition is turan_numb' 
+lemma bal_turan_help {n t :ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n):  sum_sq t P = turan_numb'  t n:=
 begin
-  rw tn', rw sum_sq, rw bal_sum_n_f hb hn (λi, i^2),
+  rw turan_numb' , rw sum_sq, rw bal_sum_n_f hb hn (λi, i^2),
 end
 
 --so given two balanced (t+1) partitions summing to n their sum_sq  agree
@@ -240,9 +241,9 @@ end
 
 
 --hence sum_sq + 2* turan number is n^2
-lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : sum_sq t P + 2*tn t n = n^2:=
+lemma bal_turan_bd {n t:ℕ} {P:ℕ→ ℕ} (hb: balanced t P) (hn: (∑i in range(t+1), P i)=n) : sum_sq t P + 2*turan_numb t n = n^2:=
 begin
-  rw bal_turan_help hb hn, exact tn_tn' t n,
+  rw bal_turan_help hb hn, exact tn_turan_numb'  t n,
 end
 
 --- introduce the partitions we use to build complete multipartite graphs

@@ -1,6 +1,4 @@
-import turan1
-
-
+import counting
 open finset nat mpartition
 
 open_locale big_operators 
@@ -10,8 +8,16 @@ variables {t n : ℕ}
 variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : finset α}
 [decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
---- If G is a simple_graph α that contains no K_{t+2} and has turan_numb (t (fintype.card α)) -s edges then 
--- by deleting at most s edges from G we obtain a subgraph of a complete (t+1)-partite graph (mp M)  
+
+
+-- Furedi stability result (no counting):
+-- if G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
+-- such that the e(G)+ ∑ i< t+1, e(G[M_i]) ≤ e(complete_multipartite M)
+-- together with our bound on the number of edges in any complete multipartite graph 
+---this easily implies Turan with equality iff G is a complete multipartite graph on a 
+--- balanced partition (ie. a Turan graph)
+
+
 theorem furedi_stability : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
 G.edge_finset.card + ∑ i in range(t+1), (G.ind (M.P i)).edge_finset.card ≤ (mp M).edge_finset.card:=
 begin
@@ -23,7 +29,7 @@ begin
 end 
 
 --Now deduce Turan's theorem without worring about case of equality yet
-theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ tn t (fintype.card α):=
+theorem turan : G.clique_free (t+2) → G.edge_finset.card ≤ turan_numb t (fintype.card α):=
 begin
   intro h, obtain ⟨M,ht,hA,hc⟩:=G.furedi_stability h,
   have :=turan_max_edges M hA,rw ht at this,
@@ -49,7 +55,7 @@ begin
 end
 
 --now deduce case of equality in Turan's theorem
-theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = tn t (fintype.card α)
+theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = turan_numb t (fintype.card α)
  ↔  ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ turan_partition M ∧ G = mp M:=
 begin
   split,{
@@ -58,11 +64,11 @@ begin
   have inz:(G.ind_int_mp M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
   have inem: (G.ind_int_mp M)=⊥:=empty_iff_edge_empty.mpr inz,
   have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
-  have ieq:(mp M).edge_finset.card= tn t (fintype.card α):=by linarith, rw ← ht at ieq,
+  have ieq:(mp M).edge_finset.card= turan_numb t (fintype.card α):=by linarith, rw ← ht at ieq,
   refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
   exact edge_eq_sub_imp_eq dec tm},
   { intro h, obtain ⟨M,ht,hu,iM,hG⟩:=h, 
-    have hc:=G.mp_clique_free M ht hu,
+    have hc:=mp_clique_free M ht hu,
     have ieq:=turan_imm_imp_eq M hu ht iM,  rw ← hG at hc, 
     refine ⟨hc,_⟩,
     have h2:=eq_iff_edges_eq.mp hG,
@@ -73,17 +79,15 @@ end
 -- the usual version of Furedi's stability theorem says:
 -- if G is (K_t+2)-free and has (turan numb - s) edges
 -- then we can make G (t+1)-partite by deleting at most s edges 
---
 
-
-theorem furedi_stability_count {s:ℕ} : G.clique_free (t+2) → G.edge_finset.card = tn t (fintype.card α) - s → 
+theorem furedi_stability_count {s:ℕ} : G.clique_free (t+2) → G.edge_finset.card = turan_numb t (fintype.card α) - s → 
 ∃ M: multi_part α, M.t=t ∧ M.A=univ  ∧ G.is_far (mp M) s:=
 begin
 --
 intros h1 h2, obtain ⟨M,ht,hA,hle⟩:=G.furedi_stability' h1,
 refine ⟨M,ht,hA,_⟩, rw h2 at hle,
 have tm:=turan_max_edges M hA, rw  ht at tm,
-by_cases hs: s≤ tn t (fintype.card α),{
+by_cases hs: s≤ turan_numb t (fintype.card α),{
 have ic:(G.ind_int_mp M).edge_finset.card ≤ s:= by linarith,
 have id:=G.self_eq_int_ext_mp hA,
 refine ⟨(G.ind_int_mp M).edge_finset,_,ic⟩, 
