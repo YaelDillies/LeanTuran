@@ -1,9 +1,7 @@
-import combinatorics.simple_graph.clique
+import combinatorics.simple_graph.basic
 import combinatorics.simple_graph.degree_sum
 import data.finset.basic
 import data.nat.basic
-import multipartite
-import mpartition
 import tactic.core
 import algebra.big_operators
 
@@ -13,14 +11,15 @@ namespace simple_graph
 
 -- When counting edges in graphs we often want to consider subgraphs induced by a set of vertices
 -- or subgraphs between two (possibly disjoint) sets of vertices 
--- For this purpose we introduce the restricted neighbourhood a vertex to a (fin)set.
+-- For this purpose we introduce the restricted neighbourhood a vertex to a finset.
 -- this is G.nbhd_res v A = A ∩ G.neighbor_finset v
 
 -- the restricted nbhd of a set of vertices
 section nbhd_res
 variables {t n : ℕ} 
-variables {α : Type*} (G H : simple_graph α)[fintype α][inhabited α]{s : finset α}
-[decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
+variables {α : Type*} (G : simple_graph α) [fintype α][inhabited α]{s : finset α}[decidable_eq α][decidable_rel G.adj]
+
+
 -- restricted nbhd is the part of nbhd in A
 include G
 @[ext]
