@@ -38,7 +38,7 @@ end
 
 -- So we have e(G)+edges internal to the partiton ≤ edges of complete (t+1)-partite M
 theorem furedi_stability' : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
-G.edge_finset.card + (G.ind_int_mp M).edge_finset.card ≤ (mp M).edge_finset.card:=
+G.edge_finset.card + (G.disJoin M).edge_finset.card ≤ (mp M).edge_finset.card:=
 begin
   intro h, obtain⟨M,ht,hu,hle⟩:=G.furedi_stability h, rw ← ht at hle,rw ← G.int_ind_edge_sum hu at hle,
   exact ⟨M,ht,hu,hle⟩,
@@ -70,8 +70,8 @@ begin
   split,{
   intro h,obtain ⟨M,ht,hu,hle⟩:=G.furedi_stability' h.1, rw h.2 at hle,
   refine ⟨M,ht,hu,_⟩, have tm:=turan_max_edges M hu, rw ht at tm, 
-  have inz:(G.ind_int_mp M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
-  have inem: (G.ind_int_mp M)=⊥:=empty_iff_edge_empty.mpr inz,
+  have inz:(G.disJoin M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
+  have inem: (G.disJoin M)=⊥:=empty_iff_edge_empty.mpr inz,
   have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
   have ieq:(mp M).edge_finset.card= turan_numb t (fintype.card α):=by linarith, rw ← ht at ieq,
   refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
@@ -89,7 +89,7 @@ end
 -- if G is (K_t+2)-free and has (turan numb - s) edges
 -- then we can make G (t+1)-partite by deleting at most s edges 
 
-theorem furedi_stability_count {s:ℕ} : G.clique_free (t+2) → G.edge_finset.card = turan_numb t (fintype.card α) - s → 
+theorem furedi_stability_count {s : ℕ} : G.clique_free (t+2) → G.edge_finset.card = turan_numb t (fintype.card α) - s → 
 ∃ M: multi_part α, M.t=t ∧ M.A=univ  ∧ G.is_far (mp M) s:=
 begin
 --
@@ -97,12 +97,12 @@ intros h1 h2, obtain ⟨M,ht,hA,hle⟩:=G.furedi_stability' h1,
 refine ⟨M,ht,hA,_⟩, rw h2 at hle,
 have tm:=turan_max_edges M hA, rw  ht at tm,
 by_cases hs: s≤ turan_numb t (fintype.card α),{
-have ic:(G.ind_int_mp M).edge_finset.card ≤ s:= by linarith,
+have ic:(G.disJoin M).edge_finset.card ≤ s:= by linarith,
 have id:=G.self_eq_int_ext_mp hA,
-refine ⟨(G.ind_int_mp M).edge_finset,_,ic⟩, 
-rw G.del_fedges_is_sdiff (G.ind_int_mp M),{ rw G.sdiff_with_int hA,
+refine ⟨(G.disJoin M).edge_finset,_,ic⟩, 
+rw G.del_fedges_is_sdiff (G.disJoin M),{ rw G.sdiff_with_int hA,
   by { intro, simp { contextual := tt } },},
-  {exact (G.ind_int_mp M).edge_finset},},
+  {exact (G.disJoin M).edge_finset},},
   {have :G.edge_finset.card ≤s:=by linarith, 
     exact G.is_far_trivial (mp M) s (this)},
 end

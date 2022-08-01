@@ -28,6 +28,7 @@ include M
 
 -- given a t+1 partition on A form the complete multi-partite graph on α
 -- with all edges present between parts in M.A and no edges involving vertices outside A
+-- perhaps this should be (⊤.bUnion M)?
 @[ext,reducible]
 def mp (M: multi_part α) : simple_graph α:={
   adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x ∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
@@ -108,7 +109,7 @@ begin
   cases hw with hA hni,
   rw M.uni at hA, rw mem_bUnion at hA,
   obtain ⟨j,hj1,hj2⟩:=hA,
-  refine mp_imp_adj hi hj1 hv hj2 _, by_contra, rw h at hni, exact hni hj2,
+  refine mp_imp_adj hi hj1 hv hj2 _, intro h, rw h at hni, exact hni hj2
 end
 
 --if v is in P i then its nbhd is A\(P i)
@@ -164,8 +165,8 @@ lemma turan_partition_deg_sum_eq (M N : multi_part α): M.A= N.A → M.t=N.t →
 begin
    intros hA ht iM iN, unfold mp_dsum,  rw [mp_deg_sum_sq,mp_deg_sum_sq,hA], rw [turan_partition_iff_not_moveable, moveable,not_not] at *,
    apply congr_arg _,
-   have hM:= turan_bal iM, have hN:= turan_bal iN, rw [← ht , ← hA] at hN,
-   have:= bal_turan_help' hM hN, rwa ← ht,
+   have hN:= turan_bal iN, rw [← ht , ← hA] at hN,
+   have:= bal_turan_help' (turan_bal iM) hN, rwa ← ht,
 end
 
 -- this is the part of the degree sum that has changed by moving a vertex
@@ -212,7 +213,7 @@ begin
 end
 
 -- Given any partition M we can find a turan_partition on the same set with the same number of parts.
-lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A= M.A ∧ N.t=M.t ∧ turan_partition N ∧ mp_dsum M ≤ mp_dsum N:=
+lemma moved (M : multi_part α) : ∃ N:multi_part  α, N.A = M.A ∧ N.t = M.t ∧ turan_partition N ∧ mp_dsum M ≤ mp_dsum N:=
 begin
   apply well_founded.recursion (measure_wf sum_sq_c) M,
   intros X h,
@@ -226,8 +227,8 @@ end
 
 
 -- given a turan_partition and any other partition on the same set and into same number of parts
--- that is moveable the degree sum of the former is strictly larger
--- ie only Turan graphs maximize number of edges
+-- that is moveable, the degree sum of the former is strictly larger
+-- ie only Turan graphs the maximize number of edges
 lemma moved_max (M N:multi_part α): M.A =N.A → M.t =N.t → turan_partition M →  ¬turan_partition N → mp_dsum N < mp_dsum M:=
 begin
   intros hA ht him h1,
@@ -285,14 +286,13 @@ end
 lemma mp_com (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∀ v ∈ C, (mp (insert M h)).deg_res v M.A=(M.A.card):=
 begin
  intros v hv, rw deg_res, congr, ext,
- rw mem_res_nbhd,split,intro h, exact h.1,
- intros ha, refine ⟨ha,_⟩, rw mem_neighbor_finset, dsimp,
- obtain⟨j,hjr,hjm⟩ :=inv_part ha,
+ rw mem_res_nbhd, simp only [mem_neighbor_finset, mem_range, ne.def, exists_prop, and_iff_left_iff_imp],
+ intro ha, obtain⟨j,hjr,hjm⟩ :=inv_part ha,
  use j,rw insert_t, 
- refine ⟨_,_,_⟩, {rw mem_range at *,linarith [hjr]}, {exact M.t+1},{use self_mem_range_succ _,
- split, {intro jc,rw jc at hjr, exact not_mem_range_self hjr},{right, rw insert_P,
- split_ifs,{exfalso, exact h_1 rfl},rw insert_P, refine ⟨hv,_⟩,split_ifs,{exact hjm},{
- push_neg at h_2,exfalso, rw h_2 at hjr,  exact not_mem_range_self hjr},},},
+ refine ⟨_,_,_,_,_⟩, {rw mem_range at *,linarith [hjr]}, {exact M.t+1},{linarith},
+ {intro eq, rw eq at hjr, exact not_mem_range_self hjr},
+ {right, rw insert_P, split_ifs,{exfalso, exact h_1 rfl},rw insert_P, refine ⟨hv,_⟩,split_ifs,{exact hjm},{
+ push_neg at h_2,exfalso, rw h_2 at hjr,  exact not_mem_range_self hjr},},
 end
 
 
@@ -345,7 +345,6 @@ end
 -- .. and in terms of deg res
 lemma mp_old (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_res v M.A=(mp M).deg_res v M.A:=
 begin
-  set H: simple_graph α:= (mp (insert M h)),
   intros v hv, rw deg_res,rw deg_res,  rw mp_old' M h v hv,
 end
 
@@ -355,7 +354,7 @@ lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v i
 
 
 
--- vertices in the new part are not adjacent
+-- vertices in the new part are not adjacent 
 lemma mp_ind (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
 begin
   intros hv hw,   have vin:= insert_P' M h v hv,

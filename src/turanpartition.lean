@@ -18,7 +18,7 @@ open_locale big_operators
 --  Turan's theorem says that this is the number of edges in a balanced complete (t+1)-partite graph
 -- 
 
--- Main definitions below: 
+-- Main definitions below: ...
 
 
 namespace turanpartition
