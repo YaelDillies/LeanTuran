@@ -126,7 +126,7 @@ end
 
 -- restricted degree additive over partition of A into B ∪ A\B
 -- this is daft, it would work for any function defined on A 
-lemma sum_sdf {A B C: finset α} (hB: B ⊆ A) (hC: C ⊆ A):
+lemma sum_sdf {A B: finset α} (hB: B ⊆ A) (C: finset α):
  ∑ v in A, G.deg_res v C = ∑v in B, G.deg_res v C + ∑ v in A\B, G.deg_res v C:=
 begin
   nth_rewrite 0 ← union_sdiff_of_subset hB, exact sum_union (disjoint_sdiff),

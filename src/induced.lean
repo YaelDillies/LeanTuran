@@ -190,14 +190,14 @@ end
 
 -- G is the join of the edges induced by the parts and those in the complete 
 -- multipartite graph M on α
-lemma self_eq_int_ext_mp {M :multi_part α} (h: M.A=univ) : G = (G.disJoin M) ⊔ (G⊓(mp M)):=
+lemma self_eq_disJoin_ext_mp {M :multi_part α} (h: M.A=univ) : G = (G.disJoin M) ⊔ (G⊓(mp M)):=
 begin
   rw ← G.sdiff_with_int h,simp only [sup_sdiff_self_right, right_eq_sup], exact G.disJoin_sub M,
 end
 
 -- Given M and v,w vertices with v ∈ M.P i and w ∈ M.A then v,w are adjacent in 
 -- the "internal induced subgraph"  iff they are adjacent in the graph induced on M.P i
-lemma int_edge_help {M :multi_part α} {v w : α} {i : ℕ}: i ∈ range(M.t+1) → v ∈ (M.P i) →  w ∈ M.A →
+lemma disJoin_edge_help {M :multi_part α} {v w : α} {i : ℕ}: i ∈ range(M.t+1) → v ∈ (M.P i) →  w ∈ M.A →
 ((G.disJoin M).adj v w ↔ (G.ind (M.P i)).adj v w):=
 begin
   intros hi hv hw, obtain ⟨j,hj,hw⟩:=inv_part hw,dsimp, 
@@ -211,17 +211,17 @@ begin
 end
 
 --same as above but for degrees and assuming M covers all of α
-lemma int_edge_help' {M :multi_part α} (h: M.A=univ) {v w:α}{i:ℕ}: i∈ range(M.t+1) → v ∈ (M.P i) → 
+lemma disJoin_edge_help' {M :multi_part α} (h: M.A=univ) {v w:α}{i:ℕ}: i∈ range(M.t+1) → v ∈ (M.P i) → 
 (G.disJoin M).degree v = (G.ind (M.P i)).degree v:=
 begin
   intros hi hv, unfold degree, apply congr_arg _, ext,
-  have :=mem_univ a,rw ← h at this, have:=G.int_edge_help  hi hv this,
+  have :=mem_univ a,rw ← h at this, have:=G.disJoin_edge_help  hi hv this,
   rwa [mem_neighbor_finset,mem_neighbor_finset],
 end
 
 
 -- so sum of degrees in internal subgraph is sum over induced subgraphs on parts of sum of degrees
-lemma int_ind_deg_sum {M :multi_part α} (h: M.A=univ) :
+lemma disJoin_deg_sum {M :multi_part α} (h: M.A=univ) :
  ∑v,(G.disJoin M).degree v =  ∑  i in range(M.t+1), ∑ v, (G.ind (M.P i)).degree v:=
 begin
 have :=bUnion_parts M, rw ← h,nth_rewrite 0 this,
@@ -230,16 +230,16 @@ have :=bUnion_parts M, rw ← h,nth_rewrite 0 this,
  intros i hi, rw (sdiff_part hi), rw sum_union (sdiff_disjoint), 
  have :∑x in M.A\(M.P i),(G.ind (M.P i)).degree x =0,{
   apply sum_eq_zero,intros x hx, rw mem_sdiff at hx, exact G.ind_deg_nmem hx.2,},
-  rw this,rw zero_add, apply sum_congr rfl _, intros x hx, apply (G.int_edge_help' h) hi hx, exact x,
+  rw this,rw zero_add, apply sum_congr rfl _, intros x hx, apply (G.disJoin_edge_help' h) hi hx, exact x,
 end
 
 
 -- number of edges in the subgraph induced inside all parts is the sum of those induced in each part
-lemma int_ind_edge_sum {M :multi_part α} (h: M.A=univ) :
+lemma disJoin_edge_sum {M :multi_part α} (h: M.A=univ) :
 (G.disJoin M).edge_finset.card =  ∑  i in range(M.t+1), (G.ind (M.P i)).edge_finset.card:=
 begin
   apply (nat.mul_right_inj (by norm_num:0<2)).mp, rw mul_sum,
-  simp only [← sum_degrees_eq_twice_card_edges], exact G.int_ind_deg_sum h,
+  simp only [← sum_degrees_eq_twice_card_edges], exact G.disJoin_deg_sum h,
 end
 
 --counting edges in induced parts is (almost) the same as summing restricted degrees...

@@ -42,8 +42,8 @@ begin
     set hBA:= (G.sub_res_nbhd_A x A), 
     set B:=(G.nbhd_res x A) with hB,-- Let B be the res nbhd of the vertex x of max deg_A 
     refine ⟨B, ⟨hBA,(G.t_clique_free hA hxA),_⟩⟩,
-    rw [G.deg_res_add_sum hBA, G.sum_sdf hBA hBA, add_assoc],
-    rw [G.sum_sdf hBA (sdiff_subset A B),G.bip_count hBA,← G.deg_res_add_sum hBA ],
+    rw [G.deg_res_add_sum hBA, G.sum_sdf hBA B, add_assoc],
+    rw [G.sum_sdf hBA (A\B),G.bip_count hBA,← G.deg_res_add_sum hBA ],
     rw ← hB, rw ← add_assoc, ring_nf,
     apply add_le_add_left _ (∑ v in B, G.deg_res v B ), 
     rw add_comm, rw add_assoc, nth_rewrite 1 add_comm,

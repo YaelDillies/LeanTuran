@@ -45,7 +45,7 @@ begin
   intro h, obtain ⟨M,hA,ht,hs⟩:=G.furedi univ (G.clique_free_graph_imp_set h),
   refine ⟨M,ht,hA,_⟩,apply (mul_le_mul_left (by norm_num:0<2)).mp, rw [mul_add, mul_sum], simp only [deg_res_univ] at hs,
   rw  [← G.sum_degrees_eq_twice_card_edges,← (mp M).sum_degrees_eq_twice_card_edges],
-  apply le_trans _ hs, apply add_le_add_left,  apply le_of_eq, apply sum_congr, rwa ht,
+  apply le_trans _ hs, apply add_le_add_left, apply le_of_eq, apply sum_congr, rwa ht,
   intros i hi, rw ← ind_edge_count,
 end 
 
@@ -54,7 +54,7 @@ end
 theorem furedi_stability' : G.clique_free (t+2) → ∃ M: multi_part α, M.t=t ∧ M.A=univ ∧
 G.edge_finset.card + (G.disJoin M).edge_finset.card ≤ (mp M).edge_finset.card:=
 begin
-  intro h, obtain⟨M,ht,hu,hle⟩:=G.furedi_stability h, rw ← ht at hle,rw ← G.int_ind_edge_sum hu at hle,
+  intro h, obtain⟨M,ht,hu,hle⟩:=G.furedi_stability h, rw ← ht at hle,rw ← G.disJoin_edge_sum hu at hle,
   exact ⟨M,ht,hu,hle⟩,
 end
 
@@ -87,7 +87,7 @@ begin
   refine ⟨M,ht,hu,_⟩, have tm:=turan_max_edges M hu, rw ht at tm, 
   have inz:(G.disJoin M).edge_finset.card=0:= by linarith, rw card_eq_zero at inz,
   have inem: (G.disJoin M)=⊥:=empty_iff_edge_empty.mpr inz,
-  have dec:=G.self_eq_int_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
+  have dec:=G.self_eq_disJoin_ext_mp hu,rw inem at dec, simp only [bot_sup_eq, left_eq_inf] at dec,
   have ieq:(mp M).edge_finset.card= turan_numb t (fintype.card α):=by linarith, rw ← ht at ieq,
   refine ⟨turan_eq_imp M hu ieq,_⟩, rw ←  h.2 at tm,
   exact edge_eq_sub_imp_eq dec tm},
@@ -114,7 +114,7 @@ refine ⟨M,ht,hA,_⟩, rw h2 at hle,
 have tm:=turan_max_edges M hA, rw  ht at tm,
 by_cases hs: s≤ turan_numb t (fintype.card α),{
 have ic:(G.disJoin M).edge_finset.card ≤ s:= by linarith,
-have id:=G.self_eq_int_ext_mp hA,
+have id:=G.self_eq_disJoin_ext_mp hA,
 refine ⟨(G.disJoin M).edge_finset,_,ic⟩, 
 rw G.del_fedges_is_sdiff (G.disJoin M),{ rw G.sdiff_with_int hA,
   by { intro, simp { contextual := tt } },},
