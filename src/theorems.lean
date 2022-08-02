@@ -97,8 +97,8 @@ begin
     refine ⟨hc,_⟩,
 --    rw ← hG at ieq, ---TO DO: figure out why this rewrite of "G = mp M" doesn't work ... "motive is not type correct"
     have h2:=eq_iff_edges_eq.mp hG, 
-    have : G.edge_finset.card= (mp M).edge_finset.card, congr, exact h2, 
-    rwa ieq at this,},
+    have : G.edge_finset.card= (mp M).edge_finset.card, {congr, exact h2}, 
+    rwa ieq at this},
 end
 
 -- The usual version of Furedi's stability theorem says:
@@ -122,6 +122,5 @@ rw G.del_fedges_is_sdiff (G.disJoin M),{ rw G.sdiff_with_int hA,
   {have :G.edge_finset.card ≤s:=by linarith, 
     exact G.is_far_trivial (mp M) s (this)},
 end
-#lint
 
 end simple_graph

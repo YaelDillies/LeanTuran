@@ -203,7 +203,7 @@ begin
   rw [add_assoc,add_assoc], refine (add_lt_add_iff_left _).mpr _ , exact mp_deg_sum_move_help hvi hj hc,
 end
 
--- equivalently moving v reduces sum of sum_sq of part sizes (basically edges in the complement)
+-- equivalently moving v from P i to P j reduces sum of sum_sq_c of part sizes (basically edges in the complement of mp)
 lemma sum_sq_c_dec (M : multi_part α) {v : α} {i j: ℕ}  (hvi: i∈ range(M.t+1) ∧ v ∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) : 
 sum_sq_c (move M hvi hj) < sum_sq_c M:=
 begin
@@ -227,9 +227,9 @@ begin
 end
 
 
+-- Only Turan graphs maximize number of edges:
 -- given a turan_partition and any other partition on the same set and into same number of parts
--- that is moveable, the degree sum of the former is strictly larger
--- ie only Turan graphs the maximize number of edges
+-- that is not-turan, the degree sum of the former is strictly larger
 lemma moved_max (M N:multi_part α): M.A =N.A → M.t =N.t → turan_partition M →  ¬turan_partition N → mp_dsum N < mp_dsum M:=
 begin
   intros hA ht him h1,
@@ -270,7 +270,7 @@ begin
   exact lt_of_lt_of_le lt le2,
 end
 
--- finally need to verify that any turan partition does indeed attain the bound
+-- finally need to verify that any turan partition does indeed attain the upper bound
 lemma turan_imm_imp_eq (M: multi_part α) {t :ℕ} (hu: M.A=univ) (ht :M.t=t): turan_partition M → (mp M).edge_finset.card = turan_numb t (fintype.card α) :=
 begin
   rw turan_partition_iff_not_moveable, unfold moveable, rw not_not,
@@ -280,7 +280,7 @@ begin
   rwa [← bal_turan_bd (turan_bal iM),  sum_sq, P', add_tsub_cancel_left],
 end
 
---- next few results are just to help count degrees in mp once a new part has been inserted.
+--- next few results for counting degrees in mp once a new part has been inserted.
 
 -- vertices in new part are adjacent to all old vertices
 --- should have used lemmas from multipartite for this...
@@ -334,7 +334,7 @@ end
 
 
 -- previous lemma interpreted in terms of res nbhds 
-lemma mp_old' (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).nbhd_res v M.A=(mp M).nbhd_res v M.A:=
+lemma mp_old_nbhd_res (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).nbhd_res v M.A=(mp M).nbhd_res v M.A:=
 begin
 --  set H: simple_graph α:= (mp (insert M h)),
   intros v hv,ext,split,{intros ha, rw mem_res_nbhd at *,refine ⟨ha.1,_⟩,
@@ -345,19 +345,19 @@ end
 
 
 -- .. and in terms of deg res
-lemma mp_old (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_res v M.A=(mp M).deg_res v M.A:=
+lemma mp_old_deg_res (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_res v M.A=(mp M).deg_res v M.A:=
 begin
-  intros v hv, rw deg_res,rw deg_res,  rw mp_old' M h v hv,
+  intros v hv, rw deg_res,rw deg_res,  rw mp_old_nbhd_res M h v hv,
 end
 
 -- so sum of deg res to old partition over old partition is unchanged
 lemma mp_old_sum (M :multi_part α) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_res v M.A= ∑ v in M.A,(mp M).deg_res v M.A
-:=sum_congr rfl (mp_old M h)
+:=sum_congr rfl (mp_old_deg_res M h)
 
 
 
 -- vertices in the new part are not adjacent to each other
-lemma mp_ind (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
+lemma mp_int_adj (M : multi_part α) {v w :α} {C :finset α} (h: disjoint M.A C) : v∈C → w∈C →  ¬(mp (insert M h)).adj v w:=
 begin
   intros hv hw,   have vin:= insert_P' M h v hv,
   have win:= insert_P' M h w hw,
@@ -366,38 +366,35 @@ begin
 end
 
 -- so their deg res to the new part is zero
-lemma mp_ind' (M : multi_part α) {C :finset α} (h: disjoint M.A C) : ∀v∈C,(mp (insert M h)).deg_res v C=0:=
+lemma mp_int_deg_res (M : multi_part α) {C :finset α} (h: disjoint M.A C) : ∀v∈C,(mp (insert M h)).deg_res v C=0:=
 begin
   intros v hv, rw deg_res, rw card_eq_zero, by_contra h', 
   obtain ⟨w,hw,adw⟩ :=(mp (insert M h)).exists_mem_nempty h', 
-  exact (mp_ind M h hv hw) adw, 
+  exact (mp_int_adj M h hv hw) adw, 
 end
 
 -- so the sum of their deg res to new part is also zero i.e. e(C)=0
-lemma mp_ind_sum (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑ v in C, (mp (insert M h)).deg_res v C=0:=
+lemma mp_int_sum (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑ v in C, (mp (insert M h)).deg_res v C=0:=
 begin
-  simp only [sum_eq_zero_iff], intros x hx, exact mp_ind' M h x hx,
+  simp only [sum_eq_zero_iff], intros x hx, exact mp_int_deg_res M h x hx,
 end
 
---- counting edges in multipartite graph  
+--- Counting edges in complete multipartite graphs:  
 --- if we add in a new part C then the sum of degrees over new vertex set
 --  is sum over old + 2 edges in bipartite join
 -- ie 2*e(M')=2*e(M)+2*e(M,C)
-
-
 lemma mp_count (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∑v in M.A, (mp M).deg_res v M.A +2*(M.A.card)*C.card =
 ∑ v in (insert M h).A, (mp (insert M h)).deg_res v (insert M h).A:=
 begin
   set H: simple_graph α:= (mp (insert M h)),
   simp  [ insert_AB], rw sum_union h, rw [H.deg_res_add_sum' h,H.deg_res_add_sum' h],
-  rw [add_assoc ,mp_ind_sum M h,  add_zero,  H.bip_count' h.symm],
+  rw [add_assoc ,mp_int_sum M h,  add_zero,  H.bip_count' h.symm],
   rw [← sum_add_distrib, card_eq_sum_ones C, mul_sum,  mp_old_sum M h ,add_right_inj],
   apply sum_congr rfl, rw [(by norm_num: 2= 1+1),add_mul, one_mul, mul_one], intros x hx, rwa (mp_com M h x hx),
 end
 
 
-
---- should probably prove that any complete (t+1)-partite graph is (t+2)-clique free.
+--- Any complete (t+1)-partite graph is (t+2)-clique free.
 lemma mp_clique_free (M: multi_part α): M.t=t → M.A=univ →  (mp M).clique_free (t+2):=
 begin
   intros ht hA, by_contra, unfold clique_free at h, push_neg at h,
