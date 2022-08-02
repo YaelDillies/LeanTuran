@@ -58,13 +58,8 @@ end
 
 
 
--- if A is (t+2)-clique-free then there exists a (t+1)-partition of M of A so that 
--- e(A) +∑ i≤t, e(A_i) ≤ e(complete_multi_partite M)
--- (Note either A is contained in M or we need to remove edges from inside parts
--- so this implies that if e(A)=max e(M)-s then it can be made (t+1)-partite by
--- removing at most s edges)
-
--- counting degrees sums over the parts of the larger partition is what you expect
+-- Putting together the deg counts of G induced on a larger partition (M with C inserted).
+-- Counting degrees sums over the parts of the larger partition is what you expect
 -- ie e(G[M_0])+ .. +e(G[M_t])+e(G[C]) = e(G[M'_0])+...+e(G[M'_{t+1}])
 lemma internal_count {M: multi_part α} {C : finset α} (h: disjoint M.A C):
  ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i) + ∑ v in C, G.deg_res v C  =
@@ -86,7 +81,7 @@ end
 -- Furedi's stability theorem: (t+2)-clique-free set A implies there is a (t+1)-partition of A
 -- such that edges in A + edges in parts (counted a second time) ≤ edges in the complete
 -- (t+1)-partite graph on same partition
--- implies Turan once we have finished with max edges of complete multi-partite....
+-- implies Turan once we have know how to maximize edges of a complete multi-partite graph
 theorem furedi : ∀A:finset α, G.clique_free_set A (t+2) → ∃M:multi_part α, M.A=A ∧ M.t =t ∧ 
 ∑v in A, G.deg_res v A + ∑ i in range(M.t+1),∑ v in (M.P i), G.deg_res v (M.P i) ≤ ∑ v in A, (mp M).deg_res v A:=
 begin
