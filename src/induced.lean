@@ -262,7 +262,8 @@ end
 -- any nbhd is contained in the fsupport
 lemma nbhd_sub_fsupport (v : α) :G.neighbor_finset v ⊆ G.fsupport :=
 begin
-  intro x,rw mem_neighbor_finset,rw mem_fsupport, rw degree,rw card_pos, intro h, tidy,
+  intro x,rw [mem_neighbor_finset, mem_fsupport, degree, card_pos], 
+  intro h, rw [adj_comm, ← mem_neighbor_finset] at h, exact ⟨v,h⟩,
 end 
 
 -- should have been a very easy lemma (on finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
