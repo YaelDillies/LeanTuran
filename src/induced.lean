@@ -19,7 +19,9 @@ variables {t n : ℕ}
 variables {α : Type*} (G H : simple_graph α)[fintype α][nonempty α]{s : finset α}
 [decidable_eq α][decidable_rel G.adj][decidable_rel H.adj]
 
-include G
+
+
+--include G
 -- I found dealing with the mathlib "induced" subgraph too painful (probably just too early in my experience of lean)
 -- Graph induced by A:finset α, defined to be a simple_graph α (so all vertices outside A have empty neighborhoods)
 -- this is equvialent to  "spanning_coe (induce (A:set α) G)" as we prove below.
@@ -33,12 +35,41 @@ def ind (A : finset α) : simple_graph α :={
   end,
   loopless:= by obviously}
 
---- don't actually use this but we have a multi_part version
+---bipartite graph induced by a finset A 
 @[ext,reducible]
 def bipart (A :finset α) :simple_graph α :=
-{ adj:= λ v w, (G.adj v w) ∧ ((v∈ A ∧ w ∉ A) ∨ (v∉ A ∧ w ∈ A)),
+{ adj:= λ v w, (G.adj v w) ∧ (v∈ A ∧ w ∉ A ∨ v∉ A ∧ w ∈ A),
   symm :=begin intros x y hxy, rw adj_comm, tauto, end,
   loopless :=by obviously,}
+
+-- the bipartite graph induced by A (and Aᶜ) is the same as that induced by Aᶜ (and A = Aᶜᶜ)
+lemma bipart_comp_eq_self (A : finset α) : (G.bipart A)=(G.bipart Aᶜ):=
+begin
+  tidy; tauto,
+end
+
+
+
+lemma nbhd_bipartite_mem (A : finset α) {v : α} (h: v∈ A) : (G.bipart A).neighbor_finset v = G.nbhd_res v Aᶜ:=
+begin
+  ext, rw [mem_res_nbhd, mem_neighbor_finset,mem_neighbor_finset], tidy; tauto,
+end
+
+lemma deg_bipartite_mem (A : finset α) {v : α} (h: v∈ A) : (G.bipart A).degree v = (G.deg_res v Aᶜ):=
+begin
+  unfold degree deg_res,rwa nbhd_bipartite_mem,
+end
+
+lemma nbhd_bipartite_not_mem (A : finset α) {v : α} (h: v ∉ A) :  (G.bipart A).neighbor_finset v = G.nbhd_res v A:=
+begin
+  ext, simp only [mem_res_nbhd, mem_neighbor_finset], tidy; tauto,
+end
+
+lemma deg_bipartite_not_mem (A : finset α) {v : α} (h: v ∉ A) :  (G.bipart A).degree v = G.deg_res v A:=
+begin
+  unfold degree deg_res,rwa nbhd_bipartite_not_mem,
+end
+
 
 
 -- why is this so messy to prove? (presumably it isn't..)
@@ -64,8 +95,8 @@ end
 
 
 -- different parts of a multi_part induce graphs that meet in the empty graph
-lemma empty_of_diff_parts {M : multi_part α} {i j : ℕ}(hi: i∈range(M.t+1)) (hj: j∈range(M.t+1)) (hne:i≠j): G.ind (M.P i) ⊓ G.ind (M.P j)=⊥
-:=G.empty_of_disjoint_ind (M.disj i hi j hj hne)
+lemma empty_of_diff_parts {M : multi_part α} {i j : ℕ}(hi: i∈range(M.t+1)) (hj: j∈range(M.t+1)) (hne:i≠j): 
+G.ind (M.P i) ⊓ G.ind (M.P j) = ⊥ := G.empty_of_disjoint_ind (M.disj i hi j hj hne)
 
 
 --induced subgraph on A meets bipartite induced subgraph e(A,Aᶜ) in empty graph
@@ -73,6 +104,9 @@ lemma empty_of_bipart_ind {A: finset α} : G.ind A ⊓ G.bipart A = ⊥ :=
 begin
   ext, simp only [inf_adj, bot_adj], tauto,
 end
+
+abbreviation nbhd (v : α) := G.neighbor_finset v
+
 
 -- would like to just define the bUnion of the induced graphs directly but can't figure out how to do this.
 @[ext]

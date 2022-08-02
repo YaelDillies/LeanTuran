@@ -28,8 +28,8 @@ variables {α : Type*}[fintype α][nonempty α][decidable_eq α]
 variables{M : multi_part α}
 
 include M
--- given a t+1 partition on A form the complete multi-partite graph on α
--- with all edges present between parts in M.A and no edges involving vertices outside A on inside any part of A
+-- given a t+1 partition on A form the complete multi-partite graph on A
+-- with all edges present between different parts in M.A and no edges involving vertices outside A or inside any part of A
 @[ext,reducible]
 def mp (M: multi_part α) : simple_graph α:={
   adj:= λ x y, (∃ i ∈ range(M.t+1), ∃ j ∈ range(M.t+1), i≠j ∧ ((x ∈ M.P i ∧ y ∈ M.P j) ∨ (x ∈ M.P j ∧ y ∈ M.P i))), 
