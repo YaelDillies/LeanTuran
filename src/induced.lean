@@ -21,8 +21,8 @@ variables {α : Type*} (G H : simple_graph α)[fintype α][nonempty α]{s : fins
 
 
 
---include G
 -- I found dealing with the mathlib "induced" subgraph too painful (probably just too early in my experience of lean)
+
 -- Graph induced by A:finset α, defined to be a simple_graph α (so all vertices outside A have empty neighborhoods)
 -- this is equvialent to  "spanning_coe (induce (A:set α) G)" as we prove below.
 
@@ -37,7 +37,7 @@ def ind (A : finset α) : simple_graph α :={
 
 
 -- why is this so messy to prove? (presumably it isn't..)
-lemma ind_eq_coe_induced (A : finset α) : spanning_coe (induce (A:set α) G) = (G.ind A):=
+lemma ind_eq_coe_induced {A : finset α} : spanning_coe (induce (A:set α) G) = (G.ind A):=
 begin
   ext, simp only [map_adj, comap_adj, function.embedding.coe_subtype, set_coe.exists, mem_coe, subtype.coe_mk, exists_prop],
   split, {rintros ⟨a,h1,b,h2,h3,h4,h5⟩,rw [←h4,←h5], exact ⟨h3,h1,h2⟩},
@@ -145,61 +145,61 @@ end
 
 
 -- v w adjacent in the bipartite graph given by A iff adj in bipartite graph given by Aᶜ (since they are the same graph..)
-lemma bipart_comp_adj_iff (A : finset α) {v w :α} : (G.bipart A).adj v w ↔ (G.bipart Aᶜ).adj v w:=
+lemma bipart_comp_adj_iff {A : finset α} {v w :α} : (G.bipart A).adj v w ↔ (G.bipart Aᶜ).adj v w:=
 begin
   tidy; tauto,
 end
 
 -- nbhd of v ∈ A in the bipartite graph is the nbhd of v in G restricted to Aᶜ
-lemma nbhd_bipart_mem (A : finset α) {v : α} (h: v∈ A) : (G.bipart A).neighbor_finset v = G.nbhd_res v Aᶜ:=
+lemma nbhd_bipart_mem {A : finset α} {v : α} (h: v∈ A) : (G.bipart A).neighbor_finset v = G.nbhd_res v Aᶜ:=
 begin
   ext, rw [mem_res_nbhd, mem_neighbor_finset,mem_neighbor_finset], tidy; tauto,
 end
 
 -- hence degree is deg_res v to Aᶜ
-lemma deg_bipart_mem (A : finset α) {v : α} (h: v∈ A) : (G.bipart A).degree v = (G.deg_res v Aᶜ):=
+lemma deg_bipart_mem {A : finset α} {v : α} (h: v∈ A) : (G.bipart A).degree v = (G.deg_res v Aᶜ):=
 begin
   unfold degree deg_res,rwa nbhd_bipart_mem,
 end
 
 
 -- nbhd of v ∉ A in the bipartite graph is the nbhd of v in G restricted to A
-lemma nbhd_bipart_not_mem (A : finset α) {v : α} (h: v ∉ A) :  (G.bipart A).neighbor_finset v = G.nbhd_res v A:=
+lemma nbhd_bipart_not_mem {A : finset α} {v : α} (h: v ∉ A) :  (G.bipart A).neighbor_finset v = G.nbhd_res v A:=
 begin
   ext, simp only [mem_res_nbhd, mem_neighbor_finset], tidy; tauto,
 end
 
 
 -- if v∉ A then in the bipartite graph deg v is the deg_res to A
-lemma deg_bipart_not_mem (A : finset α) {v : α} (h: v ∉ A) :  (G.bipart A).degree v = G.deg_res v A:=
+lemma deg_bipart_not_mem {A : finset α} {v : α} (h: v ∉ A) :  (G.bipart A).degree v = G.deg_res v A:=
 begin
   unfold degree deg_res,rwa nbhd_bipart_not_mem,
 end
 
 
 -- degree of v ∈ A is degree in induced + degree in bipartite (ie count neighbour in A and Aᶜ)
-lemma deg_eq_ind_add_bipart (A : finset α) {v : α} : ∀v∈A,  G.degree v= (G.ind A).degree v + (G.bipart A).degree v:=
+lemma deg_eq_ind_add_bipart {A : finset α} {v : α} : ∀v∈A,  G.degree v= (G.ind A).degree v + (G.bipart A).degree v:=
 begin
-  intros v hv,  rw G.deg_bipart_mem A hv, rw G.ind_deg_mem hv, rw ← G.deg_res_univ,
+  intros v hv,  rw G.deg_bipart_mem hv, rw G.ind_deg_mem hv, rw ← G.deg_res_univ,
   exact G.deg_res_add (subset_univ A),
 end
 
 
 
 --ite to count edges from A to Aᶜ
-lemma bipart_sum_ite (A : finset α): ∑ v in A, (G.bipart A).degree v = ∑ v in A, ∑  w in Aᶜ, ite (G.adj v w) (1) (0):=
+lemma bipart_sum_ite {A : finset α}: ∑ v in A, (G.bipart A).degree v = ∑ v in A, ∑  w in Aᶜ, ite (G.adj v w) (1) (0):=
 begin
-  apply sum_congr rfl, intros x hx, rw G.deg_bipart_mem A hx, rw deg_res,rw nbhd_res,
+  apply sum_congr rfl, intros x hx, rw G.deg_bipart_mem hx, rw deg_res,rw nbhd_res,
   rw card_eq_sum_ones, simp only [*, sum_const, algebra.id.smul_eq_mul, mul_one, sum_boole, cast_id],
   congr,ext,rw mem_inter,rw mem_neighbor_finset,rw mem_filter,
 end
 
 
 -- sum of degrees over each part are equal in any induced bipartite graph
-lemma bipart_sum_eq (A : finset α): ∑ v in A, (G.bipart A).degree v = ∑ v in Aᶜ, (G.bipart A).degree v :=
+lemma bipart_sum_eq {A : finset α}: ∑ v in A, (G.bipart A).degree v = ∑ v in Aᶜ, (G.bipart A).degree v :=
 begin
-  rw [G.bipart_sum_ite A, sum_comm], apply sum_congr rfl, intros x hx, rw [compl_eq_univ_sdiff, mem_sdiff] at hx,
-  rw [G.deg_bipart_not_mem A hx.2,  deg_res, nbhd_res, card_eq_sum_ones, sum_ite, sum_const,sum_const],
+  rw [G.bipart_sum_ite, sum_comm], apply sum_congr rfl, intros x hx, rw [compl_eq_univ_sdiff, mem_sdiff] at hx,
+  rw [G.deg_bipart_not_mem hx.2,  deg_res, nbhd_res, card_eq_sum_ones, sum_ite, sum_const,sum_const],
   dsimp, rw [mul_one,  mul_zero,  add_zero, card_eq_sum_ones], apply sum_congr, ext,
   rw [mem_inter,  mem_filter, mem_neighbor_finset,  adj_comm], 
   intros y hy,refl,
@@ -207,28 +207,30 @@ end
 
 
 -- hence sum of degrees over one part counts edges once
-lemma sum_deg_bipart_eq_edge_card (A : finset α) :∑ v in A, (G.bipart A).degree v = (G.bipart A).edge_finset.card :=
+lemma sum_deg_bipart_eq_edge_card {A : finset α} :∑ v in A, (G.bipart A).degree v = (G.bipart A).edge_finset.card :=
 begin
   apply (nat.mul_right_inj (by norm_num:0<2)).mp, rw ← sum_degrees_eq_twice_card_edges,
-  rw [(by norm_num:2=1+1), add_mul, one_mul], nth_rewrite 0 G.bipart_sum_eq A,
+  rw [(by norm_num:2=1+1), add_mul, one_mul], nth_rewrite 0 G.bipart_sum_eq,
   rw compl_eq_univ_sdiff, symmetry, 
   have:disjoint (univ\A) A := sdiff_disjoint,
   rw ← sum_union this, rw sdiff_union_of_subset (subset_univ A),
 end
 
 --- in the induced graph only need to sum over A to count all edges twice 
-lemma sum_degrees_ind_eq_twice_card_edges (A : finset α) : ∑v in A, (G.ind A).degree v = 2*(G.ind A).edge_finset.card:=
+lemma sum_degrees_ind_eq_twice_card_edges {A : finset α} : ∑v in A, (G.ind A).degree v = 2*(G.ind A).edge_finset.card:=
 begin
   rw ← sum_degrees_eq_twice_card_edges, rw  ind_deg_sum, apply sum_congr rfl, 
   intros x hx, exact G.ind_deg_mem hx,
 end
 
 -- sum of degrees in A = twice number of edges in A + number of edges from A to Aᶜ
-lemma sum_deg_ind_bipart (A : finset α) : ∑ v in A, G.degree v = 2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card :=
+lemma sum_deg_ind_bipart {A : finset α} : ∑ v in A, G.degree v = 2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card :=
 begin
   rw ← sum_degrees_ind_eq_twice_card_edges, rw ← sum_deg_bipart_eq_edge_card, rw ← sum_add_distrib,
-  apply sum_congr rfl,intros x hx, rwa G.deg_eq_ind_add_bipart A x hx, 
+  apply sum_congr rfl,intros x hx, rwa G.deg_eq_ind_add_bipart x hx, 
 end
+
+
 
 --induced subgraph on A meets bipartite induced subgraph e(A,Aᶜ) in empty graph
 lemma empty_of_bipart_ind {A: finset α} : G.ind A ⊓ G.bipart A = ⊥ :=
@@ -237,7 +239,7 @@ begin
 end
 
 -- Given A:finset α and G :simple_graph α we can partition G into G[A] G[Aᶜ] and G[A,Aᶜ]  
-lemma split (A : finset α): G = G.ind A ⊔ G.ind Aᶜ ⊔  G.bipart A:=
+lemma split {A : finset α}: G = G.ind A ⊔ G.ind Aᶜ ⊔  G.bipart A:=
 begin
   ext, simp only [sup_adj, mem_compl], tauto,
 end
