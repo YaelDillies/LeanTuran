@@ -265,12 +265,10 @@ begin
   intro x,rw mem_neighbor_finset,rw mem_fsupport, rw degree,rw card_pos, intro h, tidy,
 end 
 
-
--- should have been an easy lemma (finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
+-- should have been a very easy lemma (on finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
 lemma comp_nbhd_int_supp_eq_sdiff (v : α) :(G.neighbor_finset v)ᶜ ∩  G.fsupport = G.fsupport \(G.neighbor_finset v):=
 begin
-  have h:=G.nbhd_sub_fsupport v, 
-  rw compl_eq_univ_sdiff, ext, rw [mem_sdiff,mem_inter,mem_sdiff],simp_rw mem_univ, tauto, 
+  have h:=G.nbhd_sub_fsupport v, rw [sdiff_eq,  inter_comm], refl, 
 end
 
 -- so bound on max degree gives bound on edges of G in the following form:
@@ -284,16 +282,6 @@ begin
   rw hA, rw [filter_mem_eq_inter,  G.comp_nbhd_int_supp_eq_sdiff v],
   apply sum_le_sum,
   rw [← degree, h], intros x hx, exact G.degree_le_max_degree x,
-end
-
-
-lemma sum_deg_ind_max_nbhd {v : α} {A : finset α} (h: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
- 2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card ≤   (fintype.card α - G.max_degree)*G.max_degree:=
-begin
-  rw [← G.sum_deg_ind_bipart,  ← h,  degree, ← card_univ,   ← card_sdiff (subset_univ _)],
-  nth_rewrite 0 card_eq_sum_ones, rw [sum_mul, one_mul, ← compl_eq_univ_sdiff , ← hA],
-  apply sum_le_sum, intros x hx,   rw [← degree, h],
-  exact G.degree_le_max_degree x
 end
 
 
