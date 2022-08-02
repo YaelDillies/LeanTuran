@@ -11,6 +11,7 @@ variables {α : Type*} (G H : simple_graph α)[fintype α][nonempty α]{s : fins
 
 /-
 # Furedi stability result (no counting):
+
 If G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
  such that the e(G)+ ∑ i< t+1, e(G[M_i]) ≤ e(complete_multipartite M)
 
@@ -28,10 +29,9 @@ If G is K_{t+2}-free with vertex set α then there is a (t+1)-partition M of α
     exact (a^2)*nat.choose(t+1-b)(2)+a*(a+1)*b*(t+1-b)+((a+1)^2)*nat.choose(b)(2)
   end
   
-#eval turan_numb 1 11  -- = 5*6 = 30 K_3-free bipartite
-#eval turan_numb 2 12  -- = 3*(4*4) = 48 -- K_4-free tri-partite
-#eval turan_numb 5 23 --  = 5*(4*3) +(5 choose 2)*(4*4) = 60+160 = 220 -- K_7-free 6-partite 
-
+#eval turan_numb 1 11  -- = 5*6 = 30        K_3-free bipartite
+#eval turan_numb 2 12  -- = 3*(4*4) = 48    K_4-free tri-partite
+#eval turan_numb 5 23  -- = 5*(4*3) +(5 choose 2)*(4*4) = 60+160 = 220 --  K_7-free 6-partite 
 
 
 # Furedi with counting: 

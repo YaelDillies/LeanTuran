@@ -26,8 +26,8 @@ section multipartite
 variable {t : ℕ}
 variables {α : Type*}[fintype α][nonempty α][decidable_eq α]
 variables{M : multi_part α}
-include M
 
+include M
 -- given a t+1 partition on A form the complete multi-partite graph on α
 -- with all edges present between parts in M.A and no edges involving vertices outside A on inside any part of A
 @[ext,reducible]
@@ -285,6 +285,7 @@ end
 -- vertices in new part are adjacent to all old vertices
 --- should have used lemmas from multipartite for this...
 -- this says that the degree of any vertex in the new part equals the sum over the old parts
+
 lemma mp_com (M : multi_part α) {C :finset α} (h: disjoint M.A C) :∀ v ∈ C, (mp (insert M h)).deg_res v M.A=(M.A.card):=
 begin
  intros v hv, rw deg_res, congr, ext,
