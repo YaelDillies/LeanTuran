@@ -58,8 +58,6 @@ lemma empty_of_diff_parts {M : multi_part α} {i j : ℕ}(hi: i∈range(M.t+1)) 
 G.ind (M.P i) ⊓ G.ind (M.P j) = ⊥ := G.empty_of_disjoint_ind (M.disj i hi j hj hne)
 
 
-abbreviation nbhd (v : α) := G.neighbor_finset v
-
 
 -- would like to just define the bUnion of the induced graphs directly but can't figure out how to do this.
 @[ext]
@@ -184,8 +182,6 @@ begin
   exact G.deg_res_add (subset_univ A),
 end
 
-
-
 --ite to count edges from A to Aᶜ
 lemma bipart_sum_ite {A : finset α}: ∑ v in A, (G.bipart A).degree v = ∑ v in A, ∑  w in Aᶜ, ite (G.adj v w) (1) (0):=
 begin
@@ -230,6 +226,17 @@ begin
   apply sum_congr rfl,intros x hx, rwa G.deg_eq_ind_add_bipart x hx, 
 end
 
+
+
+-- so bound on max degree gives bound on edges of G in the following form:
+lemma sum_deg_ind_max_nbhd {v : α} {A : finset α} (h: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
+ 2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card ≤   (fintype.card α - G.max_degree)*G.max_degree:=
+begin
+  rw [← G.sum_deg_ind_bipart,  ← h,  degree, ← card_univ,   ← card_sdiff (subset_univ _)],
+  nth_rewrite 0 card_eq_sum_ones, rw [sum_mul, one_mul, ← compl_eq_univ_sdiff , ← hA],
+  apply sum_le_sum, intros x hx,   rw [← degree, h],
+  exact G.degree_le_max_degree x
+end
 
 
 --induced subgraph on A meets bipartite induced subgraph e(A,Aᶜ) in empty graph
