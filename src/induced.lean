@@ -86,6 +86,8 @@ begin
 end
 
 
+
+
 lemma ind_deg_mem {A : finset α} {v : α} : v∈ A → (G.ind A).degree v= G.deg_res v A:=
 begin
   unfold degree deg_res,intros hv, congr,exact G.ind_nbhd_mem hv,
@@ -110,6 +112,36 @@ begin
   split_ifs,{unfold deg_res,congr, exact G.ind_nbhd_mem h},
   {rw G.ind_nbhd_nmem h, apply card_eq_zero.mpr rfl},
 end
+
+
+
+-- finite support of G
+def fsupport : finset α := univ.filter (λ v, 0 < G.degree v )
+
+-- member of support iff degree >0
+lemma mem_fsupport (v : α) : v ∈ G.fsupport ↔ 0 < G.degree v:=
+begin
+  unfold fsupport,rw mem_filter, simp only [mem_univ, true_and],
+end
+
+
+lemma deg_fsupport (v : α) : G.degree v = ite (v∈ G.fsupport) (G.degree v) (0):=
+begin
+  split_ifs, refl,rw mem_fsupport at h, linarith,
+end
+
+
+-- a vertex is in the fsupport of (G.ind A) only if it is in A
+lemma mem_ind_fsupport (v : α) {A: finset α} : v ∈ (G.ind A).fsupport → v ∈ A:=
+begin
+  rw (G.ind A).mem_fsupport v ,contrapose , push_neg, intros hv, rw G.ind_deg_nmem hv,
+end
+
+lemma deg_sum_fsupport {A : finset α} : ∑ v in A, G.degree v = ∑ v in A.filter (λ v , v ∈ G.fsupport), G.degree v:=
+begin 
+  rw sum_filter, apply sum_congr rfl, intros x hx,exact G.deg_fsupport x,
+end
+
 
 -- so degree sum over α in the induced subgraph is same as sum of deg_res over A
 -- both count 2*e(G[A])
@@ -227,8 +259,34 @@ begin
 end
 
 
+-- any nbhd is contained in the fsupport
+lemma nbhd_sub_fsupport (v : α) :G.neighbor_finset v ⊆ G.fsupport :=
+begin
+  intro x,rw mem_neighbor_finset,rw mem_fsupport, rw degree,rw card_pos, intro h, tidy,
+end 
+
+
+-- should have been an easy lemma (finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
+lemma comp_nbhd_int_supp_eq_sdiff (v : α) :(G.neighbor_finset v)ᶜ ∩  G.fsupport = G.fsupport \(G.neighbor_finset v):=
+begin
+  have h:=G.nbhd_sub_fsupport v, 
+  rw compl_eq_univ_sdiff, ext, rw [mem_sdiff,mem_inter,mem_sdiff],simp_rw mem_univ, tauto, 
+end
 
 -- so bound on max degree gives bound on edges of G in the following form:
+--(Note this almost gives Mantel's theorem since in a K_3-free graph nbhds are independent)
+lemma sum_deg_ind_max_nbhd' {v : α} {A : finset α} (h: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
+ 2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card ≤   (G.fsupport.card - G.max_degree)*G.max_degree:=
+begin
+  rw [← G.sum_deg_ind_bipart, G.deg_sum_fsupport, ← h,  degree],
+  rw [sum_filter, sum_ite, sum_const, smul_zero, add_zero, ← card_sdiff (G.nbhd_sub_fsupport v)],
+  nth_rewrite 0 card_eq_sum_ones,rw [sum_mul, one_mul],
+  rw hA, rw [filter_mem_eq_inter,  G.comp_nbhd_int_supp_eq_sdiff v],
+  apply sum_le_sum,
+  rw [← degree, h], intros x hx, exact G.degree_le_max_degree x,
+end
+
+
 lemma sum_deg_ind_max_nbhd {v : α} {A : finset α} (h: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
  2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card ≤   (fintype.card α - G.max_degree)*G.max_degree:=
 begin
