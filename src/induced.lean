@@ -11,6 +11,13 @@ import multipartite
 import nbhd_res
 import fedges
 
+
+--set_option class.instance_max_depth 20
+
+
+
+
+
 open finset nat turanpartition
 open_locale big_operators 
 namespace simple_graph
@@ -52,6 +59,10 @@ ext , simp only [inf_adj, bot_adj], split, {rintro ⟨⟨_,h1,_⟩,⟨_,h2,_⟩�
 {tauto},
 end
 
+lemma empty_of_ind_comp (A : finset α) : G.ind A ⊓ G.ind Aᶜ =⊥:=
+begin
+  have :disjoint A Aᶜ:=disjoint_compl_right, exact G.empty_of_disjoint_ind (this),
+end
 
 -- different parts of a multi_part induce graphs that meet in the empty graph
 lemma empty_of_diff_parts {M : multi_part α} {i j : ℕ}(hi: i∈range(M.t+1)) (hj: j∈range(M.t+1)) (hne:i≠j): 
@@ -85,9 +96,7 @@ begin
   {rw [mem_inter, set.mem_to_finset, mem_neighbor_set], tauto},
 end
 
-
-
-
+-- induced degree of  v ∈ A is deg res to A
 lemma ind_deg_mem {A : finset α} {v : α} : v∈ A → (G.ind A).degree v= G.deg_res v A:=
 begin
   unfold degree deg_res,intros hv, congr,exact G.ind_nbhd_mem hv,
@@ -137,6 +146,7 @@ begin
   rw (G.ind A).mem_fsupport v ,contrapose , push_neg, intros hv, rw G.ind_deg_nmem hv,
 end
 
+-- so when calculating any sum of degrees over a set can restrict to fsupport
 lemma deg_sum_fsupport {A : finset α} : ∑ v in A, G.degree v = ∑ v in A.filter (λ v , v ∈ G.fsupport), G.degree v:=
 begin 
   rw sum_filter, apply sum_congr rfl, intros x hx,exact G.deg_fsupport x,
@@ -172,6 +182,29 @@ lemma bipart_comp_eq_self {A : finset α} : (G.bipart A)=(G.bipart Aᶜ):=
 begin
   tidy; tauto
 end
+
+
+--induced subgraph on A meets bipartite induced subgraph e(A,Aᶜ) in empty graph
+lemma empty_of_ind_bipart (A: finset α) : (G.ind A ⊔ G.ind Aᶜ) ⊓ G.bipart A = ⊥ :=
+begin
+  ext, simp only [inf_adj, sup_adj,bot_adj, mem_compl], tauto,
+end
+
+-- Given A:finset α and G :simple_graph α we can partition G into G[A] G[Aᶜ] and G[A,Aᶜ]  
+lemma split_induced (A : finset α): G = (G.ind A ⊔ G.ind Aᶜ) ⊔  G.bipart A:=
+begin
+  ext, simp only [sup_adj, mem_compl], tauto,
+end
+
+--- edge counting e(G[A])+e(G[Aᶜ])+e(G[A,Aᶜ])=e(G)
+lemma edges_split_induced  (A : finset α):  (G.ind A).edge_finset.card + (G.ind Aᶜ).edge_finset.card 
++ (G.bipart A).edge_finset.card = G.edge_finset.card :=
+begin 
+  have:=G.split_induced A, rw eq_iff_edges_eq at this, rw this,  
+  rw card_edges_add_of_meet_empty (G.empty_of_ind_bipart A), rw add_left_inj,
+  rwa card_edges_add_of_meet_empty (G.empty_of_ind_comp A),
+end
+
 
 
 -- v w adjacent in the bipartite graph given by A iff adj in bipartite graph given by Aᶜ (since they are the same graph..)
@@ -266,39 +299,32 @@ begin
   intro h, rw [adj_comm, ← mem_neighbor_finset] at h, exact ⟨v,h⟩,
 end 
 
--- should have been a very easy lemma (on finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
+-- should have been one line (on finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
 lemma comp_nbhd_int_supp_eq_sdiff (v : α) :(G.neighbor_finset v)ᶜ ∩  G.fsupport = G.fsupport \(G.neighbor_finset v):=
 begin
   have h:=G.nbhd_sub_fsupport v, rw [sdiff_eq,  inter_comm], refl, 
 end
 
--- so bound on max degree gives bound on edges of G in the following form:
+-- So bound on max degree gives bound on edges of G in the following form:
 --(Note this almost gives Mantel's theorem since in a K_3-free graph nbhds are independent)
-lemma sum_deg_ind_max_nbhd' {v : α} {A : finset α} (h: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
+lemma sum_deg_ind_max_nbhd {v : α} {A : finset α} (hm: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
  2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card ≤   (G.fsupport.card - G.max_degree)*G.max_degree:=
 begin
-  rw [← G.sum_deg_ind_bipart, G.deg_sum_fsupport, ← h,  degree],
+  rw [← G.sum_deg_ind_bipart, G.deg_sum_fsupport, ← hm,  degree],
   rw [sum_filter, sum_ite, sum_const, smul_zero, add_zero, ← card_sdiff (G.nbhd_sub_fsupport v)],
   nth_rewrite 0 card_eq_sum_ones,rw [sum_mul, one_mul],
   rw hA, rw [filter_mem_eq_inter,  G.comp_nbhd_int_supp_eq_sdiff v],
   apply sum_le_sum,
-  rw [← degree, h], intros x hx, exact G.degree_le_max_degree x,
+  rw [← degree, hm], intros x hx, exact G.degree_le_max_degree x,
 end
 
 
---induced subgraph on A meets bipartite induced subgraph e(A,Aᶜ) in empty graph
-lemma empty_of_bipart_ind {A: finset α} : G.ind A ⊓ G.bipart A = ⊥ :=
+---
+lemma edge_bound_max_deg {v : α} {A : finset α} (hm: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
+ G.edge_finset.card + (G.ind A).edge_finset.card ≤   (G.fsupport.card - G.max_degree)*G.max_degree +(G.ind Aᶜ).edge_finset.card:=
 begin
-  ext, simp only [inf_adj, bot_adj], tauto,
+  rw ← G.edges_split_induced A, have:=G.sum_deg_ind_max_nbhd hm hA, linarith,
 end
-
--- Given A:finset α and G :simple_graph α we can partition G into G[A] G[Aᶜ] and G[A,Aᶜ]  
-lemma split {A : finset α}: G = G.ind A ⊔ G.ind Aᶜ ⊔  G.bipart A:=
-begin
-  ext, simp only [sup_adj, mem_compl], tauto,
-end
-
-
 
 
 @[ext,reducible]
