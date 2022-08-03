@@ -60,7 +60,7 @@ begin
 end
 
 -- if G is 2-clique free then it is empty
-lemma two_clique_free_iff_empty  : G.clique_free 2 → G = ⊥:=
+lemma two_clique_free_imp_empty  : G.clique_free 2 → G = ⊥:=
 begin
   intros h ,  contrapose h, obtain ⟨v,w,had⟩:=edge_of_not_empty h,
   rw clique_free,push_neg, use {v,w}, split, {tidy}, {exact card_doubleton had.1},

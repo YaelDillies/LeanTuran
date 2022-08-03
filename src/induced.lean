@@ -35,6 +35,10 @@ def ind (A : finset α) : simple_graph α :={
   end,
   loopless:= by obviously}
 
+lemma ind_univ : G.ind univ = G :=
+begin
+  ext, simp only [mem_univ, and_true],
+end
 
 -- why is this so messy to prove? (presumably it isn't..)
 lemma ind_eq_coe_induced {A : finset α} : spanning_coe (induce (A:set α) G) = (G.ind A):=
@@ -353,6 +357,23 @@ begin
   have:=G.clique_insert_nbhr (⟨(is_clique.mono (G.ind_sub (G.neighbor_finset v)) hs.1),hs.2⟩) (G.clique_ind_sub_ind (by linarith) hs), 
   rwa [(by norm_num: 3=2+1),← add_assoc],
 end
+
+---Not this is can easily work.. 
+theorem furedi_var {t : ℕ} : ∀ A:finset α, (G.ind A).clique_free (t+2) → ∃ P : ℕ → finset α,(range(t+1):set ℕ).pairwise_disjoint P ∧ 
+(G.ind A).edge_finset.card + ∑ i in range(t+1),(G.ind (P i)).edge_finset.card 
+≤ ∑ i in range(t+1),(P i).card * (fintype.card α - (P i).card):=
+begin
+  induction t with t ht, {simp only [zero_add, range_one, sum_singleton], intros h1 h2,
+  have:= two_clique_free_imp_empty h2,  
+  use (λ i, univ),rw card_univ,norm_num, rw empty_iff_edge_empty at this,
+  have t2:=G.ind_univ, rw eq_iff_edges_eq at t2, simp only [← mem_edge_finset], rw t2, rw this,
+  simp only [not_mem_empty, filter_false, and_self],},{
+  rw succ_eq_add_one, norm_num,
+
+
+  sorry},
+end
+
 
 
 @[ext,reducible]
