@@ -107,6 +107,8 @@ begin
 end
 
 
+
+
 ---can this be used to simplify the previous lemma ?
 lemma mod_tplus1' {t n:ℕ} : (t+1)*(n/(t+1))+n%(t+1)=n:=
 begin
@@ -277,6 +279,18 @@ structure multi_part (α : Type*)[decidable_eq α][fintype α][nonempty α]:=
 (disj: ∀i∈ range(t+1),∀j∈ range(t+1), i≠j → disjoint (P i) (P j)) 
 
 
+
+--TO DO rewrite constructors for multi_part using this for "move" and set.pairwise_disjoint.insert for "insert"
+lemma disjoint_insert_erase {A B : finset α} {v: α} (hv: v∈ A) (hd:disjoint A B) : disjoint (A.erase v) (insert v B):=
+begin
+  rw [disjoint_insert_right, mem_erase], 
+  refine ⟨_,disjoint_of_subset_left (erase_subset v A) hd⟩,
+  {push_neg,intro h,exfalso, exact h rfl},
+ end
+
+
+
+
 def parts_t_A (t : ℕ) (A : finset α) (M : multi_part α) : Prop:= M.t=t ∧ M.A=A
 
 
@@ -322,7 +336,7 @@ def default_M (B:finset α) (s:ℕ)  : multi_part α:={
   disj:= begin intros i hi j hj ne,split_ifs,{exfalso,rw h at ne,rw h_1 at ne, exact ne rfl}, 
     {exact disjoint_empty_right _},{exact disjoint_empty_left _},{exact disjoint_empty_left _},end,}
 
-
+--TODO : this should use set.pairwise_disjoint.insert to be much simpler
 -- we want to build a complete (t+1)-partite graph one part at a time
 -- given a current partition into t+1 parts we can insert a new
 -- disjoint set to the partition, increasing the number of parts by 1.
