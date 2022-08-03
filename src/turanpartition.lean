@@ -291,6 +291,7 @@ begin
 
 
 
+
 def parts_t_A (t : ℕ) (A : finset α) (M : multi_part α) : Prop:= M.t=t ∧ M.A=A
 
 
@@ -395,6 +396,10 @@ lemma exists_mpartition (B: finset α) (s:ℕ): ∃ M:multi_part α, M.A=B ∧ M
 
 ---M.disj is the same as "pairwise_disjoint" but without any coercion to set for range(t+1) 
 lemma pair_disjoint (M : multi_part α) : ((range(M.t+1):set ℕ)).pairwise_disjoint M.P:=M.disj
+
+
+
+
 
 -- member of a part implies member of union
 lemma mem_part{M:multi_part α} {v :α} {i :ℕ}: i∈range(M.t+1) → v ∈ M.P i → v ∈ M.A :=
