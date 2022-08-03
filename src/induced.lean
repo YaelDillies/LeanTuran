@@ -291,15 +291,6 @@ begin
   intro h, rw [adj_comm, ← mem_neighbor_finset] at h, exact ⟨v,h⟩,
 end 
 
--- any "actual" clique consists of vertices in the support
-lemma clique_sub_fsupport {t : ℕ} {S :finset α} (ht: 2 ≤ t) (h: G.is_n_clique t S) : S ⊆ G.fsupport:=
-begin
-  intros a ha,
-  rw is_n_clique_iff at h, cases h with hc ht, have :(1<S.card):= by linarith, 
-  obtain ⟨b,hb,hne⟩:= exists_ne_of_one_lt_card this a,   
-  rw ← mem_coe at *, have hadj:=hc hb ha hne, rw mem_coe, rw ← mem_neighbor_finset at hadj,
-  exact (G.nbhd_sub_fsupport b) hadj,
-end
 
 -- should have been one line (on finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
 lemma comp_nbhd_int_supp_eq_sdiff (v : α) :(G.neighbor_finset v)ᶜ ∩  G.fsupport = G.fsupport \(G.neighbor_finset v):=
@@ -316,17 +307,25 @@ begin
   rw [sum_filter, sum_ite, sum_const, smul_zero, add_zero, ← card_sdiff (G.nbhd_sub_fsupport v)],
   nth_rewrite 0 card_eq_sum_ones,rw [sum_mul, one_mul],
   rw hA, rw [filter_mem_eq_inter,  G.comp_nbhd_int_supp_eq_sdiff v],
-  apply sum_le_sum,
-  rw [← degree, hm], intros x hx, exact G.degree_le_max_degree x,
+  apply sum_le_sum, rw [← degree, hm], intros x hx, exact G.degree_le_max_degree x,
 end
 
---the essential bound for Furedi's result 
----e(G) + e(G[Γ(v)ᶜ]) ≤ (G.fsupport.card - Δ(G))*Δ(G) + e(G[Γ(v)]) 
+-- The essential bound for Furedi's result: 
+-- e(G) + e(G[Γ(v)ᶜ]) ≤ (G.fsupport.card - Δ(G))*Δ(G) + e(G[Γ(v)]) 
 lemma edge_bound_max_deg {v : α} {A : finset α} (hm: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
  G.edge_finset.card + (G.ind A).edge_finset.card ≤ 
  (G.fsupport.card - G.max_degree)*G.max_degree + (G.ind Aᶜ).edge_finset.card:=
 begin
   rw ← G.edges_split_induced A, have:=G.sum_deg_ind_max_nbhd hm hA, linarith,
+end
+
+-- any "actual" clique consists of vertices in the support
+lemma clique_sub_fsupport {t : ℕ} {S :finset α} (ht: 2 ≤ t) (h: G.is_n_clique t S) : S ⊆ G.fsupport:=
+begin
+  intros a ha, rw is_n_clique_iff at h,  have :(1 < S.card):= by linarith, 
+  obtain ⟨b,hb,hne⟩:= exists_ne_of_one_lt_card this a,   
+  rw ← mem_coe at *, have hadj:=h.1 hb ha hne, rw mem_coe, rw ← mem_neighbor_finset at hadj,
+  exact (G.nbhd_sub_fsupport b) hadj,
 end
 
 -- any t+2 clique of an induced graph is a subset of the induced set
@@ -335,27 +334,24 @@ begin
   intros h1 a ha, exact G.mem_ind_fsupport (((G.ind A).clique_sub_fsupport h h1) ha),
 end
 
-
--- if we have a t-clique and insert a common neighbor then obtain at (t+1)-clique
+-- if S a t-clique in a nbhd Γ(v) then inserting v gives a (t+1)-clique
 lemma clique_insert_nbhr {t : ℕ} {S :finset α} {v : α} (hc: G.is_n_clique t S) (hd: S ⊆ G.neighbor_finset v) :
  G.is_n_clique (t+1) (insert v S):=
 begin
-   rw is_n_clique_iff at *, cases hc with hs ht, rw ←  ht, have:=G.not_mem_nbhd v,
-   have vnin:v∉S:=by  apply set.not_mem_subset hd this, rw is_clique_iff at *,
-   refine ⟨_,card_insert_of_not_mem vnin⟩, 
+   rw is_n_clique_iff at *, rw ← hc.2,
+   have vnin:v∉S:=by apply set.not_mem_subset hd (G.not_mem_nbhd v), 
+   rw is_clique_iff at *, refine ⟨_,card_insert_of_not_mem vnin⟩, 
    have hn: ∀ b ∈S,  v ≠ b → G.adj v b ∧ G.adj b v,{
-    intros b hb hj, rw G.adj_comm b v, rw ← mem_neighbor_finset, exact ⟨hd hb,hd hb⟩},
-   rw coe_insert, exact set.pairwise.insert hs hn, 
+   intros b hb hj, rw [G.adj_comm b v,  ← mem_neighbor_finset], exact ⟨hd hb,hd hb⟩},
+   rw coe_insert, exact set.pairwise.insert hc.1 hn, 
 end
 
-
--- if G is K_{t+3}-free then any nbhd induces a K_{t+2}-free graph
-lemma clique_free_nbhd_ind {t : ℕ} (v : α) : G.clique_free (t+3) →  (G.ind (G.neighbor_finset v)).clique_free (t+2):=
+-- Now the other key lemma for Furedi's result:
+-- If G is K_{t+3}-free then any nbhd induces a K_{t+2}-free graph
+lemma clique_free_nbhd_ind {t : ℕ} {v : α} : G.clique_free (t+3) →  (G.ind (G.neighbor_finset v)).clique_free (t+2):=
 begin
   contrapose, unfold clique_free, push_neg, rintro ⟨S,hs⟩, use (insert v S),
-  have :=G.clique_ind_sub_ind (by linarith) hs,
-  have ht:=is_clique.mono (G.ind_sub (G.neighbor_finset v)) hs.1,  
-  have :=G.clique_insert_nbhr (⟨ht,hs.2⟩) this, 
+  have:=G.clique_insert_nbhr (⟨(is_clique.mono (G.ind_sub (G.neighbor_finset v)) hs.1),hs.2⟩) (G.clique_ind_sub_ind (by linarith) hs), 
   rwa [(by norm_num: 3=2+1),← add_assoc],
 end
 

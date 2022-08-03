@@ -1,4 +1,5 @@
 import data.nat.basic
+import combinatorics.simple_graph.clique
 import tactic.core
 import data.finset.basic
 import combinatorics.simple_graph.basic
@@ -49,6 +50,20 @@ end
 lemma empty_iff_edge_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅
 := by rwa [eq_iff_edges_eq, empty_has_no_edges]
 
+
+-- if G is not the empty graph there exist a pair of distinct adjacent vertices
+lemma edge_of_not_empty {G : simple_graph α}[decidable_rel G.adj] : G ≠ ⊥ → ∃v:α,∃w:α, v≠ w ∧ G.adj v w:=
+begin
+  contrapose,intro h,push_neg at h, push_neg, ext,rw bot_adj,specialize h x x_1,
+  by_cases h':x=x_1, simp only [*, G.irrefl], have:= (h h'), tauto,
+end
+
+-- if G is 2-clique free then it is empty
+lemma two_clique_free_iff_empty {G :simple_graph α} [decidable_rel G.adj] : G.clique_free 2 → G= ⊥:=
+begin
+  intros h ,  contrapose h, obtain ⟨v,w,had⟩:=edge_of_not_empty h,
+  rw clique_free,push_neg, use {v,w}, split, {tidy}, {exact card_doubleton had.1},
+end
 -- meet of two graphs has edges given by intersection
 lemma meet_edges_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : (G⊓H).edge_finset =G.edge_finset ∩ H.edge_finset:=
 begin
