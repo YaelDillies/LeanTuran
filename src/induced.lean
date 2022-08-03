@@ -188,7 +188,8 @@ lemma split_induced (A : finset α): G = (G.ind A ⊔ G.ind Aᶜ) ⊔  G.bipart 
 begin
   ext, simp only [sup_adj, mem_compl], tauto,
 end
---- edge counting e(G[A])+e(G[Aᶜ])+e(G[A,Aᶜ])=e(G)
+
+--- Edge counting: e(G[A])+e(G[Aᶜ])+e(G[A,Aᶜ])=e(G)
 lemma edges_split_induced  (A : finset α):  (G.ind A).edge_finset.card + (G.ind Aᶜ).edge_finset.card 
 + (G.bipart A).edge_finset.card = G.edge_finset.card :=
 begin 
@@ -214,7 +215,8 @@ end
 -- hence degree is deg_res v to Aᶜ
 lemma deg_bipart_mem {A : finset α} {v : α} (h: v∈ A) : (G.bipart A).degree v = (G.deg_res v Aᶜ):=
 begin
-  unfold degree deg_res,rwa nbhd_bipart_mem,
+  unfold degree deg_res,
+  rwa nbhd_bipart_mem,
 end
 
 
@@ -298,7 +300,7 @@ begin
   have h:=G.nbhd_sub_fsupport v, rw [sdiff_eq,  inter_comm], refl, 
 end
 
--- So bound on max degree gives bound on edges of G in the following form:
+-- Bound on max degree gives bound on edges of G in the following form:
 --(Note this almost gives Mantel's theorem since in a K_3-free graph nbhds are independent)
 lemma sum_deg_ind_max_nbhd {v : α} {A : finset α} (hm: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
  2*(G.ind A).edge_finset.card + (G.bipart A).edge_finset.card ≤   (G.fsupport.card - G.max_degree)*G.max_degree:=
@@ -338,12 +340,9 @@ end
 lemma clique_insert_nbhr {t : ℕ} {S :finset α} {v : α} (hc: G.is_n_clique t S) (hd: S ⊆ G.neighbor_finset v) :
  G.is_n_clique (t+1) (insert v S):=
 begin
-   rw is_n_clique_iff at *, rw ← hc.2,
-   have vnin:v∉S:=by apply set.not_mem_subset hd (G.not_mem_nbhd v), 
-   rw is_clique_iff at *, refine ⟨_,card_insert_of_not_mem vnin⟩, 
-   have hn: ∀ b ∈S,  v ≠ b → G.adj v b ∧ G.adj b v,{
-   intros b hb hj, rw [G.adj_comm b v,  ← mem_neighbor_finset], exact ⟨hd hb,hd hb⟩},
-   rw coe_insert, exact set.pairwise.insert hc.1 hn, 
+   rw is_n_clique_iff at *, rw ← hc.2, have vnin:v∉S:=by apply set.not_mem_subset hd (G.not_mem_nbhd v), 
+   rw is_clique_iff at *, refine ⟨_,card_insert_of_not_mem vnin⟩, rw coe_insert,
+   refine set.pairwise.insert hc.1 _, intros b hb hj, rw [G.adj_comm b v, and_self,← mem_neighbor_finset], exact hd hb,
 end
 
 -- Now the other key lemma for Furedi's result:

@@ -17,7 +17,7 @@ section fedges
 variables {t n : ℕ} 
 variables {α : Type*} [fintype α][nonempty α][decidable_eq α]
 {G H : simple_graph α}[decidable_rel G.adj][decidable_rel H.adj]
---include G H
+
 
 
 -- G is a subgraph of H iff G.edge_finset is subset of H.edge_finset
@@ -27,6 +27,7 @@ begin
   { intro gh,intros x y h, have :⟦(x,y)⟧∈ G.edge_set:=h, rw [← mem_edge_finset] at this, 
   have:= gh this, rwa mem_edge_finset at this,},
 end
+
 -- graphs (on same vertex set) are equal iff edge_finsets are equal
 lemma eq_iff_edges_eq   : G=H ↔ G.edge_finset = H.edge_finset:= 
 begin
@@ -47,23 +48,24 @@ begin
 end
 
 -- a graph is the empty graph iff it has no edges
-lemma empty_iff_edge_empty {G :simple_graph α} [decidable_rel G.adj] : G = ⊥  ↔ G.edge_finset=∅
+lemma empty_iff_edge_empty  : G = ⊥  ↔ G.edge_finset=∅
 := by rwa [eq_iff_edges_eq, empty_has_no_edges]
 
 
 -- if G is not the empty graph there exist a pair of distinct adjacent vertices
-lemma edge_of_not_empty {G : simple_graph α}[decidable_rel G.adj] : G ≠ ⊥ → ∃v:α,∃w:α, v≠ w ∧ G.adj v w:=
+lemma edge_of_not_empty : G ≠ ⊥ → ∃v:α,∃w:α, v≠ w ∧ G.adj v w:=
 begin
   contrapose,intro h,push_neg at h, push_neg, ext,rw bot_adj,specialize h x x_1,
   by_cases h':x=x_1, simp only [*, G.irrefl], have:= (h h'), tauto,
 end
 
 -- if G is 2-clique free then it is empty
-lemma two_clique_free_iff_empty {G :simple_graph α} [decidable_rel G.adj] : G.clique_free 2 → G= ⊥:=
+lemma two_clique_free_iff_empty  : G.clique_free 2 → G = ⊥:=
 begin
   intros h ,  contrapose h, obtain ⟨v,w,had⟩:=edge_of_not_empty h,
   rw clique_free,push_neg, use {v,w}, split, {tidy}, {exact card_doubleton had.1},
 end
+
 -- meet of two graphs has edges given by intersection
 lemma meet_edges_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : (G⊓H).edge_finset =G.edge_finset ∩ H.edge_finset:=
 begin
@@ -103,9 +105,7 @@ begin
   refl,
 end
 
-
 -- now introduce a simple version of distance between graphs 
-
 -- G.is_far s H iff there exists a finset of at most s edges such that G-S is a subgraph of H
 
 def is_far (G H :simple_graph α) (s : ℕ) [decidable_rel G.adj][decidable_rel H.adj] 
@@ -126,10 +126,6 @@ begin
 end
 
 
-
-
 end fedges
 
-
-#lint
 end simple_graph
