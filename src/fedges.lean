@@ -54,10 +54,23 @@ begin
   ext,simp only [mem_edge_finset, mem_inter], induction a,{refl},{refl},
 end
 
+-- join of two graphs has edges given by union
+lemma join_edges_eq {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : (G ⊔ H).edge_finset =G.edge_finset ∪ H.edge_finset:=
+begin
+  ext,simp only [mem_edge_finset, mem_union], induction a,{refl},{refl},
+end
+
 -- edge sets are disjoint iff meet is empty graph
 lemma disjoint_edges_iff_meet_empty {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : disjoint G.edge_finset H.edge_finset ↔  G ⊓ H = ⊥:= 
 begin
   rw [empty_iff_edge_empty, meet_edges_eq], exact disjoint_iff,
+end
+
+--if G and H meet in ⊥ then the card of their edge sets adds
+lemma card_edges_add_of_meet_empty {G H :simple_graph α} [decidable_rel G.adj][decidable_rel H.adj] : G ⊓ H = ⊥ →
+(G ⊔ H).edge_finset.card= G.edge_finset.card+ H.edge_finset.card:=
+begin
+  rw [← disjoint_edges_iff_meet_empty, join_edges_eq], intros h, exact card_disjoint_union h,
 end
 
 -- the subgraph formed by deleting edges (from edge_finset)
