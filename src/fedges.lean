@@ -18,6 +18,7 @@ variables {α : Type*} [fintype α][nonempty α][decidable_eq α]
 {G H : simple_graph α}[decidable_rel G.adj][decidable_rel H.adj]
 --include G H
 
+
 -- G is a subgraph of H iff G.edge_finset is subset of H.edge_finset
 lemma subgraph_edge_subset : G ≤ H ↔ G.edge_finset ⊆ H.edge_finset:=
 begin

@@ -1,4 +1,4 @@
-import combinatorics.simple_graph.basic
+import combinatorics.simple_graph.clique
 import combinatorics.simple_graph.degree_sum
 import data.finset.basic
 import data.nat.basic
@@ -10,13 +10,6 @@ import turanpartition
 import multipartite
 import nbhd_res
 import fedges
-
-
---set_option class.instance_max_depth 20
-
-
-
-
 
 open finset nat turanpartition
 open_locale big_operators 
@@ -141,7 +134,7 @@ end
 
 
 -- a vertex is in the fsupport of (G.ind A) only if it is in A
-lemma mem_ind_fsupport (v : α) {A: finset α} : v ∈ (G.ind A).fsupport → v ∈ A:=
+lemma mem_ind_fsupport {v : α} {A: finset α} : v ∈ (G.ind A).fsupport → v ∈ A:=
 begin
   rw (G.ind A).mem_fsupport v ,contrapose , push_neg, intros hv, rw G.ind_deg_nmem hv,
 end
@@ -162,7 +155,7 @@ begin
 end
 
 --induced subgraph is a subgraph
-lemma ind_sub {A : finset α} : (G.ind A)≤ G:=  λ x y, G.ind_adj_imp 
+lemma ind_sub (A : finset α) : (G.ind A)≤ G:=  λ x y, G.ind_adj_imp 
 
 
 -- internal edges induced by parts of a partition M
@@ -195,16 +188,15 @@ lemma split_induced (A : finset α): G = (G.ind A ⊔ G.ind Aᶜ) ⊔  G.bipart 
 begin
   ext, simp only [sup_adj, mem_compl], tauto,
 end
-
 --- edge counting e(G[A])+e(G[Aᶜ])+e(G[A,Aᶜ])=e(G)
 lemma edges_split_induced  (A : finset α):  (G.ind A).edge_finset.card + (G.ind Aᶜ).edge_finset.card 
 + (G.bipart A).edge_finset.card = G.edge_finset.card :=
 begin 
-  have:=G.split_induced A, rw eq_iff_edges_eq at this, rw this,  
+  have:=G.split_induced A, 
+  rw eq_iff_edges_eq at this, rw this,  
   rw card_edges_add_of_meet_empty (G.empty_of_ind_bipart A), rw add_left_inj,
   rwa card_edges_add_of_meet_empty (G.empty_of_ind_comp A),
 end
-
 
 
 -- v w adjacent in the bipartite graph given by A iff adj in bipartite graph given by Aᶜ (since they are the same graph..)
@@ -299,6 +291,16 @@ begin
   intro h, rw [adj_comm, ← mem_neighbor_finset] at h, exact ⟨v,h⟩,
 end 
 
+-- any "actual" clique consists of vertices in the support
+lemma clique_sub_fsupport {t : ℕ} {S :finset α} (ht: 2 ≤ t) (h: G.is_n_clique t S) : S ⊆ G.fsupport:=
+begin
+  intros a ha,
+  rw is_n_clique_iff at h, cases h with hc ht, have :(1<S.card):= by linarith, 
+  obtain ⟨b,hb,hne⟩:= exists_ne_of_one_lt_card this a,   
+  rw ← mem_coe at *, have hadj:=hc hb ha hne, rw mem_coe, rw ← mem_neighbor_finset at hadj,
+  exact (G.nbhd_sub_fsupport b) hadj,
+end
+
 -- should have been one line (on finsets not graphs) but couldn't find it: A ⊆ B → Aᶜ ∩ B = B\A
 lemma comp_nbhd_int_supp_eq_sdiff (v : α) :(G.neighbor_finset v)ᶜ ∩  G.fsupport = G.fsupport \(G.neighbor_finset v):=
 begin
@@ -318,12 +320,43 @@ begin
   rw [← degree, hm], intros x hx, exact G.degree_le_max_degree x,
 end
 
-
----
+--the essential bound for Furedi's result 
+---e(G) + e(G[Γ(v)ᶜ]) ≤ (G.fsupport.card - Δ(G))*Δ(G) + e(G[Γ(v)]) 
 lemma edge_bound_max_deg {v : α} {A : finset α} (hm: G.degree v= G.max_degree) (hA: A=(G.neighbor_finset v)ᶜ) :
- G.edge_finset.card + (G.ind A).edge_finset.card ≤   (G.fsupport.card - G.max_degree)*G.max_degree +(G.ind Aᶜ).edge_finset.card:=
+ G.edge_finset.card + (G.ind A).edge_finset.card ≤ 
+ (G.fsupport.card - G.max_degree)*G.max_degree + (G.ind Aᶜ).edge_finset.card:=
 begin
   rw ← G.edges_split_induced A, have:=G.sum_deg_ind_max_nbhd hm hA, linarith,
+end
+
+-- any t+2 clique of an induced graph is a subset of the induced set
+lemma clique_ind_sub_ind {A S : finset α} (h: 2 ≤ t): (G.ind A).is_n_clique t S → S ⊆ A:=
+begin
+  intros h1 a ha, exact G.mem_ind_fsupport (((G.ind A).clique_sub_fsupport h h1) ha),
+end
+
+
+-- if we have a t-clique and insert a common neighbor then obtain at (t+1)-clique
+lemma clique_insert_nbhr {t : ℕ} {S :finset α} {v : α} (hc: G.is_n_clique t S) (hd: S ⊆ G.neighbor_finset v) :
+ G.is_n_clique (t+1) (insert v S):=
+begin
+   rw is_n_clique_iff at *, cases hc with hs ht, rw ←  ht, have:=G.not_mem_nbhd v,
+   have vnin:v∉S:=by  apply set.not_mem_subset hd this, rw is_clique_iff at *,
+   refine ⟨_,card_insert_of_not_mem vnin⟩, 
+   have hn: ∀ b ∈S,  v ≠ b → G.adj v b ∧ G.adj b v,{
+    intros b hb hj, rw G.adj_comm b v, rw ← mem_neighbor_finset, exact ⟨hd hb,hd hb⟩},
+   rw coe_insert, exact set.pairwise.insert hs hn, 
+end
+
+
+-- if G is K_{t+3}-free then any nbhd induces a K_{t+2}-free graph
+lemma clique_free_nbhd_ind {t : ℕ} (v : α) : G.clique_free (t+3) →  (G.ind (G.neighbor_finset v)).clique_free (t+2):=
+begin
+  contrapose, unfold clique_free, push_neg, rintro ⟨S,hs⟩, use (insert v S),
+  have :=G.clique_ind_sub_ind (by linarith) hs,
+  have ht:=is_clique.mono (G.ind_sub (G.neighbor_finset v)) hs.1,  
+  have :=G.clique_insert_nbhr (⟨ht,hs.2⟩) this, 
+  rwa [(by norm_num: 3=2+1),← add_assoc],
 end
 
 
