@@ -29,10 +29,16 @@ begin
 end
 
 -- graphs (on same vertex set) are equal iff edge_finsets are equal
-lemma eq_iff_edges_eq   : G=H ↔ G.edge_finset = H.edge_finset:= 
+lemma eq_iff_edges_eq   : G = H ↔ G.edge_finset = H.edge_finset:= 
 begin
   split, {intro eq, exact subset_antisymm (subgraph_edge_subset.mp (le_of_eq eq)) (subgraph_edge_subset.mp (le_of_eq eq.symm))},
   {intro eq, exact le_antisymm (subgraph_edge_subset.mpr (subset_of_eq eq)) (subgraph_edge_subset.mpr (subset_of_eq eq.symm))},  
+end
+
+-- if G=H (finite) graph they have the same number of edges..
+lemma eq_imp_edges_card_eq   : G=H → G.edge_finset.card = H.edge_finset.card:= 
+begin intro h,
+  rwa eq_iff_edges_eq.mp h,  
 end
 
 -- a subgraph of the same size or larger is the same graph (... everything is finite)

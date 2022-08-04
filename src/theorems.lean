@@ -74,11 +74,11 @@ end
 -- 3) the multipartite induced graph G ⊓ (mp M) may not be complete 
 -- Clearly for equality in Furedi-Turan hybrid ie LHS of Furedi with RHS of Turan
 -- need M is a balanced partition and G is multipartite (ie no internal edges)
--- could then prove in this case G ≤ (mp M) = T and hence G = T for equality.   
+-- can then prove in this case G ≤ (mp M) = T and hence G = T for equality.   
 
 
 
---now deduce case of equality in Turan's theorem
+--Now deduce case of equality in Turan's theorem
 theorem turan_equality :  G.clique_free (t+2) ∧ G.edge_finset.card = turan_numb t (fintype.card α)
  ↔  ∃ M:multi_part α, M.t=t ∧ M.A=univ ∧ turan_partition M ∧ G = mp M:=
 begin
@@ -94,11 +94,9 @@ begin
   { intro h, obtain ⟨M,ht,hu,iM,hG⟩:=h, 
     have hc:=mp_clique_free M ht hu,
     have ieq:=turan_imm_imp_eq M hu ht iM,  rw ← hG at hc, 
-    refine ⟨hc,_⟩,
+    refine ⟨hc,_⟩, 
 --    rw ← hG at ieq, ---TO DO: figure out why this rewrite of "G = mp M" doesn't work ... "motive is not type correct"
-    have h2:=eq_iff_edges_eq.mp hG, 
-    have : G.edge_finset.card= (mp M).edge_finset.card, {congr, exact h2}, 
-    rwa ieq at this},
+    rw ← ieq, exact eq_imp_edges_card_eq hG}
 end
 
 -- The usual version of Furedi's stability theorem says:
