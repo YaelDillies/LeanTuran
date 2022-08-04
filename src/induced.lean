@@ -351,6 +351,7 @@ end
 
 -- Now the other key lemma for Furedi's result:
 -- If G is K_{t+3}-free then any nbhd induces a K_{t+2}-free graph
+-- (Could replace t by t-1 below, since G K_2 free → nbhds all empty → graphs induced by nbhds empty → they are K_1 -free )
 lemma clique_free_nbhd_ind {t : ℕ} {v : α} : G.clique_free (t+3) →  (G.ind (G.neighbor_finset v)).clique_free (t+2):=
 begin
   contrapose, unfold clique_free, push_neg, rintro ⟨S,hs⟩, use (insert v S),
