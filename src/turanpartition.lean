@@ -487,6 +487,7 @@ end
 --  but it didn't complain about "(M.P i).erase v"
 --- Error message :'insert' is not a valid "field" because environment does not contain 
 -- 'finset.insert' M.P j which has type finset α
+--- This is due to the "insert" defined for multi_part α above that clashes, and somehow finset.insert doesn't work 
 def move (M : multi_part α) {v : α} {i j: ℕ} (hvi: i∈ range(M.t+1) ∧ v∈ M.P i) (hj : j∈range(M.t+1) ∧ j≠i) : multi_part α :={
   t:=M.t,
   P:= begin intros k, exact ite (k ≠ i ∧ k ≠ j) (M.P k) (ite (k = i) ((M.P i).erase v) ((M.P j) ∪ {v})),end,
