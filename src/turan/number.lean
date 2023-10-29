@@ -15,7 +15,7 @@ Turan's theorem says that this is the number of edges in a balanced complete t-p
 open finset nat
 open_locale big_operators
 
-namespace turanpartition
+namespace turan
 
 --classical Turan numbers
 def turan_num : ℕ → ℕ → ℕ :=
@@ -342,4 +342,4 @@ variables {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : finset α}
 --   exact nat.add_lt_add ab nba
 -- end
 
-end turanpartition
+end turan

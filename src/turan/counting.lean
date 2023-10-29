@@ -1,7 +1,8 @@
-import mathlib.combinatorics.simple_graph.clique
-import induced
+import mathlib.combinatorics.simple_graph.degree
+import turan.number
+import turan.induced
 
-open finset nat turanpartition
+open finset nat turan
 open_locale big_operators
 
 namespace simple_graph
@@ -12,31 +13,33 @@ variables {α : Type*} (G H : simple_graph α)[fintype α][nonempty α][decidabl
 ---for any (t+2)-clique free set there is a partition into B, a t-clique free set and A\B
 -- such that e(A)+e(A\B) ≤ e(B) + |B|(|A|-|B|)
 lemma fueredi_help : ∀A:finset α, G.clique_free_on A (t+2) → ∃B:finset α, B ⊆ A ∧ G.clique_free_on B t ∧
-∑v in A, G.deg_on A v + ∑ v in (A\B), G.deg_on v (A\B) ≤ ∑ v in B, G.deg_on v B + 2*B.card * (A\B).card:=
+∑v in A, G.deg_on A v + ∑ v in (A\B), G.deg_on (A\B) v ≤ ∑ v in B, G.deg_on B v + 2*B.card * (A\B).card:=
 begin
-  cases nat.eq_zero_or_pos t with ht,{
-  intros A hA,rw ht at *, rw zero_add at *,
------ t = 0 need to check that ∅ is not a 1-clique.
-  refine ⟨∅,⟨empty_subset A,(G.clique_free_empty (by norm_num: 0 <1)),_⟩⟩,
-  rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,G.two_clique_free_sum hA]},{
+  obtain rfl | ht := t.eq_zero_or_pos,
+  { intros A hA,
+    rw zero_add at *,
+  ----- t = 0 need to check that ∅ is not a 1-clique.
+    refine ⟨∅, empty_subset A, (G.clique_free_on_empty.2 (by norm_num: 0 <1)),_⟩,
+    rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,G.two_clique_free_sum hA]},
 ----- 0 < t case
-  intros A hA, by_cases hnem: A.nonempty,{
-    obtain ⟨x,hxA,hxM⟩:=G.exists_max_res_deg_vertex hnem, -- get a vert x of max res deg in A
-    set hBA:= (G.sub_res_nbhd_A x A),
-    set B:=(A ∩ G.neighbor_finset x) with hB,-- Let B be the res nbhd of the vertex x of max deg_A
-    refine ⟨B, ⟨hBA,(G.t_clique_free hA hxA),_⟩⟩,
-    rw [G.deg_on_add_sum hBA, G.sum_sdf hBA B, add_assoc],
-    rw [G.sum_sdf hBA (A\B),G.sum_deg_on_comm hBA,← G.deg_on_add_sum hBA ],
-    rw ← hB, rw ← add_assoc, ring_nf,
-    apply add_le_add_left _ (∑ v in B, G.deg_on v B ),
-    rw add_comm, rw add_assoc, nth_rewrite 1 add_comm,
-    rw ← G.deg_on_add_sum hBA, ring_nf,rw mul_assoc,
-    refine mul_le_mul' (by norm_num) _,
-    apply le_trans (G.max_deg_on_sum_le (sdiff_subset A B)) _,
-    rw [hxM,deg_on],},
-    {rw not_nonempty_iff_eq_empty at hnem,
+  intros A hA,
+  obtain rfl | hnem := A.eq_empty_or_nonempty,
+  { rw not_nonempty_iff_eq_empty at hnem,
     refine ⟨∅,⟨empty_subset A,(G.clique_free_empty (by norm_num: 0 <t)),_⟩⟩,
-    rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,hnem,sum_empty],}},
+    rw [sdiff_empty, card_empty, mul_zero,zero_mul, sum_empty, zero_add,hnem,sum_empty] },
+  obtain ⟨x,hxA,hxM⟩:=G.exists_max_res_deg_vertex hnem, -- get a vert x of max res deg in A
+  set hBA:= (G.sub_res_nbhd_A x A),
+  set B:=(A ∩ G.neighbor_finset x) with hB,-- Let B be the res nbhd of the vertex x of max deg_A
+  refine ⟨B, ⟨hBA,(G.t_clique_free hA hxA),_⟩⟩,
+  rw [G.deg_on_add_sum hBA, G.sum_sdf hBA B, add_assoc],
+  rw [G.sum_sdf hBA (A\B),G.sum_deg_on_comm hBA,← G.deg_on_add_sum hBA ],
+  rw ← hB, rw ← add_assoc, ring_nf,
+  apply add_le_add_left _ (∑ v in B, G.deg_on v B ),
+  rw add_comm, rw add_assoc, nth_rewrite 1 add_comm,
+  rw ← G.deg_on_add_sum hBA, ring_nf,rw mul_assoc,
+  refine mul_le_mul' (by norm_num) _,
+  apply le_trans (G.max_deg_on_sum_le (sdiff_subset A B)) _,
+  rw [hxM,deg_on],
 end
 
 -- Putting together the deg counts of G induced on a larger partition (M with C inserted).

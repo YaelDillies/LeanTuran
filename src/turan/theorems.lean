@@ -1,4 +1,4 @@
-import counting
+import turan.counting
 
 /-!
 # Füredi stability result (no counting)
@@ -29,7 +29,7 @@ end
 If G is K_{t+2}-free and is close to extremal in size then G is close to t-partite.
 -/
 
-open finset nat turanpartition
+open finset nat turan
 open_locale big_operators
 
 namespace simple_graph
