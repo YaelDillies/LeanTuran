@@ -13,6 +13,13 @@ section ordered_ring
 variables [ordered_ring 𝕜] [add_comm_group E] [module 𝕜 E]
   {K K₁ K₂ : simplicial_complex 𝕜 E} {x y : E} {s t : finset E} {A : set (finset E)} {m n : ℕ}
 
+-- TODO: Rename `faces` to `carrier`
+instance : set_like (simplicial_complex 𝕜 E) (finset E) :=
+{ coe := faces,
+  coe_injective' := λ K₁ K₂ hK, by cases K₁; cases K₂; congr' }
+
+attribute [simp] faces_bot space_bot facets_bot
+
 protected lemma nonempty (K : simplicial_complex 𝕜 E) (hs : s ∈ K) : s.nonempty :=
 nonempty_of_ne_empty $ ne_of_mem_of_not_mem hs K.not_empty_mem
 
@@ -22,10 +29,31 @@ protected lemma down_closed' (K : simplicial_complex 𝕜 E) (hs : s ∈ K.faces
 
 @[simp] lemma mem_faces_iff (K : simplicial_complex 𝕜 E) : s ∈ K.faces ↔ s ∈ K := iff.rfl
 
+@[simp] lemma not_mem_bot : s ∉ (⊥ : simplicial_complex 𝕜 E) := by simp [←mem_faces_iff]
+
 lemma le_def : K₁ ≤ K₂ ↔ K₁.faces ⊆ K₂.faces := iff.rfl
 
 lemma eq_bot_of_forall_not_mem (K : simplicial_complex 𝕜 E) (h : ∀ s, s ∉ K) : K = ⊥ :=
 by { ext s, exact iff_of_false (h s) id }
+
+@[simp] lemma space_eq_empty : K.space = ∅ ↔ K = ⊥ :=
+begin
+  simp only [set.eq_empty_iff_forall_not_mem, mem_space_iff, ext_iff, @forall_swap E, mem_faces_iff,
+    exists_prop, not_exists, not_and, faces_bot],
+  refine ⟨λ h s hs, (K.nonempty hs).ne_empty _, λ h s x hs hx, h _ hs⟩,
+  simpa [←set.eq_empty_iff_forall_not_mem] using forall_swap.1 (h s) hs,
+end
+
+@[simp] lemma space_nonempty : K.space.nonempty ↔ K ≠ ⊥ :=
+set.nonempty_iff_ne_empty.trans space_eq_empty.not
+
+@[simp, norm_cast] lemma coe_eq_empty : (K : set (finset E)) = ∅ ↔ K = ⊥ :=
+by simp [set.eq_empty_iff_forall_not_mem, ext_iff]
+
+@[simp, norm_cast] lemma coe_nonempty : (K : set (finset E)).nonempty ↔ K ≠ ⊥ :=
+set.nonempty_iff_ne_empty.trans coe_eq_empty.not
+
+@[simp] lemma faces_eq_coe : K.faces = K := rfl
 
 lemma facets_singleton (hK : K.faces = {s}) : K.facets = {s} :=
 begin

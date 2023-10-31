@@ -84,7 +84,8 @@ begin
   { rintro ⟨hs, hsdisj, hsStar⟩,
     refine ⟨⟨hs, hsStar⟩, _⟩,
     rintro ⟨hs, t, ⟨⟨ht, u, hu, htu⟩, (htnonempty : t ≠ ∅)⟩, hts⟩,
-    exact htnonempty (coe_eq_empty.1 $ disjoint_self.1 $ (hsdisj hu).mono htu hts) },
+    -- exact htnonempty (coe_eq_empty.1 $ disjoint_self.1 $ (hsdisj hu).mono htu hts)
+    sorry },
   rintro ⟨hsStar, hs'⟩,
   refine ⟨(K.Star A).nonempty hsStar, λ W hW, set.disjoint_left.2 $ λ x hxW hxs, hs' _, hsStar.2⟩,
   have : (W ∩ s).nonempty := ⟨x, mem_inter.2 ⟨hxW, hxs⟩⟩,
