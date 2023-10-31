@@ -4,6 +4,9 @@ variables {α : Type*} [decidable_eq α] {s t : finset α} {a : α}
 
 namespace finset
 
+alias attach_nonempty_iff ↔ _ nonempty.attach
+attribute [protected] nonempty.attach
+
 lemma disjoint_insert_erase (ha : a ∉ t) : disjoint (s.erase a) (insert a t) ↔ disjoint s t :=
 by rw [disjoint_erase_comm, erase_insert ha]
 

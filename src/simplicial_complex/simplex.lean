@@ -6,8 +6,8 @@ Authors: Yaël Dillies, Bhavik Mehta
 import analysis.convex.topology
 import linear_algebra.finite_dimensional
 import order.filter.archimedean
+import mathlib.analysis.convex.extreme
 import mathlib.linear_algebra.affine_space.independent
-import simplicial_complex.extreme
 
 /-!
 # Definitions and lemmas about individual simplices

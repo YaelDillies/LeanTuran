@@ -5,7 +5,7 @@ Authors: Yaël Dillies, thavik Mehta
 -/
 import analysis.convex.exposed
 import analysis.normed_space.hahn_banach.separation
-import combinatorics.simplicial_complex.extreme
+import mathlib.analysis.convex.extreme
 
 /-!
 # Exposed sets
@@ -14,7 +14,7 @@ import combinatorics.simplicial_complex.extreme
 open_locale affine big_operators classical
 open set
 --TODO: Generalise to LCTVS
-variables {E : Type*} [normed_group E] [normed_space ℝ E] {x : E} {s t C : set E}
+variables {E : Type*} [normed_add_comm_group E] [normed_space ℝ E] {x : E} {s t C : set E}
   {X : finset E} {l : E →L[ℝ] ℝ}
 
 namespace is_exposed

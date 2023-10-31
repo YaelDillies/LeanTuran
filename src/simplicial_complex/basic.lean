@@ -110,47 +110,13 @@ begin
     rwa combi_interior_empty at hxu }
 end
 
-noncomputable def dim (K : simplicial_complex 𝕜 E) : ℕ := sorry
+def dim (K : simplicial_complex 𝕜 E) : ℕ := sorry
 
 end ordered_ring
 
 section linear_ordered_field
 variables [linear_ordered_field 𝕜] [add_comm_group E] [module 𝕜 E]
   {K : simplicial_complex 𝕜 E} {x y : E} {s t : finset E} {A : set (finset E)} {m n : ℕ}
-
-/-- A constructor for simplicial complexes by specifying a set of faces to close downward. -/
-@[simps] def of_set_closure
-  (indep : ∀ {s : finset E}, s ∈ A → affine_independent 𝕜 (coe : (s : set E) → E))
-  (inter_subset_convex_hull : ∀ {s t}, s ∈ A → t ∈ A →
-    convex_hull 𝕜 ↑s ∩ convex_hull 𝕜 ↑t ⊆ convex_hull 𝕜 (s ∩ t : set E)) :
-  simplicial_complex 𝕜 E :=
-{ faces := {s | s.nonempty ∧ ∃ t, t ∈ A ∧ s ⊆ t},
-  indep := λ s ⟨hs, t, ht, hst⟩, (indep ht).mono hst,
-  down_closed := λ s t ⟨hs, u, hu, hsu⟩ hts ht, ⟨nonempty_iff_ne_empty.2 ht, u, hu, hts.trans hsu⟩,
-  inter_subset_convex_hull :=
-  begin
-    rintro v s ⟨hv, t, ht, hvt⟩ ⟨hs, u, hu, hsu⟩ x ⟨hxv, hxs⟩,
-    have hxtu : x ∈ convex_hull 𝕜 (t ∩ u : set E) :=
-      inter_subset_convex_hull ht hu ⟨convex_hull_mono hvt hxv, convex_hull_mono hsu hxs⟩,
-    have hxvu : x ∈ convex_hull 𝕜 (v ∩ u : set E),
-    { have := affine_independent.subset_convex_hull_inter (indep ht) hvt (inter_subset_left t u),
-      norm_cast at this hxtu,
-      exact_mod_cast convex_hull_mono
-        (inter_subset_inter_left $ inter_subset_right t u) (this ⟨hxv, hxtu⟩) },
-    have hxts : x ∈ convex_hull 𝕜 (t ∩ s : set E),
-    { have := affine_independent.subset_convex_hull_inter (indep hu) (inter_subset_right t u) hsu,
-      norm_cast at this hxtu,
-      exact_mod_cast convex_hull_mono
-        (inter_subset_inter_right $ inter_subset_left t u) (this ⟨hxtu, hxs⟩) },
-    norm_cast at hxvu hxts,
-    have hxvs := affine_independent.subset_convex_hull_inter (indep ht)
-      ((inter_subset_inter_right hvt).trans $ inter_subset_left t u)
-      (inter_subset_left t s) ⟨hxvu, hxts⟩,
-    norm_cast at hxvs,
-    exact_mod_cast convex_hull_mono ((inter_subset_inter_right $ inter_subset_left v u).trans $
-      inter_subset_inter_left $ inter_subset_right t s) hxvs,
-  end,
-  not_empty_mem := λ h, h.1.ne_empty rfl }
 
 variables {𝕜 E}
 
