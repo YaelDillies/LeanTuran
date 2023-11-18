@@ -8,13 +8,14 @@ open finset nat
 open_locale big_operators
 
 namespace simple_graph
-variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : finset α} {P : finpartition A}
+variables {t : ℕ} {α : Type*} [fintype α] [nonempty α] [decidable_eq α] {A : finset α}
+  {P : finpartition A} {P : finpartition (univ : finset α)}
 
 -- given a t partition on A form the complete multi-partite graph on A
 -- with all edges present between different parts in M.A and no edges involving vertices outside A or inside any part of A
 
 -- --any vertex in α but not in A is isolated
--- lemma no_nbhrs {P : finpartition A} {v w: α} (hA: v∉M.A) : ¬(mp M).adj v w:=
+-- lemma no_nbhrs {P : finpartition A} {v w: α} (hA: v∉M.A) : ¬(M.multipartite_graph).adj v w:=
 -- begin
 --   contrapose! hA,
 --   obtain ⟨i,hi,j,hj,ne,hv⟩:=hA, cases hv, {exact (sub_part hi) hv.1},
@@ -22,14 +23,14 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- -- having any neighbour implies the vertex is in A
--- lemma nbhrs_imp {P : finpartition A} {v w: α} : (mp M).adj v w → v ∈ M.A:=
+-- lemma nbhrs_imp {P : finpartition A} {v w: α} : (M.multipartite_graph).adj v w → v ∈ M.A:=
 -- begin
 --   intros h1, by_contra, exact no_nbhrs h h1,
 -- end
 
 -- -- if v in P i  and w in A\(P i) then vw is an edge
 -- lemma nbhr_diff_parts {P : finpartition A} {v w: α} {i : ℕ} (hi : i∈ range(M.t)) (hv: v∈ M.P i) (hw : w∈ M.A\M.P i)
---  : (mp M).adj v w:=
+--  : (M.multipartite_graph).adj v w:=
 -- begin
 --   rw mem_sdiff at hw,
 --   cases hw with hA hni,
@@ -39,30 +40,30 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- --if v is in P i then its nbhd is A\(P i)
--- lemma mp_nbhd {P : finpartition A} {v:α} {i: ℕ} (hv: i∈ range(M.t) ∧ v ∈ M.P i) : (mp M).neighbor_finset v = (M.A)\(M.P i) :=
+-- lemma mp_nbhd {P : finpartition A} {v:α} {i: ℕ} (hv: i∈ range(M.t) ∧ v ∈ M.P i) : (M.multipartite_graph).neighbor_finset v = (M.A)\(M.P i) :=
 -- begin
 --   ext,split,{rw mem_neighbor_finset,intro h, rw adj_comm at h,
 --   rw mem_sdiff, refine  ⟨nbhrs_imp h,_⟩, exact not_nbhr_same_part hv.1 hv.2 h.symm},
 --   {rw mem_neighbor_finset, exact nbhr_diff_parts hv.1 hv.2},
 -- end
 
--- -- degree sum over all vertices i.e. 2*e(mp M)
--- def mp_dsum (P : finpartition A) : ℕ:= ∑ v in M.A, (mp M).degree v
+-- -- degree sum over all vertices i.e. 2*e(M.multipartite_graph)
+-- def mp_dsum (P : finpartition A) : ℕ:= ∑ v in M.A, (M.multipartite_graph).degree v
 
 -- -- degree of vertex in P i is card(A\P i)
--- lemma mp_deg {P : finpartition A} {v : α} {i: ℕ} (hv: i∈ range(M.t) ∧ v∈ M.P i) : (mp M).degree v = ((M.A)\(M.P i)).card:=
+-- lemma mp_deg {P : finpartition A} {v : α} {i: ℕ} (hv: i∈ range(M.t) ∧ v∈ M.P i) : (M.multipartite_graph).degree v = ((M.A)\(M.P i)).card:=
 -- begin
 --   rw degree,rwa mp_nbhd hv,
 -- end
 
 -- -- degree of v in P i as |A|- |P i|
--- lemma mp_deg_diff {P : finpartition A} {v : α} {i: ℕ} (hv: i∈ range(M.t) ∧ v∈ M.P i) : (mp M).degree v = M.A.card -  (M.P i).card:=
+-- lemma mp_deg_diff {P : finpartition A} {v : α} {i: ℕ} (hv: i∈ range(M.t) ∧ v∈ M.P i) : (M.multipartite_graph).degree v = M.A.card -  (M.P i).card:=
 -- begin
 --   rw mp_deg hv, exact card_sdiff (sub_part hv.1),
 -- end
 
 -- -- sum of degrees as sum over parts
--- lemma mp_deg_sum (P : finpartition A) : ∑ v in M.A, (mp M).degree v = ∑i in range(M.t),(M.P i).card * ((M.A)\(M.P i)).card :=
+-- lemma mp_deg_sum (P : finpartition A) : ∑ v in M.A, (M.multipartite_graph).degree v = ∑i in range(M.t),(M.P i).card * ((M.A)\(M.P i)).card :=
 -- begin
 --   nth_rewrite 0 M.uni,
 --   rw sum_bUnion (pair_disjoint M), apply finset.sum_congr rfl _,
@@ -71,7 +72,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- --- same using squares of part sizes and avoiding the cursed tsubtraction
--- lemma mp_deg_sum_sq' (P : finpartition A) : ∑ v in M.A, (mp M).degree v + ∑i in range(M.t), (M.P i).card^2 = M.A.card^2:=
+-- lemma mp_deg_sum_sq' (P : finpartition A) : ∑ v in M.A, (M.multipartite_graph).degree v + ∑i in range(M.t), (M.P i).card^2 = M.A.card^2:=
 -- begin
 --   rw mp_deg_sum M, rw pow_two, nth_rewrite 0 card_uni, rw ← sum_add_distrib, rw sum_mul,
 --   refine finset.sum_congr rfl _,
@@ -79,7 +80,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- -- expressed  as |A|^2- ∑ degrees squared
--- lemma mp_deg_sum_sq (P : finpartition A) : ∑ v in M.A, (mp M).degree v = M.A.card^2 - ∑i in range(M.t), (M.P i).card^2
+-- lemma mp_deg_sum_sq (P : finpartition A) : ∑ v in M.A, (M.multipartite_graph).degree v = M.A.card^2 - ∑i in range(M.t), (M.P i).card^2
 -- :=eq_tsub_of_add_eq (mp_deg_sum_sq' M)
 
 -- -- turan_partition partition corresponds to balanced partition sizes so if we have two turan_partition partitions
@@ -115,7 +116,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- -- given a vertex v ∈ P i and a part P j such that card(P j)+1 < card(P i) then moving v from Pi to Pj will increase the sum of degrees
 -- -- putting the two previous lemmas together tells us that the move has increased the degree sum
 -- lemma mp_deg_sum_move {P : finpartition A} {v : α} {i j: ℕ}  (hvi: i∈ range(M.t) ∧ v ∈ M.P i) (hj : j∈range(M.t) ∧ j≠i) (hc: (M.P j).card+1<(M.P i).card ) :
--- ∑ w in M.A,  (mp M).degree w < ∑ w in (move M hvi hj).A,  (mp (move M hvi hj)).degree w :=
+-- ∑ w in M.A,  (M.multipartite_graph).degree w < ∑ w in (move M hvi hj).A,  (mp (move M hvi hj)).degree w :=
 -- begin
 --   rw [mp_deg_sum M,mp_deg_sum (move M hvi hj), (move_t hvi hj)],
 --   rw [← sum_erase_add (range(M.t)) _ hj.1,← sum_erase_add (range(M.t)) _ hj.1],
@@ -173,7 +174,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- -- so if we have a partition of α then the number of edges is at most the turan number
--- lemma turan_max_edges (P : finpartition A): M.A=univ → (mp M).edge_finset.card ≤ turan_num M.t (fintype.card α):=
+-- lemma turan_max_edges (P : finpartition A): M.A=univ → (M.multipartite_graph).edge_finset.card ≤ turan_num M.t (fintype.card α):=
 -- begin
 --   intro hA, apply (mul_le_mul_left (by norm_num:0<2)).mp,
 --   rw ← sum_degrees_eq_twice_card_edges, have:=turan_bound_M M,  unfold mp_dsum at this,rw hA at this,
@@ -181,7 +182,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- -- Now reformulate our bound to say that any complete multipartite graph on α that attains the turan bound is a turan_partition
--- lemma turan_eq_imp (P : finpartition A) (hu: M.A=univ):  (mp M).edge_finset.card = turan_num M.t (fintype.card α) → P.is_equipartition:=
+-- lemma turan_eq_imp (P : finpartition A) (hu: M.A=univ):  (M.multipartite_graph).edge_finset.card = turan_num M.t (fintype.card α) → P.is_equipartition:=
 -- begin
 --   intros h, contrapose h, apply ne_of_lt, obtain ⟨N,NA,Nt,iN,le⟩:= moved M,
 --   apply (mul_lt_mul_left (by norm_num:0<2)).mp, rw ←sum_degrees_eq_twice_card_edges,
@@ -191,7 +192,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- -- finally need to verify that any turan partition does indeed attain the upper bound
--- lemma turan_imm_imp_eq (P : finpartition A) {t :ℕ} (hu: M.A=univ) (ht :M.t=t): P.is_equipartition → (mp M).edge_finset.card = turan_num t (fintype.card α) :=
+-- lemma turan_imm_imp_eq (P : finpartition A) {t :ℕ} (hu: M.A=univ) (ht :M.t=t): P.is_equipartition → (M.multipartite_graph).edge_finset.card = turan_num t (fintype.card α) :=
 -- begin
 --   rw turan_partition_iff_not_moveable, unfold ¬ P.is_equipartition, rw not_not,
 --   intros iM,  apply (nat.mul_right_inj (by norm_num:0<2)).mp, rw [←sum_degrees_eq_twice_card_edges, ←hu, ←ht],
@@ -220,7 +221,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 
 -- -- given two vertices in the old partition they are adjacent in the partition with
 -- -- C inserted iff they were already adjacent
--- lemma mp_old_adj (M :finpartition A) {C : finset α} {v w :α}(h: disjoint M.A C) : v∈ M.A → w ∈ M.A → ((mp M).adj v w ↔ (mp (insert M h)).adj v w):=
+-- lemma mp_old_adj (M :finpartition A) {C : finset α} {v w :α}(h: disjoint M.A C) : v∈ M.A → w ∈ M.A → ((M.multipartite_graph).adj v w ↔ (mp (insert M h)).adj v w):=
 -- begin
 --   intros hv hw,
 --   split,{intro hins, obtain⟨k,hkr,l,hlr,lnek,lkc⟩:=hins,
@@ -253,7 +254,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- -- previous lemma interpreted in terms of res nbhds
--- lemma mp_old_nbhd_res (M :finpartition A) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).nbhd_res v M.A=(mp M).nbhd_res v M.A:=
+-- lemma mp_old_nbhd_res (M :finpartition A) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).nbhd_res v M.A=(M.multipartite_graph).nbhd_res v M.A:=
 -- begin
 -- --  set H: simple_graph α:= (mp (insert M h)),
 --   intros v hv,ext,split,{intros ha, rw mem_res_nbhd at *,refine ⟨ha.1,_⟩,
@@ -263,13 +264,13 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- -- .. and in terms of deg res
--- lemma mp_old_deg_on (M :finpartition A) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_on v M.A=(mp M).deg_on v M.A:=
+-- lemma mp_old_deg_on (M :finpartition A) {C : finset α} (h: disjoint M.A C) :∀v∈M.A, (mp (insert M h)).deg_on v M.A=(M.multipartite_graph).deg_on v M.A:=
 -- begin
 --   intros v hv, rw deg_on,rw deg_on,  rw mp_old_nbhd_res M h v hv,
 -- end
 
 -- -- so sum of deg res to old partition over old partition is unchanged
--- lemma mp_old_sum (M :finpartition A) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_on v M.A= ∑ v in M.A,(mp M).deg_on v M.A
+-- lemma mp_old_sum (M :finpartition A) {C : finset α} (h: disjoint M.A C) :∑ v in M.A, (mp (insert M h)).deg_on v M.A= ∑ v in M.A,(M.multipartite_graph).deg_on v M.A
 -- :=sum_congr rfl (mp_old_deg_on M h)
 
 -- -- vertices in the new part are not adjacent to each other
@@ -299,7 +300,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- --- if we add in a new part C then the sum of degrees over new vertex set
 -- --  is sum over old + 2 edges in bipartite join
 -- -- ie 2*e(M')=2*e(M)+2*e(M,C)
--- lemma mp_count (P : finpartition A) {C :finset α} (h: disjoint M.A C) :∑v in M.A, (mp M).deg_on v M.A +2*(M.A.card)*C.card =
+-- lemma mp_count (P : finpartition A) {C :finset α} (h: disjoint M.A C) :∑v in M.A, (M.multipartite_graph).deg_on v M.A +2*(M.A.card)*C.card =
 -- ∑ v in (insert M h).A, (mp (insert M h)).deg_on v (insert M h).A:=
 -- begin
 --   set H: simple_graph α:= (mp (insert M h)),
@@ -310,7 +311,7 @@ variables {t : ℕ} {α : Type*}[fintype α][nonempty α][decidable_eq α] {A : 
 -- end
 
 -- --- Any complete t-partite graph is (t+2)-clique free.
--- lemma mp_clique_free (P : finpartition A): M.t=t → M.A=univ →  (mp M).clique_free (t+2):=
+-- lemma mp_clique_free (P : finpartition A): M.t=t → M.A=univ →  (M.multipartite_graph).clique_free (t+2):=
 -- begin
 --   intros ht hA, by_contra, unfold clique_free at h, push_neg at h,
 --   obtain ⟨S,hs1,hs2⟩:=h, rw is_clique_iff at hs1,

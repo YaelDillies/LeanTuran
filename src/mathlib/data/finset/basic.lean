@@ -7,6 +7,9 @@ namespace finset
 alias attach_nonempty_iff ↔ _ nonempty.attach
 attribute [protected] nonempty.attach
 
+lemma insert_comm (a b : α) (s : finset α) : insert a (insert b s) = insert b (insert a s) :=
+coe_injective $ by { push_cast, exact set.insert_comm _ _ _ }
+
 lemma disjoint_insert_erase (ha : a ∉ t) : disjoint (s.erase a) (insert a t) ↔ disjoint s t :=
 by rw [disjoint_erase_comm, erase_insert ha]
 

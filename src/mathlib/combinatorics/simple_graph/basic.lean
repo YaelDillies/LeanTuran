@@ -7,7 +7,7 @@ experience of lean)
 
 open set
 
-variables {α β : Type*} {G H : simple_graph α} {s t : set α} {a b : α}
+variables {α β V : Type*} {G H : simple_graph α} {s t : set α} {a b : α}
 
 namespace simple_graph
 
@@ -26,6 +26,13 @@ by rw [finset.nonempty_iff_ne_empty, edge_finset_eq_empty.ne]
 
 @[simp] lemma delete_edges_edge_set (G H : simple_graph α) : G.delete_edges H.edge_set = G \ H :=
 rfl
+
+@[simp] lemma edge_set_top : (⊤ : simple_graph V).edge_set = {e : sym2 V | ¬ e.is_diag} :=
+by ext x; induction x using sym2.ind; simp
+
+@[simp] lemma edge_finset_top [fintype V] [decidable_eq V] [fintype (⊤ : simple_graph V).edge_set] :
+  (⊤ : simple_graph V).edge_finset = finset.univ.filter (λ e, ¬ e.is_diag) :=
+by ext x; induction x using sym2.ind; simp
 
 section ind
 
