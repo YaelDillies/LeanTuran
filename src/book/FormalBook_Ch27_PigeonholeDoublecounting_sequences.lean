@@ -14,7 +14,7 @@ import tactic
 # Pigeon-hole and double counting : Sequences
 
 This file is part of a Master thesis project of formalizing some proofs from
-"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler. 
+"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler.
 
 We refer to chapter 27: "Pigeon-hole and double counting".
 In this file, we formalize the section "Sequences".
@@ -22,7 +22,7 @@ In this file, we formalize the section "Sequences".
 
 ## Structure
 
-- `claim` :
+- `erdos_szekeres` :
       In any sequence `a` of `m*n + 1` distinct real numbers,
       there exists an increasing subsequence of length m + 1,
       or a decreasing subsequence of length n + 1, or both.
@@ -41,7 +41,7 @@ open finset
 /--
 For a sequence `a` and an index `s`, the property `is_increasing_subseq I a s`
 says that `I` is a set of indices containing `s`, and on which `a` is
-increasing for increasing indices. 
+increasing for increasing indices.
 -/
 def is_increasing_subseq (I : finset ℕ) (a : ℕ → ℝ) (s : ℕ) : Prop :=
   (∀i∈I,∀j∈I, (i<j) → a i < a j) ∧ (∀j∈I, s≤j) ∧ (s∈I)
@@ -49,7 +49,7 @@ def is_increasing_subseq (I : finset ℕ) (a : ℕ → ℝ) (s : ℕ) : Prop :=
 /--
 For a sequence `a` and an index `s`, the property `is_decreasing_subseq I a s`
 says that `I` is a set of indices containing `s`, and on which `a` is
-decreasin for increasing indices. 
+decreasin for increasing indices.
 -/
 def is_decreasing_subseq (I : finset ℕ) (a : ℕ → ℝ) (s : ℕ) : Prop :=
   (∀i∈I,∀j∈I, (i<j) → a i > a j) ∧ (∀j∈I, s≤j) ∧ (s∈I)
@@ -94,10 +94,10 @@ begin
   rw jsin,
   apply mem_singleton_self,
   },
-end 
+end
 
 
-/-- 
+/--
 For a sequence `a` and an index set `I` acting as universe,
 for some `i∈I`, we consider the length of a longest increasing
 subsequence starting at `i`, made of indeces of `I` only.
@@ -125,7 +125,7 @@ lemma lisl_non_extendable
       (wlog : j<i):
       a j > a i
       :=
-begin 
+begin
   by_contra' con,
   replace con := (show a j < a i,
     by {apply lt_of_le_of_ne con,
@@ -186,7 +186,7 @@ begin
         },
   -- To derive a contradiction with the length of this new sequence,
   -- we bring it in form to be considered in the set of lengths we
-  -- took a maximum over. 
+  -- took a maximum over.
   have contra_pre :
     (insert j index_seq).card ∈ (range (I.card +1)).filter (λ t, (∃J⊆I, (J.card = t) ∧ (is_increasing_subseq J a j))):=
     by {rw mem_filter,
@@ -195,7 +195,7 @@ begin
          apply lt_of_le_of_lt (card_insert_le j index_seq),
          rw add_lt_add_iff_right,
          apply card_lt_card,
-         rw finset.ssubset_iff_subset_ne, 
+         rw finset.ssubset_iff_subset_ne,
          split,
          exact index_sub,
          by_contra C,
@@ -281,11 +281,11 @@ In any sequence `a` of `m*n + 1` distinct real numbers,
 there exists an increasing subsequence of length m + 1,
 or a decreasing subsequence of length n + 1, or both.
 -/
-theorem claim 
+theorem erdos_szekeres
         (n m : ℕ) (n_pos : 0 < n) (m_pos : 0 < m)
         (a : ℕ → ℝ) (distinct : ∀i∈(range (m*n + 1)), ∀j∈(range (m*n + 1)), i≠j →  a i ≠ a j)
         :
-        (∃i∈(range (m*n + 1)), ∃I⊆(range (m*n + 1)), (is_increasing_subseq I a i) ∧ (I.card ≥ m+1))  
+        (∃i∈(range (m*n + 1)), ∃I⊆(range (m*n + 1)), (is_increasing_subseq I a i) ∧ (I.card ≥ m+1))
         ∨ (∃i∈(range (m*n + 1)), ∃I⊆(range (m*n + 1)), (is_decreasing_subseq I a i) ∧ (I.card ≥ n+1))
         :=
 begin
@@ -347,7 +347,7 @@ begin
   split,
   {dsimp [is_decreasing_subseq],
    split,
-   {-- For `x < y`, if `a x < a y`, we could extend the longest increasing 
+   {-- For `x < y`, if `a x < a y`, we could extend the longest increasing
     -- subsequence starting at `x` by that of `y`, which would contradict
     -- maximality.
     intros x x_I y y_I xly,
@@ -358,7 +358,7 @@ begin
     rw mem_filter at *,
     dsimp [f] at x_I,
     dsimp [f] at y_I,
-    --rw (dif_pos x_I_1.1) at x_I_1, --plausible but makes 4 goals... 
+    --rw (dif_pos x_I_1.1) at x_I_1, --plausible but makes 4 goals...
     rw (show longest_incr_subseq_len (range (m * n + 1)) a y (tec_2 y_I) = j,
         by {cases y_I_1 with yIl yIr,
             rw (dif_pos yIl) at yIr,
@@ -385,7 +385,3 @@ begin
    exact ineq,
    },
 end
-
-
-
-

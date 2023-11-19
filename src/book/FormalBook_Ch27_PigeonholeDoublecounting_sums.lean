@@ -12,7 +12,7 @@ import tactic
 # Pigeon-hole and double counting : Sums
 
 This file is part of a Master thesis project of formalizing some proofs from
-"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler. 
+"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler.
 
 We refer to chapter 27: "Pigeon-hole and double counting".
 In this file, we formalize the section "Sums".
@@ -20,7 +20,7 @@ In this file, we formalize the section "Sums".
 
 ## Structure
 
-- `claim` :
+- `exists_subseq_sum_eq_zero` :
       Suppose we are given the n first terms of an integer
       sequence `a`, which need not be pairwise distinct.
       Then there is always a set of consecutive numbers
@@ -57,15 +57,13 @@ begin
   exact (n : ℤ).zero_mod,
 end
 
-#check disjoint
-
 open_locale big_operators
 
 /--
 A technical lemma for deleting the first terms of a sum
 indexed by `Icc`, all interms of `Icc`.
 -/
-lemma tec_sum 
+lemma tec_sum
   (a : ℕ → ℤ) (b c : ℕ) (h : b < c) :
   (∑ (i : ℕ) in Icc 1 c, a i) - (∑ (i : ℕ) in Icc 1 b, a i)
   = ∑ (i : ℕ) in Icc (b + 1) c, a i :=
@@ -115,9 +113,9 @@ Then there is always a set of consecutive numbers
 k+1,k+2,...,l in [0,n], whose sum of the corresponding
 terms of `a` is a multiple of n.
 -/
-lemma claim
+lemma exists_subseq_sum_eq_zero
   (n : ℕ) (hn : n ≠ 0) (a : ℕ → ℤ) :
-  ∃ k l, (k ∈ range (n+1)) ∧ (l ∈ range (n+1)) ∧ (k<l) ∧ 
+  ∃ k l, (k ∈ range (n+1)) ∧ (l ∈ range (n+1)) ∧ (k<l) ∧
   (n : ℤ) ∣ (∑ i in (Icc (k+1) l), a i ) :=
 begin
   -- The pigeonhole map and the conditions
@@ -147,7 +145,7 @@ begin
    split,
    exact blc,
    -- Some rewrites
-   have to_dvd: ((((Icc 1 c).sum a) - ((Icc 1 b).sum a)).nat_mod ↑n : ℤ) = 0 := 
+   have to_dvd: ((((Icc 1 c).sum a) - ((Icc 1 b).sum a)).nat_mod ↑n : ℤ) = 0 :=
      by {apply tec_mod n hn,
          exact fbfc.symm,
          },
@@ -178,7 +176,7 @@ begin
    split,
    exact blc,
    -- Some rewrites
-   have to_dvd: ((((Icc 1 b).sum a) - ((Icc 1 c).sum a)).nat_mod ↑n : ℤ) = 0 := 
+   have to_dvd: ((((Icc 1 b).sum a) - ((Icc 1 c).sum a)).nat_mod ↑n : ℤ) = 0 :=
      by {apply tec_mod n hn,
          exact fbfc,
          },
@@ -195,7 +193,3 @@ begin
    exact int.dvd_of_mod_eq_zero to_dvd,
   },
 end
-
-
-
-

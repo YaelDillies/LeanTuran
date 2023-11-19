@@ -9,7 +9,7 @@ open_locale big_operators
 
 namespace simple_graph
 variables {t : ℕ} {α : Type*} [fintype α] [nonempty α] [decidable_eq α] {A : finset α}
-  {P : finpartition A} {P : finpartition (univ : finset α)}
+  {P : finpartition A}
 
 -- given a t partition on A form the complete multi-partite graph on A
 -- with all edges present between different parts in M.A and no edges involving vertices outside A or inside any part of A
