@@ -11,7 +11,7 @@ import data.real.sqrt
 import algebra.big_operators.ring
 import combinatorics.double_counting
 import data.sym.card
-import combinatorics.simple_graph.acyclic 
+import combinatorics.simple_graph.acyclic
 import combinatorics.simple_graph.degree_sum
 import tactic
 
@@ -19,7 +19,7 @@ import tactic
 # Pigeon-hole and double counting : Graphs
 
 This file is part of a Master thesis project of formalizing some proofs from
-"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler. 
+"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler.
 
 We refer to chapter 27: "Pigeon-hole and double counting".
 In this file, we formalize the section "Graphs".
@@ -44,7 +44,7 @@ In this file, we formalize the section "Graphs".
       inequality, `first_ineq`.
 
 - `Cauchy_Schwartz_int` :
-      A version of Cauchy-Schwartz for vectors in ℤ 
+      A version of Cauchy-Schwartz for vectors in ℤ
 
 - `Cauchy_Schwartz_in_action` :
       We use Cauchy-Schwartz to derive a further ineqaulity
@@ -65,7 +65,7 @@ open finset simple_graph
 variables {V : Type} -- The type of vertices
 
 
-#check simple_graph.is_acyclic --source of inspiration for `c4_free`
+-- #check simple_graph.is_acyclic --source of inspiration for `c4_free`
 
 
 /-- The graph contains no 4-cycle -/
@@ -73,18 +73,18 @@ def c4_free (G : simple_graph V) : Prop :=
   ∀ (v : V) (c : G.walk v v), ¬((c.is_cycle) ∧ (c.length = 4))
 
 -- Alternatives ?
-#check subgraph
-#check is_subgraph
+-- #check subgraph
+-- #check is_subgraph
 
 
 variables [fintype V]  --[decidable_eq V]
 /-
-We tried following mathlib conventions: stay as general as possible. 
+We tried following mathlib conventions: stay as general as possible.
 Indeed, we can define 4-cycle free infinite graphs.
 The `open_locale classical` makes the need for `[decidable_eq V]`
 -/
 
-#check degree
+-- #check degree
 /-
 The degree can be formulated as `(G.neighbor_set v).to_finset.card`,
 and we use it as source of inspiration to define the number of
@@ -135,7 +135,7 @@ begin
 end
 
 
-#check finset.card_eq_two
+-- #check finset.card_eq_two
 
 /--
 A technical lemma extracting a pair of elements from
@@ -217,7 +217,7 @@ begin
            split,
            repeat {intro problem,
                    {{exfalso, {{exact vnb problem} <|> {exact vnb problem.symm} <|> {exact vnw problem} <|> {exact vnw problem.symm} <|> {exact vna problem} <|> {exact vna problem.symm} <|> {exact wna problem} <|> {exact wna problem.symm} <|> {exact wnb problem} <|> {exact wnb problem.symm} <|> {exact anb problem} <|> {exact anb problem.symm}},}
-                   <|> {{exact vnb} <|> {exact vnb.symm} <|> {exact vnw} <|> {exact vnw.symm} <|> {exact vna } <|> {exact vna.symm} <|> {exact wna} <|> {exact wna.symm} <|> {exact wnb} <|> {exact wnb.symm} <|> 
+                   <|> {{exact vnb} <|> {exact vnb.symm} <|> {exact vnw} <|> {exact vnw.symm} <|> {exact vna } <|> {exact vna.symm} <|> {exact wna} <|> {exact wna.symm} <|> {exact wnb} <|> {exact wnb.symm} <|>
                     {intro bna, rw subtype.coe_inj at bna, exact anb bna} <|> {intro bna, rw subtype.coe_inj at bna, exact anb bna.symm} <|> {intro bna, rw subtype.coe_inj at problem, exact anb problem} <|> {intro bna, rw subtype.coe_inj at problem, exact anb problem.symm}}},},
           },
         },
@@ -237,7 +237,7 @@ begin
       rw ← ne.def at vnw,
       intros e edef,
       fin_cases edef ;
-      {{exact vnb} <|> {exact vnb.symm} <|> {exact vnw} <|> {exact vnw.symm} <|> {exact vna } <|> {exact vna.symm} <|> {exact wna} <|> {exact wna.symm} <|> {exact wnb} <|> {exact wnb.symm} <|> 
+      {{exact vnb} <|> {exact vnb.symm} <|> {exact vnw} <|> {exact vnw.symm} <|> {exact vna } <|> {exact vna.symm} <|> {exact wna} <|> {exact wna.symm} <|> {exact wnb} <|> {exact wnb.symm} <|>
                               {intro bna, rw subtype.coe_inj at bna, exact anb bna} <|> {intro bna, rw subtype.coe_inj at bna, exact anb bna.symm}},
       },
    apply list.pairwise.nil,
@@ -253,7 +253,7 @@ to the vertex.
 -/
 def double_counting_rel
   (G : simple_graph V ) (u : V) (e : sym2 V) :=
-   ∀ v ∈ e, G.adj u v 
+   ∀ v ∈ e, G.adj u v
 
 /--
 A technical lemma to get an easy criterion for when
@@ -451,7 +451,7 @@ begin
    exact con,
    refl,},
    {intro two,
-   --rcases two with ⟨a, ⟨b ,⟨ua ,⟨ub, anb⟩ ⟩, ⟨eq⟩ ⟩⟩, 
+   --rcases two with ⟨a, ⟨b ,⟨ua ,⟨ub, anb⟩ ⟩, ⟨eq⟩ ⟩⟩,
     cases two with a h,
     cases h with b h,
     cases h with h eq,
@@ -491,7 +491,7 @@ begin
   ext x,
   rw [adj_comm],
   nth_rewrite 1 [adj_comm],
-end 
+end
 
 
 open_locale big_operators
@@ -522,7 +522,7 @@ begin
   apply double_count_below G hG,
   simp at xydef,
   apply xydef,
-end 
+end
 
 
 /--
@@ -531,13 +531,13 @@ to get a relation linking degrees and the graph's order
 -/
 lemma first_ineq
   (G : simple_graph V ) (hG : c4_free G):
-  ∑ u in (univ : finset V), (G.degree u).choose 2 
+  ∑ u in (univ : finset V), (G.degree u).choose 2
   ≤ (fintype.card V).choose 2 :=
 begin
   simp_rw [← double_count_above' ],
   rw @sum_card_bipartite_above_eq_sum_card_bipartite_below _ _ (double_counting_rel G) (univ : finset V) ({e : sym2 V | ¬ e.is_diag}.to_finset) _,
   apply double_count_below_bound G hG,
-end 
+end
 
 /--
 Distributes sums of sumtractions.
@@ -546,11 +546,11 @@ Refer to `sum_sub_distrib` for instances of
 An equivalent in the sense of `sum_tsub_distrib`
 doesn't exists in mathlib.
 -/
-lemma nat.sum_sub_distrib 
+lemma nat.sum_sub_distrib
   {α : Type} (s : finset α) (f g : α → ℕ)
   (h : ∀ i, g i ≤ f i): -- i∈s would be better but then a different induction is necessary
   ∑ i in s, (f i - g i) = (∑ i in s, f i )- (∑ i in s, g i)  :=
-begin 
+begin
   apply finset.induction_on s,
   simp,
   intros a s ans ih,
@@ -561,14 +561,14 @@ begin
   exact h a,
   apply sum_le_sum,
   intros i is, exact h i,
-end 
+end
 
 
 /-- A technical rewrite we separated from `first_ineq_rw` -/
 lemma tec_stuff
   (n : ℕ) :
   2*((n*(n-1))/2) = n*(n-1) :=
-begin 
+begin
   nth_rewrite 1 ← nat.mod_add_div (n*(n-1)) 2,
   rw self_eq_add_left,
   rw nat.mul_mod,
@@ -590,7 +590,7 @@ begin
         have id : n.succ = (n - 1) + 2 :=
           by {rw nat.succ_eq_add_one, linarith,},
         rw id,
-        rw nat.add_mod, 
+        rw nat.add_mod,
         rw ih,
         dec_trivial,
         },
@@ -612,21 +612,21 @@ end
 --#find _ → (_ - _ ≤ _ ↔ _ ≤ _ + _) -- timeout
 
 
-/-- 
+/--
 We rewrite the first inequality with
 some algebraic manipulations and previous
 equalities.
 -/
 lemma first_ineq_rw
   (G : simple_graph V ) (hG : c4_free G):
-  ∑ u in (univ : finset V), (G.degree u)^2 
-  ≤ (fintype.card V)*((fintype.card V) - 1) 
+  ∑ u in (univ : finset V), (G.degree u)^2
+  ≤ (fintype.card V)*((fintype.card V) - 1)
     + ∑ u in (univ : finset V), (G.degree u) :=
 begin
   have := first_ineq G hG,
   rw [nat.choose_two_right] at this,
   simp_rw [nat.choose_two_right] at this,
-  have that : monotone (λ x, 2*x) := 
+  have that : monotone (λ x, 2*x) :=
     by {simp [monotone],},
   apply_fun (λ x, 2*x) at this using that,
   rw mul_sum at this,
@@ -656,7 +656,7 @@ begin
   rw mathlib_is_a_desert _ at this,
   rw nat.mul_sub_left_distrib,
   rw [←pow_two,mul_one],
-  exact this,  
+  exact this,
   apply sum_le_sum,
   intros i idef,
   exact tec i,
@@ -711,7 +711,7 @@ end
 
 /--
 We use a technique consisting in applying Cauchy-Schwartz
-with the all 1 vector to get a fruther inequality in our context. 
+with the all 1 vector to get a fruther inequality in our context.
 -/
 lemma Cauchy_Schwartz_in_action
   (G : simple_graph V):
@@ -762,10 +762,10 @@ lemma third_ineq
     + (fintype.card V)*2*(G.edge_finset.card) :=
 begin
   rw (show (4 : ℝ)  = 2^2, by {norm_num1,}),
-  rw ← mul_pow, 
+  rw ← mul_pow,
   rw mul_assoc,
   have := sum_degrees_eq_twice_card_edges G,
-    -- here is where "2|E| = ∑ deg" comes into play 
+    -- here is where "2|E| = ∑ deg" comes into play
   apply_fun (λ x, (x : ℝ)) at this,
   push_cast at this,
   rw ← (show (2 : ℝ) = 0 + 1 + 1, by {norm_num}) at this,
@@ -784,7 +784,7 @@ We isloate the algebraic manipulations needed to get
 inequality, to ease noatation.
 -/
 lemma max_edges_of_c4_free_Istvan_Reiman_pre
-  (a b : ℕ) 
+  (a b : ℕ)
   (ineq :   (4*(a)^2 : ℝ) ≤ ((b)^2)*((b) - 1) + (b)*2*(a)):
   ((a) : ℤ) ≤ ⌊((b) / 4 : ℝ)*(1 + real.sqrt (4*(b) - 3))⌋ :=
 begin
@@ -793,7 +793,7 @@ begin
   rw mul_add,
   rw mul_one,
   apply le_add_of_sub_left_le,
-  -- We make use of the canoncic/normal form of 2nd degree equations 
+  -- We make use of the canoncic/normal form of 2nd degree equations
   have canonic : (4 : ℝ)*((a - ((b) / 4))^2) ≤ ((((b)^2)/4)*(1+((4*(b)) -4))) :=
     by {rw [pow_two, sub_mul, mul_sub, mul_sub, ← pow_two],
         cancel_denoms,
@@ -813,7 +813,7 @@ begin
         rw ← pow_two,
         rw ←mul_assoc,
         nth_rewrite 1 mul_comm,
-        nth_rewrite 2 mul_comm, 
+        nth_rewrite 2 mul_comm,
         rw ← mul_assoc,
         exact ineq,
         },
@@ -849,13 +849,13 @@ example (a b : ℕ) :
    (4*(a)^2 : ℝ) - ((b)^2)*((b) - 1) - (b)*2*(a) =(4 : ℝ)*((a - ((b) / 4))^2) - ((((b)^2)/4)*(1+((4*(b)) -4))) :=
 begin
   ring,
-end 
+end
 
 
 /--
 If a 4-cycle-free graph, the number of edges is upper-bounded
 by the following expression in the number of vertices |V|:
-⌊(|V|/ 4)(1 + real.sqrt (4*|V| - 3))⌋ 
+⌊(|V|/ 4)(1 + real.sqrt (4*|V| - 3))⌋
 -/
 theorem max_edges_of_c4_free_Istvan_Reiman
   (G : simple_graph V ) (hG : c4_free G) :
@@ -880,7 +880,7 @@ begin
   contrapose!, -- we show this by contraposition
   intro C,
   rcases C with ⟨v, ⟨cyc, ⟨cyc_cycle, cyc_len⟩⟩⟩,
-  -- We unfold the cycle 
+  -- We unfold the cycle
   cases cyc with _ _ a _ av cyc,
   exfalso, exact walk.is_cycle.not_of_nil cyc_cycle,
   cases cyc with _ _ b _ ba cyc,
@@ -906,7 +906,7 @@ begin
         cases xdef,
         rw xdef,
         simp [common_neighbors],
-        exact ⟨av, (G.adj_symm ba)⟩, 
+        exact ⟨av, (G.adj_symm ba)⟩,
         rw mem_singleton at xdef,
         rw xdef,
         simp [common_neighbors],
@@ -923,7 +923,7 @@ begin
         },
   apply lt_of_lt_of_le (show 1 < 2, by {norm_num,}),
   rw ← thot,
-  apply card_le_of_subset that,  
+  apply card_le_of_subset that,
 end
 
 
@@ -936,16 +936,16 @@ because `zmod p` isn't recognized as a field
 
 /--
 Two vertices (points of the pejective space), are connected
-by an edge iff they're orthogonal to one another. 
+by an edge iff they're orthogonal to one another.
 -/
 def edge_relation
   (v w : (projectivization (zmod p) (fin 3 → (zmod p)))) :=
-  (v ≠ w) ∧ (matrix.dot_product v.rep w.rep = 0) 
+  (v ≠ w) ∧ (matrix.dot_product v.rep w.rep = 0)
 
 
 /--
 The extremal graph that will be used to show that the bound
-from `max_edges_of_c4_free_Istvan_Reiman` is tight. 
+from `max_edges_of_c4_free_Istvan_Reiman` is tight.
 -/
 def extremal_graph :
   simple_graph (projectivization (zmod p) (fin 3 → (zmod p))) :=
@@ -977,7 +977,7 @@ begin
   rw mem_neighbor_set,
   dsimp only [extremal_graph, edge_relation],
   rw [matrix.dot_product_comm, ne_comm],
-end 
+end
 
 instance reminder : fintype (zmod p) := infer_instance
 -- turns out only this instance is needed for .to_finset not to fail in Zp3_fin
@@ -992,7 +992,7 @@ begin
         (by {apply fintype.subtype {v : (fin 3 → (zmod p)) | v ≠ 0 }.to_finset,
               intro x,
               simp only [true_and, finset.mem_univ, set.to_finset_congr, iff_self,
-                        set.to_finset_set_of, ne.def, finset.mem_filter],}) 
+                        set.to_finset_set_of, ne.def, finset.mem_filter],})
         (projectivization_setoid (zmod p) (fin 3 → (zmod p)))
         _,
 end
@@ -1001,7 +1001,7 @@ end
 /--
 To make use of orthogonality related theorems,
 we need to remind ourselves that the dot-product
-is a bilinear form. 
+is a bilinear form.
 -/
 def dotp : bilin_form (zmod p) (fin 3 → (zmod p)) :=
 {bilin := (λ x y, matrix.dot_product x y),
@@ -1110,7 +1110,7 @@ end
 
 /--
 In (ℤ_p)^3, the dimension of the orthogonal complement
-to the span of 2 linearly independent vectors is 1. 
+to the span of 2 linearly independent vectors is 1.
 -/
 lemma dim_of_ortho
   (v w : (fin 3 → (zmod p)) )
@@ -1149,7 +1149,7 @@ begin
   rw ← projectivization.independent_pair_iff_neq,
   rw projectivization.independent_iff,
   rw this,
-end 
+end
 
 
 /--
@@ -1191,7 +1191,7 @@ begin
         },
   -- We recall the dimension of the orthogonal
   have dim_o := dim_of_ortho p v.rep w.rep ((rw_tec p v w).mp vnw),
-  -- We recall the charcterization of 1-dimensional spaces 
+  -- We recall the charcterization of 1-dimensional spaces
   have dim_o_char := @finrank_eq_one_iff_of_nonzero' (zmod p) (↥((dotp p).orthogonal (submodule.span (zmod p) {v.rep, w.rep}))) _ _ _,
   -- We derive from it that `a` and `b` are dependent
   specialize dim_o_char ⟨(b.val).rep , bo⟩
@@ -1203,7 +1203,7 @@ begin
   rw dim_o_char at dim_o,
   obtain ⟨sc, eq⟩ := dim_o ⟨(a.val).rep , ao⟩,
   simp only [set_like.mk_smul_mk, subtype.mk_eq_mk, subtype.val_eq_coe] at eq,
-  -- Yet, we recall that `a ≠ b` meant that they were independent 
+  -- Yet, we recall that `a ≠ b` meant that they were independent
   rw [ne.def, (not_iff_not.mpr subtype.ext_iff_val), ←ne.def ] at absub,
   rw (rw_tec p a.val b.val) at absub,
   rw linear_independent_fin2 at absub,
@@ -1211,9 +1211,7 @@ begin
   apply absub.2 sc,
   simp only [matrix.cons_val_zero],
   exact eq,
-end 
+end
 
 
 -- To be continiued
-
-

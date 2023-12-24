@@ -99,10 +99,10 @@ def π (n : ℕ) : ℕ :=
 #eval primes_up_to 100000
 
 -- I later found out about:
-#check nat.nth
+-- #check nat.nth
 --However, it's not computable. Making the following
 -- and #eval will fail
-#check nat.nth nat.prime 3
+-- #check nat.nth nat.prime 3
 
 /--
 A function that takes as input `n`, `k` and a proof that
@@ -222,7 +222,7 @@ begin
    apply order_tec_1,
   },
   {intro xim,
-   simp? at xim,
+   simp at xim,
    cases xim with y ydef,
    rw ←ydef,
    apply kth_prime_among_makes_sense,
@@ -485,13 +485,13 @@ begin
   use ha,
 end
 
-#check fin.prod_univ_eq_prod_range
+-- #check fin.prod_univ_eq_prod_range
   -- I didn't know about this one, before writing the proof
   -- to the previous result, as you can guess from the failed
   -- library search.
 
 
-#check prod_range_div
+-- #check prod_range_div
   -- Requires a commutative group, which (ℚ,×) isn't
 
 /--
@@ -529,7 +529,7 @@ begin
     -- as a multiplicative group, which requires casting
   simp_rw [(show ∀ x : ℕ, (x : ℚ ) + 1 = (x.succ : ℚ ), by {norm_num,})],
   rw prod_range_telescope (λ x, (x.succ : ℚ)),
-  {simp?,},
+  {simp,},
   {intro m,
    dsimp,
    intro con,
@@ -541,7 +541,7 @@ begin
 end
 
 
-#check prod_attach
+-- #check prod_attach
   --This serves as a good example for library search inflexibility
 lemma prod_set_attach
   {α : Type} [comm_monoid α] (f : ℕ → α) (s : finset ℕ) :
@@ -714,7 +714,7 @@ which we now present
 -/
 
 -- This one I came accross only in the clean up phase of this file
-#check nat.factorization
+-- #check nat.factorization
 #eval nat.factorization 2023 7  --the valuation of prime factor 7 in 2023
 
 -- Prime decomposition present as `factorization_prod_pow_eq_self`,
@@ -726,12 +726,12 @@ which we now present
 
 -- This one I new about before formalizing `quick_prime_decompo`,
 -- but it didn't appear useful, as it had no valuations ...
-#check nat.factors
+-- #check nat.factors
 #eval nat.factors 9
 -- ... and prime decomposition was in the form of a product
 -- over a list, where valuations made no appearance.
-#check nat.prod_factors
-#check nat.factorization_prod_pow_eq_self
+-- #check nat.prod_factors
+-- #check nat.factorization_prod_pow_eq_self
 
 /--
 Prime decomposition in the form of a function, in the sense that:
@@ -913,7 +913,7 @@ It may very well be possible that the previous lemma is present in mathlib.
 However, with libreary_serach failing, an nomenclature showing its limitations,
 I proved it instead of looking further.
 -/
-#check bUnion_filter_eq_of_maps_to -- could you have guessed the name ?
+-- #check bUnion_filter_eq_of_maps_to -- could you have guessed the name ?
 -- #check pairwise_disjoint_of_maps_to --fails
 
 /-
@@ -921,8 +921,8 @@ The following come close to what we want, and may possibly be used
 as alternative in `sum_nonneg_surj`. However, the entire formalization
 would have to be changed, as they don't work with Pi-types
 -/
-#check disj_Union_filter_eq_of_maps_to
-#check sum_disj_Union
+-- #check disj_Union_filter_eq_of_maps_to
+-- #check sum_disj_Union
 
 
 /--
@@ -1011,8 +1011,8 @@ end
 
 -- These have slightly different conditions and conclusions
 -- Also, I didn't know the nomancalture for them
-#check single_le_prod'
-#check single_lt_prod'
+-- #check single_le_prod'
+-- #check single_lt_prod'
 
 -- An inequality used in `the_great_split_part_3`
 lemma tec_ineq (n : ℕ) : n < 2^(n+1) :=
@@ -1083,7 +1083,7 @@ begin
   -- surjectivity : this is where we need `quick_prime_decompo`
   {intros m mdef,
    rw idef,
-   simp?,
+   simp,
    obtain ⟨valu, valu_def⟩ : _ := quick_prime_decompo m mdef,
    use valu, split,
    {split,
@@ -1352,4 +1352,4 @@ begin
 end
 
 
-#check fourth_proof
+-- #check fourth_proof

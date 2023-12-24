@@ -417,7 +417,7 @@ begin
   classical,
   contrapose! hp,
   have := congr_arg support hp,
-  rw [support_zero, support_add_eq h, finset.union_eq_empty_iff, -- TODO should this be simp?
+  rw [support_zero, support_add_eq h, finset.union_eq_empty_iff, -- TODO should this be simp
     mv_polynomial.support_eq_empty] at this,
   exact this.left,
 end

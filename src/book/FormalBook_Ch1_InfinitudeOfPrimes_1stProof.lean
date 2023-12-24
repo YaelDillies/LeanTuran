@@ -87,12 +87,12 @@ begin
   -- Using the properties of divisibility, we reach a contradiction thorugh:
   have problem : p ∣ 1 :=
     by {convert dvd_sub' pdvd this,
-        simp only [add_tsub_cancel_left, eq_self_iff_true], -- via simp?
+        simp only [add_tsub_cancel_left, eq_self_iff_true], -- via simp
         },
   exact (nat.prime.not_dvd_one pp) problem,
 end
 
-#check Euclid_proof
+-- #check Euclid_proof
 
 /-- The standardised statement proven through Euclids proof-/
 lemma Euclid_proof_standardised :

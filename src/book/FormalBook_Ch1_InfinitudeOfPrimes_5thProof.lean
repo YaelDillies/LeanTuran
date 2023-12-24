@@ -107,7 +107,7 @@ lemma N_as_a_comlpement (a b : ℤ) (b_tec : 0<b) :
   (N a b)ᶜ = (⋃ i ∈ (finset.Ico 1 b),  (N (a+i) b) ) :=
 begin
   ext x,
-  simp?, -- the suggested "simp only" is not enough to get the same result.
+  simp, -- the suggested "simp only" is not enough to get the same result.
   split,
   {intro xcomp,
    -- If x isn't on the arithmetic progression, we can consider
@@ -168,7 +168,7 @@ begin
   rw ←is_open_compl_iff,
   rw N_as_a_comlpement a b b_tec,
   apply is_open_bUnion,
-  simp?,
+  simp,
   intros i wierd,
   simp only [is_open, topological_space.is_open],
     -- unfold the meaning of open in our topology
@@ -189,7 +189,7 @@ lemma two_units_not_open :
   ¬ (bona_fide_topology.is_open {(-1 : ℤ),1}) :=
 begin
   intro con,
-  simp? [topological_space.is_open] at con,
+  simp [topological_space.is_open] at con,
   cases con,
   {have problem : (-1 : ℤ) ∈ ∅ := by { rw ← con, apply set.mem_insert,},
    rw [set.mem_empty_iff_false] at problem,
@@ -293,4 +293,4 @@ begin
   exact two_units_not_open union_closed,
 end
 
-#check fifth_proof
+-- #check fifth_proof

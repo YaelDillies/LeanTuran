@@ -105,8 +105,8 @@ begin
         rw zmod.ring_char_zmod_n,
         exact q_tec},
   clear q_tec,
-  simp? at qd2p,
-    -- Note: check simp? in messages. Replacing simp with the message
+  simp at qd2p,
+    -- Note: check simp in messages. Replacing simp with the message
     -- will fail, even if the library of the commands used is imported.
   rw sub_eq_zero at qd2p,
   -- We use some more group theory to get:
@@ -154,7 +154,7 @@ begin
 end
 
 
-#check third_proof
+-- #check third_proof
 
 
 /-- The standardised statement proven through Euclids proof-/

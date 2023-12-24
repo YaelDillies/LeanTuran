@@ -15,7 +15,7 @@ import tactic
 # Pigeon-hole and double counting : Numbers again
 
 This file is part of a Master thesis project of formalizing some proofs from
-"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler. 
+"Proofs from THE BOOK" (5th ed.) by Martin Aigner and Günter M. Ziegler.
 
 We refer to chapter 27: "Pigeon-hole and double counting".
 In this file, we formalize the section "Numbers again".
@@ -72,7 +72,7 @@ begin
          linarith,
         },
         {rw xmul at ubound,
-         rw mul_comm at ubound, 
+         rw mul_comm at ubound,
          rw ← (nat.le_div_iff_mul_le) at ubound,
          exact ubound,
          exact nat.pos_of_ne_zero hm,
@@ -105,7 +105,7 @@ begin
   rw RW,
   dsimp [S],
   rw card_image_of_injective _,
-  -- Handled by a simp? ; the main theorem is `nat.card_Icc` .
+  -- Handled by a simp ; the main theorem is `nat.card_Icc` .
   simp only [nat.add_succ_sub_one, add_zero, nat.card_Icc, eq_self_iff_true],
   rw [function.injective],
   intros a b eq,
@@ -158,7 +158,7 @@ We now have an explicit expression for
 the sum of the number of divisors.
 -/
 lemma main_result_pre_rw
-  (n : ℕ) (hn : n ≠ 0) : 
+  (n : ℕ) (hn : n ≠ 0) :
   ∑ m in (Icc 1 n), (((Icc 1 n).filter (λ x, (∃q, m=x*q)))).card =
   ∑ m in (Icc 1 n), n/m :=
 begin
@@ -177,11 +177,11 @@ end
 We cast the explicit expression for
 the sum of the number of divisors
 to ℚ, so as to take averages, using
-fractions. 
+fractions.
 -/
 lemma main_result_pre_cast
   (n : ℕ) (hn : n ≠ 0) :
-  (∑ m in (Icc 1 n), ((n/m : ℕ): ℚ)) = 
+  (∑ m in (Icc 1 n), ((n/m : ℕ): ℚ)) =
   (∑ m in (Icc 1 n), (((Icc 1 n).filter (λ x, (∃q, m=x*q)))).card : ℚ) :=
 begin
   have := main_result_pre_rw n hn,
@@ -195,7 +195,7 @@ end
 We upper bound the average number of multiples of a number
 in [n] by the harmonic sum.
 -/
-lemma upperbound 
+lemma upperbound
   (n : ℕ) (hn : n ≠ 0):
   (1/n : ℚ) * (∑ m in (Icc 1 n), ((n/m : ℕ): ℚ))
   -- To keep `/` as a quotient of two naturals,
@@ -239,7 +239,7 @@ begin
     by {rw nat.cast_pos,
         exact nat.pos_of_ne_zero hm,
         },
-  apply le_of_mul_le_mul_left _ this, 
+  apply le_of_mul_le_mul_left _ this,
   clear this,
   rw [mul_sub, mul_one],
   rw (show (m : ℚ)*(n/m :  ℚ ) = (n : ℚ),
@@ -257,7 +257,7 @@ begin
         rw [eq_comm, add_comm],
         apply nat.mod_add_div,
         apply nat.mod_le,
-        }), 
+        }),
   rw (nat.cast_sub (nat.mod_le n m)),
   apply sub_le_sub,
   simp only [le_refl, nat.cast_le],
@@ -270,9 +270,9 @@ end
 
 /--
 A rewrite we singled out to shorten the proof of `lowerbound`
--/                                     
+-/
 lemma last_rw
-  (n x : ℕ) (hn : n ≠ 0) : 
+  (n x : ℕ) (hn : n ≠ 0) :
   (1 / n : ℚ ) * (↑n / ↑x - 1) = ((1 / ↑x) -(1 / ↑n )) :=
   --note : x≠0 not needed ; consider the check and eval that follow
 begin
@@ -288,7 +288,7 @@ begin
   rw mul_one,
 end
 
-#check (1 : ℚ)/(0 : ℚ)
+-- #check (1 : ℚ)/(0 : ℚ)
 #eval (1 : ℚ)/(0 : ℚ)
 
 
@@ -326,7 +326,7 @@ begin
   rw sum_const at pre,
   rw [nat.card_Icc, nat.add_sub_cancel] at pre,
   simp only [one_div, algebra_map.coe_one, nsmul_eq_mul, nat.cast_add, finset.sum_congr] at pre,
-    -- technique use simp? look at the simp only [] and delete the undesired simplifcations from the list
+    -- technique use simp look at the simp only [] and delete the undesired simplifcations from the list
   simp only [one_div, algebra_map.coe_one, nsmul_eq_mul, nat.cast_add, finset.sum_congr],
   rw (show ((n : ℚ)  * (↑n)⁻¹) = 1,
         by {apply mul_inv_cancel,
@@ -353,7 +353,4 @@ begin
   split,
   exact lowerbound n hn,
   exact upperbound n hn,
-end 
-
-
-
+end
